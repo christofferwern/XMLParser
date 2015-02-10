@@ -8,16 +8,16 @@ namespace ConsoleApplication
 {
     class TextFragment
     {
-        private int _x, _y;
-        private String _text;
         private TextStyle _textStyle;
+        private String _text;
+        private int _x, _y;
 
         public TextFragment()
         {
+            _textStyle = new TextStyle();
+            _text = "text";
             _x = 0;
             _y = 0;
-            _text = "Text";
-            _textStyle = new TextStyle();
         }
 
         public int Y

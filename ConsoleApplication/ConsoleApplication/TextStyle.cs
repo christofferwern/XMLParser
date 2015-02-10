@@ -9,19 +9,36 @@ namespace ConsoleApplication
 {
     class TextStyle
     {
-        Boolean _bold, _underline, _italic;
-        string _font;
-        int _fontColor, _fontSize;
+        private Boolean _bold, _underline, _italic;
+        private int _fontSize, _fontColor;
+        private string font;
 
         public TextStyle()
         {
             _bold = false;
             _underline = false;
             _italic = false;
-
-            _font = "Arial";
-            _fontColor = Color.Black.ToArgb();
             _fontSize = 14;
+            _fontColor = Color.Black.ToArgb();
+            font = "Arial";
+        }
+
+        public string Font
+        {
+            get { return font; }
+            set { font = value; }
+        }
+
+        public int FontColor
+        {
+            get { return _fontColor; }
+            set { _fontColor = value; }
+        }
+
+        public int FontSize
+        {
+            get { return _fontSize; }
+            set { _fontSize = value; }
         }
 
         public Boolean Italic
@@ -40,24 +57,6 @@ namespace ConsoleApplication
         {
             get { return _bold; }
             set { _bold = value; }
-        }
-
-        public int FontSize
-        {
-            get { return _fontSize; }
-            set { _fontSize = value; }
-        }
-
-        public int FontColor
-        {
-            get { return _fontColor; }
-            set { _fontColor = value; }
-        }
-
-        public string Font
-        {
-            get { return _font; }
-            set { _font = value; }
         }
     }
 }
