@@ -15,6 +15,8 @@ namespace ConsoleApplication
 
             Console.WriteLine("Tobbes");
 
+            Console.WriteLine("Chris");
+
             watch.Stop();
             Console.WriteLine("Compilation time: " + (double)watch.ElapsedMilliseconds/1000 + "s");
             Console.WriteLine("Press any key to exit...");
