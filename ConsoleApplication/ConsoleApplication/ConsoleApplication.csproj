@@ -51,8 +51,9 @@
     <Compile Include="SceneObjectDecorator.cs" />
     <Compile Include="ShapeObject.cs" />
     <Compile Include="SimpleSceneObject.cs" />
+    <Compile Include="TextFragment.cs" />
     <Compile Include="TextObject.cs" />
-    
+    <Compile Include="TextStyle.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
