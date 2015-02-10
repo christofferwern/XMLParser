@@ -10,6 +10,8 @@ namespace ConsoleApplication
     public class TextObject : SceneObjectDecorator
     {
         private string _align, _antiAlias, _font, _autosize;
+        //private List<TextStyle> _styleList;
+        //private List<TextFragment> _fragmentsList;
 
         public string Align
         {
@@ -27,8 +29,7 @@ namespace ConsoleApplication
             XmlElement XE =  base.getXMLTree();
             return XE;
         }
-        //private List<TextStyle> _styleList;
-        //private List<TextFragment> _fragmentsList;
+        
 
     }
 }

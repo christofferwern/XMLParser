@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ConsoleApplication
 {
-    class Properties
+    public class Properties
     {
         private Boolean _flip,
                         _formEnabled,

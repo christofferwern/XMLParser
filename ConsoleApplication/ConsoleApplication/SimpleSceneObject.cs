@@ -15,10 +15,13 @@ namespace ConsoleApplication
         private Boolean _hidden;
         private XmlDocument doc;
 
+        private Properties _properties;
+
         public SimpleSceneObject()
         {
             _name = "SimpleScenObject";
             doc = new XmlDocument();
+            _properties = new Properties();
         }
 
         public float Alpha
@@ -27,19 +30,19 @@ namespace ConsoleApplication
             set { _alpha = value; }
         }
 
-        /*public Propterties getProperties()
+        public Properties getProperties()
         {
-            throw new NotImplementedException();
+            return _properties;
         }
 
-        public void setProperties(Properties p)
+        public void setProperties(Properties properties)
         {
-            throw new NotImplementedException();
-        }*/
+            _properties = properties;
+        }
 
         public XmlElement getXMLTree()
         {
-            XmlElement XE = doc.DocumentElement;
+            XmlElement XE = doc.CreateElement("root");
             return XE;
         }
     }
