@@ -13,6 +13,8 @@ namespace ConsoleApplication
         {
             var watch = Stopwatch.StartNew();
 
+            Console.WriteLine("Tobbes");
+
             watch.Stop();
             Console.WriteLine("Compilation time: " + (double)watch.ElapsedMilliseconds/1000 + "s");
             Console.WriteLine("Press any key to exit...");
