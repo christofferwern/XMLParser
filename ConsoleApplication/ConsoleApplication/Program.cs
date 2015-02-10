@@ -13,9 +13,11 @@ namespace ConsoleApplication
         {
             var watch = Stopwatch.StartNew();
 
-            Console.WriteLine("Tobbes");
+            SimpleSceneObject SSO = new SimpleSceneObject();
+            
+            TextObject TO = new TextObject(SSO);
 
-            Console.WriteLine("Chris");
+            TO.getXMLTree();
 
             watch.Stop();
             Console.WriteLine("Compilation time: " + (double)watch.ElapsedMilliseconds/1000 + "s");

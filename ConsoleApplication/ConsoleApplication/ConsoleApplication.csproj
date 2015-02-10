@@ -43,6 +43,11 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SceneObject.cs" />
+    <Compile Include="SceneObjectDecorator.cs" />
+    <Compile Include="ShapeObject.cs" />
+    <Compile Include="SimpleSceneObject.cs" />
+    <Compile Include="TextObject.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
