@@ -12,7 +12,7 @@ namespace ConsoleApplication
         private int _backgroundColor, _projektWidth, _projectHeight;
         private string _id;
         private List<Scene> sceneList;
-        //List<SceneObject> backgroundSceneObjectList;
+        List<SceneObject> backgroundSceneObjectList;
 
         public PresentationObject()
         {

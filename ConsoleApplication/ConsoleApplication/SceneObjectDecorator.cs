@@ -16,19 +16,19 @@ namespace ConsoleApplication
             _sceneObject = so;
         }
 
-        /*public Propterties getProperties()
+        public virtual XmlElement getXMLTree()
+        {
+            return _sceneObject.getXMLTree();
+        }
+
+        public virtual Properties getProperties()
         {
             throw new NotImplementedException();
         }
 
-        public void setProperties(Properties p)
+        public virtual void setProperties(Properties p)
         {
             throw new NotImplementedException();
-        }*/
-
-        public virtual XmlElement getXMLTree()
-        {
-            return _sceneObject.getXMLTree();
         }
     }
 }

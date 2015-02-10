@@ -9,9 +9,8 @@ namespace ConsoleApplication
 {
     public interface SceneObject
     {
-        /*Propterties getProperties();
+        Properties getProperties();
         void setProperties(Properties p);
-        */
         XmlElement getXMLTree();
     }
 }

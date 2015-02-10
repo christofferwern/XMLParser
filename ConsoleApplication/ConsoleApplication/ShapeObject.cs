@@ -25,6 +25,10 @@ namespace ConsoleApplication
             return base.getXMLTree();
             
         }
+        public override Properties getProperties()
+        {
+            return null;
+        }
         
     }
 }
