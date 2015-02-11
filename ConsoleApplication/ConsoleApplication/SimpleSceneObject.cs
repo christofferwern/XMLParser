@@ -17,15 +17,64 @@ namespace ConsoleApplication
 
         private Boolean _hidden;
 
-        private XmlDocument doc;
+        private XmlDocument _doc;
 
         private Properties _properties;
+
+        private List<XmlAttribute> _objectAttributes;
 
         public SimpleSceneObject()
         {
             _name = "SimpleScenObject";
-            doc = new XmlDocument();
             _properties = new Properties();
+            _objectAttributes = new List<XmlAttribute>();
+        }
+
+        private void generateAttributes()
+        {
+            XmlAttribute type = _doc.CreateAttribute("type");
+            type.Value = "";
+            XmlAttribute clipID = _doc.CreateAttribute("clipID");
+            clipID.Value = "";
+            XmlAttribute z = _doc.CreateAttribute("z");
+            z.Value = "";
+            XmlAttribute boundsX = _doc.CreateAttribute("boundsX");
+            boundsX.Value = "";
+            XmlAttribute boundsY = _doc.CreateAttribute("boundsY");
+            boundsY.Value = "";
+            XmlAttribute clipWidth = _doc.CreateAttribute("clipWidth");
+            clipWidth.Value = "";
+            XmlAttribute clipHeight = _doc.CreateAttribute("clipHeight");
+            clipHeight.Value = "";
+            XmlAttribute width = _doc.CreateAttribute("width");
+            width.Value = "";
+            XmlAttribute height = _doc.CreateAttribute("height");
+            height.Value = "";
+            XmlAttribute rotation = _doc.CreateAttribute("rotation");
+            rotation.Value = "";
+            XmlAttribute alpha = _doc.CreateAttribute("alpha");
+            alpha.Value = "";
+            XmlAttribute name = _doc.CreateAttribute("name");
+            name.Value = "";
+            XmlAttribute hidden = _doc.CreateAttribute("hidden");
+            hidden.Value = "";
+            XmlAttribute flip = _doc.CreateAttribute("flip");
+            flip.Value = "";
+
+            _objectAttributes.Add(type);
+            _objectAttributes.Add(clipID);
+            _objectAttributes.Add(z);
+            _objectAttributes.Add(boundsX);
+            _objectAttributes.Add(boundsY);
+            _objectAttributes.Add(clipWidth);
+            _objectAttributes.Add(clipHeight);
+            _objectAttributes.Add(width);
+            _objectAttributes.Add(height);
+            _objectAttributes.Add(rotation);
+            _objectAttributes.Add(alpha);
+            _objectAttributes.Add(name);
+            _objectAttributes.Add(hidden);
+            _objectAttributes.Add(flip);
         }
 
         public Properties getProperties()
@@ -38,10 +87,26 @@ namespace ConsoleApplication
             _properties = properties;
         }
 
+        public void setXMLDocumentRoot(ref XmlDocument xmldocument)
+        {
+            _doc = xmldocument;
+            //generateAttributes();
+        }
+
+        public XmlDocument getXMLDocumentRoot()
+        {
+            return _doc;
+        }
+
         public XmlElement getXMLTree()
         {
-            XmlElement XE = doc.CreateElement("root");
-            doc.AppendChild(XE);
+            XmlElement XE = _doc.CreateElement("sceneObject");
+
+            foreach (XmlAttribute XA in _objectAttributes)
+                XE.Attributes.Append(XA);
+            
+
+            _doc.DocumentElement.AppendChild(XE);
             return XE;
         }
 
@@ -123,5 +188,6 @@ namespace ConsoleApplication
             set { _hidden = value; }
         }
 
+        
     }
 }

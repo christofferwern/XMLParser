@@ -12,5 +12,7 @@ namespace ConsoleApplication
         Properties getProperties();
         void setProperties(Properties p);
         XmlElement getXMLTree();
+        void setXMLDocumentRoot(ref XmlDocument xmldocument);
+        XmlDocument getXMLDocumentRoot();
     }
 }

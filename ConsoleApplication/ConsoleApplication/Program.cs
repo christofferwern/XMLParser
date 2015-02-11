@@ -17,6 +17,9 @@ namespace ConsoleApplication
         static void Main(string[] args)
         {
             var watch = Stopwatch.StartNew();
+            PresentationObject PO = new PresentationObject();
+            PO.getXMLTree().Save(Console.Out);
+
 
             watch.Stop();
             Console.WriteLine("\nCompilation time: " + (double)watch.ElapsedMilliseconds/1000 + "s");
