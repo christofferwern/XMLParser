@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,13 +12,15 @@ namespace ConsoleApplication
         private string _align, _antiAlias, _font, _autosize;
         private List<TextStyle> _styleList;
         private List<TextFragment> _fragmentsList;
-
-        
         private int _color, _leading, _letterSpacing, _size;
         private Boolean _bold, _italic, _underLine, _selectable, _runningText;
         private XmlDocument _doc;
 
-        public TextObject(SceneObject sceneobject) : base(sceneobject) { }
+        public TextObject(SceneObject sceneobject) : base(sceneobject) 
+        {
+            _styleList = new List<TextStyle>();
+            _fragmentsList = new List<TextFragment>();
+        }
 
         public override XmlElement getXMLTree()
         {
@@ -47,11 +49,24 @@ namespace ConsoleApplication
         public override void setProperties(Properties properties)
         {
             base.setProperties(properties);
-        }
+        }
+
         public string Align
         {
             get { return _align; }
             set { _align = value; }
+        }
+
+        internal List<TextStyle> StyleList
+        {
+            get { return _styleList; }
+            set { _styleList = value; }
+        }
+
+        internal List<TextFragment> FragmentsList
+        {
+            get { return _fragmentsList; }
+            set { _fragmentsList = value; }
         }
 
     }

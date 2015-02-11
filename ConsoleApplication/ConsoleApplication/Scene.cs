@@ -33,8 +33,8 @@ namespace ConsoleApplication
             _sceneLabel = "Scene Label";
             _sceneObjectList = new List<SceneObject>();
 
-            _sceneObjectList.Add(new TextObject(new SimpleSceneObject()));
-            _sceneObjectList.Add(new ShapeObject(new SimpleSceneObject()));
+            //_sceneObjectList.Add(new TextObject(new SimpleSceneObject()));
+            //_sceneObjectList.Add(new ShapeObject(new SimpleSceneObject()));
             //_sceneObjectList.Add(new TextObject(new ShapeObject(new SimpleSceneObject())));
             
         }

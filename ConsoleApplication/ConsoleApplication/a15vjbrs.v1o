@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using System.Runtime.Serialization.Json;
+
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml;
 using PresentationML = DocumentFormat.OpenXml.Presentation;
@@ -92,6 +94,7 @@ namespace ConsoleApplication
             //Traverse through all the shapes in the tree
             foreach (PresentationML.Shape sp in spTree.Descendants<PresentationML.Shape>())
             {
+                Console.WriteLine("Shape");
                 SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
 
                 //Get info about SimpleSceneObject
@@ -131,18 +134,6 @@ namespace ConsoleApplication
                     textFragment.Text = run.Text.Text;
 
                     TextStyle textStyle = new TextStyle();
-
-                    //Get font
-                    foreach (var symbolFont in run.Descendants<DrawingML.SymbolFont>())
-                    {
-                        textStyle.Font = symbolFont.Typeface;
-                    }
-
-                    //Get the texy body color, if it has been changed manually in the ppt file.
-                    foreach (var color in run.Descendants<DrawingML.RgbColorModelHex>())
-                    {
-                        //Console.WriteLine(color.Val);
-                    }
 
                     //Get run properties (size, bold, italic, underline) and insert into style
                     textStyle.FontSize  = (run.RunProperties.FontSize != null)  ? (int)run.RunProperties.FontSize   : textStyle.FontSize;
