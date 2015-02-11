@@ -11,6 +11,8 @@ namespace ConsoleApplication
     {
         private float _alpha, _height, _width, _rotation, _z;
 
+        //BoundsX and BoundsY corresponds to positions from left top corner
+        //ClipHeight and ClipWidth are the height and width of the scene object
         private int _boundsX, _boundsY, _clipHeight, _clipWidth;
 
         private string _clipID, _name, _type;
@@ -23,9 +25,14 @@ namespace ConsoleApplication
 
         public SimpleSceneObject()
         {
-            _name = "SimpleScenObject";
+            _clipID = Guid.NewGuid().ToString();
+            _name = "SimpleSceneObject";
             doc = new XmlDocument();
             _properties = new Properties();
+            _alpha = 1;
+            _hidden = false;
+            _width = 0;
+            _height = 0;
         }
 
         public Properties getProperties()

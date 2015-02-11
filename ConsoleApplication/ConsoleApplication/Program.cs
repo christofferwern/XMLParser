@@ -18,6 +18,12 @@ namespace ConsoleApplication
         {
             var watch = Stopwatch.StartNew();
 
+            string path = @"C:\Users\ex1\Downloads\test_presentation.pptx";
+
+            OpenXMLReader reader = new OpenXMLReader(path);
+
+            reader.read();
+
             watch.Stop();
             Console.WriteLine("\nCompilation time: " + (double)watch.ElapsedMilliseconds/1000 + "s");
             Console.WriteLine("Press any key to exit...");

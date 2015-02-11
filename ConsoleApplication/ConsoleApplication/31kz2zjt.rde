@@ -12,14 +12,16 @@ namespace ConsoleApplication
         private string _align, _antiAlias, _font, _autosize;
         private List<TextStyle> _styleList;
         private List<TextFragment> _fragmentsList;
+
+        internal List<TextFragment> FragmentsList
+        {
+            get { return _fragmentsList; }
+            set { _fragmentsList = value; }
+        }
         private int _color, _leading, _letterSpacing, _size;
         private Boolean _bold, _italic, _underLine, _selectable, _runningText;
 
-        public TextObject(SceneObject sceneobject) : base(sceneobject) 
-        { 
-            _styleList = new List<TextStyle>();
-            _fragmentsList = new List<TextFragment>();
-        }
+        public TextObject(SceneObject sceneobject) : base(sceneobject) { }
 
         public override XmlElement getXMLTree()
         {
@@ -107,16 +109,5 @@ namespace ConsoleApplication
             set { _bold = value; }
         }
 
-        internal List<TextStyle> StyleList
-        {
-            get { return _styleList; }
-            set { _styleList = value; }
-        }
-
-        internal List<TextFragment> FragmentsList
-        {
-            get { return _fragmentsList; }
-            set { _fragmentsList = value; }
-        }
     }
 }

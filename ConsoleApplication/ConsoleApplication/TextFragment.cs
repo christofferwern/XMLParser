@@ -8,13 +8,17 @@ namespace ConsoleApplication
 {
     class TextFragment
     {
-        private TextStyle _textStyle;
         private String _text;
-        private int _x, _y;
+        private int _x, _y, _styleId;
+
+        public int StyleId
+        {
+            get { return _styleId; }
+            set { _styleId = value; }
+        }
 
         public TextFragment()
         {
-            _textStyle = new TextStyle();
             _text = "text";
             _x = 0;
             _y = 0;
@@ -38,11 +42,6 @@ namespace ConsoleApplication
             set { _text = value; }
         }
 
-        internal TextStyle TextStyle
-        {
-            get { return _textStyle; }
-            set { _textStyle = value; }
-        }
 
     }
 }

@@ -11,22 +11,30 @@ namespace ConsoleApplication
     {
         private Boolean _bold, _underline, _italic;
         private int _fontSize, _fontColor;
-        private string font;
+        private string _font;
 
         public TextStyle()
         {
             _bold = false;
             _underline = false;
             _italic = false;
-            _fontSize = 14;
+            _fontSize = 0;
             _fontColor = Color.Black.ToArgb();
-            font = "Arial";
+            _font = "Default";
+        }
+
+        public String toString()
+        {
+            return "Font:   " + _font + "\n" +
+                   "Size:   " + _fontSize + "\n" +
+                   "Color:  " + _fontColor + "\n" +
+                   "B U I:  (" + _bold + ", " + _underline + ", " + _italic + ") \n";
         }
 
         public string Font
         {
-            get { return font; }
-            set { font = value; }
+            get { return _font; }
+            set { _font = value; }
         }
 
         public int FontColor
