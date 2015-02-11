@@ -13,11 +13,7 @@ namespace ConsoleApplication
         //private List<TextStyle> _styleList;
         //private List<TextFragment> _fragmentsList;
 
-        public string Align
-        {
-            get { return _align; }
-            set { _align = value; }
-        }
+        
         private int _color, _leading, _letterSpacing, _size;
         private Boolean _bold, _italic, _underLine, _selectable, _runningText;
 
@@ -27,9 +23,15 @@ namespace ConsoleApplication
         {
             
             XmlElement XE =  base.getXMLTree();
+            
             return XE;
         }
-        
+
+        public string Align
+        {
+            get { return _align; }
+            set { _align = value; }
+        }
 
     }
 }
