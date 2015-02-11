@@ -43,7 +43,7 @@ namespace ConsoleApplication
                 PresentationPart presentationPart = presentationDocument.PresentationPart;
 
                 //Go through all Slides in the PowerPoint presentation
-                foreach (SlidePart slidePart in presentationPart.SlideParts)
+                foreach (SlidePart slidePart in presentationPart.SlideParts.Reverse())
                 {
                     Scene scene = new Scene();
 
@@ -83,7 +83,7 @@ namespace ConsoleApplication
         }
 
         private List<SceneObject> GetTextShapesFromSlidePart(SlidePart slidePart)
-        {
+        {           
             List<SceneObject> sceneObjectList = new List<SceneObject>();
 
             //Get the shape tree, <p:spTree>, which contains all shapes in the slide
@@ -97,19 +97,19 @@ namespace ConsoleApplication
                 //Get info about SimpleSceneObject
 
                 //Get the rotation of scene object
-                foreach (var xfrm in sp.Descendants<DrawingML.Transform2D>())
+                foreach (var xfrm in sp.Elements<DrawingML.Transform2D>())
                 {
                     simpleSceneObject.Rotation = (xfrm.Rotation != null) ? xfrm.Rotation : simpleSceneObject.Rotation;
                 }
 
-                //Get the offset of the scene object
+                //Get the positions of the scene object
                 foreach (var off in sp.Descendants<DrawingML.Offset>())
                 {
                     simpleSceneObject.BoundsX = (off.X != null) ? (int)off.X : simpleSceneObject.BoundsX;
                     simpleSceneObject.BoundsY = (off.Y != null) ? (int)off.Y : simpleSceneObject.BoundsY;
                 }
 
-                //Get the positions of the shape object
+                //Get the size of the shape object
                 foreach (var ext in sp.Descendants<DrawingML.Extents>())
                 {
                     simpleSceneObject.ClipHeight = (ext.Cx != null) ? (int)ext.Cx : simpleSceneObject.ClipHeight;
@@ -129,19 +129,20 @@ namespace ConsoleApplication
 
                     TextFragment textFragment = new TextFragment();
                     textFragment.Text = run.Text.Text;
-
+                    
                     TextStyle textStyle = new TextStyle();
 
                     //Get font
-                    foreach (var symbolFont in run.Descendants<DrawingML.SymbolFont>())
+                    foreach (var symbolFont in run.Elements<DrawingML.SymbolFont>())
                     {
                         textStyle.Font = symbolFont.Typeface;
                     }
 
                     //Get the texy body color, if it has been changed manually in the ppt file.
-                    foreach (var color in run.Descendants<DrawingML.RgbColorModelHex>())
+                    foreach (var color in run.Elements<DrawingML.RgbColorModelHex>())
                     {
-                        //Console.WriteLine(color.Val);
+                        //Convert Hexadeciamal color to integer color
+                        textStyle.FontColor = int.Parse(color.Val, System.Globalization.NumberStyles.HexNumber);
                     }
 
                     //Get run properties (size, bold, italic, underline) and insert into style
