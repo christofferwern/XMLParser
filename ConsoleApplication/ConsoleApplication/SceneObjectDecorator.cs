@@ -30,5 +30,15 @@ namespace ConsoleApplication
         {
             _sceneObject.setProperties(properties);
         }
+
+        public virtual void setXMLDocumentRoot(ref XmlDocument xmldocument)
+        {
+            _sceneObject.setXMLDocumentRoot(ref xmldocument);
+        }
+
+        public virtual XmlDocument getXMLDocumentRoot()
+        {
+            return _sceneObject.getXMLDocumentRoot();
+        }
     }
 }

@@ -130,8 +130,6 @@ namespace ConsoleApplication
                     TextFragment textFragment = new TextFragment();
                     textFragment.Text = run.Text.Text;
 
-                    Console.WriteLine(textFragment.Text);
-
                     TextStyle textStyle = new TextStyle();
 
                     //Get font
@@ -143,7 +141,7 @@ namespace ConsoleApplication
                     //Get the texy body color, if it has been changed manually in the ppt file.
                     foreach (var color in run.Descendants<DrawingML.RgbColorModelHex>())
                     {
-                        Console.WriteLine(color.Val);
+                        //Console.WriteLine(color.Val);
                     }
 
                     //Get run properties (size, bold, italic, underline) and insert into style
@@ -153,8 +151,6 @@ namespace ConsoleApplication
                     textStyle.Underline = (run.RunProperties.Underline != null) ? true                              : textStyle.Underline;
 
                     sceneObject.StyleList.Add(textStyle);
-
-                    Console.WriteLine(textStyle.toString());
 
                     textFragment.StyleId = sceneObject.StyleList.IndexOf(textStyle);
 
