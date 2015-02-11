@@ -23,12 +23,12 @@ namespace ConsoleApplication
 
         public virtual Properties getProperties()
         {
-            throw new NotImplementedException();
+            return _sceneObject.getProperties();
         }
 
-        public virtual void setProperties(Properties p)
+        public virtual void setProperties(Properties properties)
         {
-            throw new NotImplementedException();
+            _sceneObject.setProperties(properties);
         }
     }
 }
