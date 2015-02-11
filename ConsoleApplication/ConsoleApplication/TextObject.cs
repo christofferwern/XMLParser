@@ -10,8 +10,8 @@ namespace ConsoleApplication
     public class TextObject : SceneObjectDecorator
     {
         private string _align, _antiAlias, _font, _autosize;
-        //private List<TextStyle> _styleList;
-        //private List<TextFragment> _fragmentsList;
+        private List<TextStyle> _styleList;
+        private List<TextFragment> _fragmentsList;
 
         
         private int _color, _leading, _letterSpacing, _size;

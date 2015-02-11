@@ -5,6 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml;
+using PresentationML = DocumentFormat.OpenXml.Presentation;
+using DrawingML = DocumentFormat.OpenXml.Drawing;
+
 namespace ConsoleApplication
 {
     class Program
