@@ -24,7 +24,7 @@ namespace ConsoleApplication
 
             reader.read();
 
-            reader.PresentationObject.getXMLTree().Save(Console.Out);
+            //reader.PresentationObject.getXMLTree().Save(Console.Out);
 
             watch.Stop();
             Console.WriteLine("\nCompilation time: " + (double)watch.ElapsedMilliseconds/1000 + "s");
