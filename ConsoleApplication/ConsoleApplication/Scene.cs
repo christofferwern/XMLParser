@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Xml;
 using System.Threading.Tasks;
 
 namespace ConsoleApplication
@@ -11,6 +12,7 @@ namespace ConsoleApplication
         private Properties _properties;
         private List<SceneObject> _sceneObjectList;
         private string _sceneLabel;
+        private XmlDocument _doc;
 
         public  Properties Properties
         {
@@ -30,6 +32,11 @@ namespace ConsoleApplication
             _properties = new Properties();
             _sceneLabel = "Scene Label";
             _sceneObjectList = new List<SceneObject>();
+
+            _sceneObjectList.Add(new TextObject(new SimpleSceneObject()));
+            _sceneObjectList.Add(new ShapeObject(new SimpleSceneObject()));
+            //_sceneObjectList.Add(new TextObject(new ShapeObject(new SimpleSceneObject())));
+            
         }
 
         public void addSceneObject(SceneObject sceneObject)
@@ -49,9 +56,24 @@ namespace ConsoleApplication
             _sceneObjectList.Remove(sceneObject);
         }
 
-        public void getXMLTree()
+        public XmlElement getXMLTree()
         {
+            XmlElement _rootElement = _doc.CreateElement("scene");
+            _doc.DocumentElement.AppendChild(_rootElement);
 
+            foreach (SceneObject scenObject in _sceneObjectList)
+            {
+                scenObject.setXMLDocumentRoot(ref _doc);
+                _rootElement.AppendChild(scenObject.getXMLTree());
+
+            }
+           
+            return _rootElement;
+        }
+
+        public void setXMLDocumentRoot(ref XmlDocument xmlDocument)
+        {
+            _doc = xmlDocument;
         }
 
     }
