@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Xml;
 using System.Threading.Tasks;
 
 using DocumentFormat.OpenXml.Packaging;
@@ -15,6 +16,7 @@ namespace ConsoleApplication
     {
         private string _path;
         private PresentationObject _presentationObject;
+        private XmlDocument _rootXmlDoc;
 
         internal PresentationObject PresentationObject
         {
@@ -26,6 +28,7 @@ namespace ConsoleApplication
         {
             _path = path;
             _presentationObject = new PresentationObject();
+            _presentationObject.getXmlDocument(out _rootXmlDoc);
         }
 
         public string Path
@@ -128,6 +131,7 @@ namespace ConsoleApplication
                         continue;
 
                     TextFragment textFragment = new TextFragment();
+                    textFragment.setXMLDocumentRoot(ref _rootXmlDoc);
                     textFragment.Text = run.Text.Text;
                     
                     TextStyle textStyle = new TextStyle();
