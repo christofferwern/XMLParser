@@ -17,6 +17,7 @@ namespace ConsoleApplication
         private string _path;
         private PresentationObject _presentationObject;
 
+        private const int _nrOfThemeColors = 16;
         private string[,] _themeColors;
         private List<PowerPointText> _slideMasterPowerPointShapes;
 
@@ -34,7 +35,7 @@ namespace ConsoleApplication
             _path = path;
             _presentationObject = new PresentationObject();
 
-            _themeColors = new string[12, 2];
+            _themeColors = new string[_nrOfThemeColors, 2];
             _slideMasterPowerPointShapes = new List<PowerPointText>();
 
             _presentationObject.getXmlDocument(out _rootXmlDoc);
@@ -50,8 +51,8 @@ namespace ConsoleApplication
         public void read()
         {
 
-            //try
-            //{
+            try
+            {
                 // Open the presentation file as read-only.
                 using (PresentationDocument presentationDocument = PresentationDocument.Open(_path, false))
                 {
@@ -88,11 +89,11 @@ namespace ConsoleApplication
                         _presentationObject.addScene(scene);
                     }
                 }
-            //}
-            //catch
-            //{
-            //    Console.WriteLine("Error with reading: " + _path);
-            //}
+            }
+            catch
+            {
+                Console.WriteLine("Error reading: " + _path);
+            }
         }
 
         private List<SceneObject> GetBackgroundShapesFromSlidePart(SlidePart slidePart)
@@ -134,7 +135,6 @@ namespace ConsoleApplication
 
                 powerPointText = GetPowerPointObjectOnType(slideLayoutPowerPointShapes, powerPointText.Type);
 
-                Console.WriteLine(powerPointText.toString());
 
                 SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
                 simpleSceneObject.BoundsX = powerPointText.X;
@@ -145,7 +145,7 @@ namespace ConsoleApplication
                 //Get info about SimpleSceneObject
 
                 //Get the rotation of scene object
-                foreach (var xfrm in sp.Elements<DrawingML.Transform2D>())
+                foreach (var xfrm in sp.Descendants<DrawingML.Transform2D>())
                 {
                     simpleSceneObject.Rotation = (xfrm.Rotation != null) ? xfrm.Rotation : simpleSceneObject.Rotation;
                 }
@@ -187,18 +187,26 @@ namespace ConsoleApplication
                     textStyle.Italic = powerPointText.Italic;
                     textStyle.Underline = powerPointText.Underline;
                     textStyle.Font = powerPointText.Font;
-                    textStyle.FontColor = powerPointText.FontColor;
+
+                    if (powerPointText.FontColor.Length==6)
+                        textStyle.FontColor = int.Parse(powerPointText.FontColor, System.Globalization.NumberStyles.HexNumber); 
+
                     textStyle.FontSize = powerPointText.FontSize;
                     
 
                     //Get font
-                    foreach (var symbolFont in run.Elements<DrawingML.SymbolFont>())
+                    foreach (var symbolFont in run.Descendants<DrawingML.SymbolFont>())
                     {
                         textStyle.Font = symbolFont.Typeface;
                     }
 
+                    foreach (var latinFont in run.Descendants<DrawingML.LatinFont>())
+                    {
+                        textStyle.Font = latinFont.Typeface;
+                    }
+
                     //Get the texy body color, if it has been changed manually in the ppt file.
-                    foreach (var color in run.Elements<DrawingML.RgbColorModelHex>())
+                    foreach (var color in run.Descendants<DrawingML.RgbColorModelHex>())
                     {
                         //Convert Hexadeciamal color to integer color
                         textStyle.FontColor = int.Parse(color.Val, System.Globalization.NumberStyles.HexNumber);
@@ -231,6 +239,8 @@ namespace ConsoleApplication
             return sceneObjectList;
         }
 
+
+        //Returns a list of all the template shapes in the slide master
         private List<PowerPointText> GetSlideMasterPowerPointShapes(PresentationDocument presentationDocument)
         {
             List<PowerPointText> slideMasterPowerPointShapes = new List<PowerPointText>();
@@ -308,6 +318,7 @@ namespace ConsoleApplication
             return slideMasterPowerPointShapes;
         }
 
+        //Returns a list of all the template shapes in the slide layout
         private List<PowerPointText> GetSlideLayoutPowerPointShapes(SlidePart slidePart)
         {
             List<PowerPointText> slideLayoutPowerPointShapes = new List<PowerPointText>();
@@ -383,6 +394,7 @@ namespace ConsoleApplication
             return slideLayoutPowerPointShapes;
         }
 
+        //Get the power point text object in the list that corresponds to the type
         private PowerPointText GetPowerPointObjectOnType(List<PowerPointText> list, string type)
         {
             PowerPointText powerPointText = new PowerPointText();
@@ -407,15 +419,18 @@ namespace ConsoleApplication
             return Tuple.Create(x, y);
         }
 
+        //Read all the colors in the theme
         private void readColorFromTheme(PresentationDocument presentationDocument)
         {
             var colorScheme = presentationDocument.PresentationPart.ThemePart.Theme.ThemeElements.ColorScheme;
 
+            var colorMap = presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster.ColorMap;
+
             int index = 0;
 
-            string[] colorRefNames = new String[12]{ "dk1", "lt1", "dk2", "lt2", 
+            string[] colorRefNames = new String[_nrOfThemeColors]{ "dk1", "lt1", "dk2", "lt2", 
                                        "accent1", "accent2", "accent3","accent4","accent5","accent6",
-                                        "hlink", "folHlink"};
+                                        "hlink", "folHlink", "tx1", "tx2", "bg1", "bg2"};
 
             foreach (var childElement in colorScheme.ChildElements)
             {
@@ -436,20 +451,57 @@ namespace ConsoleApplication
 
                 index++;
             }
+
+            if (colorExistInTheme(colorMap.Text1.InnerText))
+            {
+                _themeColors[index, 0] = colorRefNames[index];
+                _themeColors[index, 1] = getColorFromTheme(colorMap.Text1.InnerText);
+            }
+            index++;
+            if (colorExistInTheme(colorMap.Text2.InnerText))
+            {
+                _themeColors[index, 0] = colorRefNames[index];
+                _themeColors[index, 1] = getColorFromTheme(colorMap.Text2.InnerText);
+            }
+            index++;
+            if (colorExistInTheme(colorMap.Background1.InnerText))
+            {
+                _themeColors[index, 0] = colorRefNames[index];
+                _themeColors[index, 1] = getColorFromTheme(colorMap.Background1.InnerText);
+            }
+            index++;
+            if (colorExistInTheme(colorMap.Background2.InnerText))
+            {
+                _themeColors[index, 0] = colorRefNames[index];
+                _themeColors[index, 1] = getColorFromTheme(colorMap.Background2.InnerText);
+            }
         }
 
-        private int getColorFromTheme(string color)
+        public bool colorExistInTheme(string color)
         {
-            for(int i=0;i<12;i++)
+            for (int i = 0; i < _nrOfThemeColors; i++)
             {
                 if (color == _themeColors.GetValue(i, 0).ToString())
                 {
-                    string hexColor = (string) _themeColors.GetValue(i, 1);
-                    return int.Parse(hexColor, System.Globalization.NumberStyles.HexNumber);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+
+        //Get the color from the theme
+        private string getColorFromTheme(string color)
+        {
+            for(int i=0;i<16;i++)
+            {
+                if (color == _themeColors.GetValue(i, 0).ToString())
+                {
+                    return (string) _themeColors.GetValue(i, 1);
                 }
             }
 
-            return 0;
+            return "";
         }
     }
 }

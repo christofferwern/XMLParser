@@ -179,9 +179,7 @@ namespace ConsoleApplication
         public int BoundsX
         {
             get { return _boundsX; }
-            set { _boundsX = value;
-            Console.WriteLine(_boundsX);
-            }
+            set { _boundsX = value; }
         }
 
         public string Type
