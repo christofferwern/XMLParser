@@ -116,8 +116,6 @@ namespace ConsoleApplication
         public XmlElement getXMLTree()
         {
             generateAttributes();
-            
-
             XmlElement XE = _doc.CreateElement("sceneObject");
 
             foreach (XmlAttribute XA in _objectAttributes)
