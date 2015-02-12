@@ -76,12 +76,16 @@ namespace ConsoleApplication
                         //Get all images
                         List<SceneObject> imageShapelist = GetImageShapesFromSlidePart(slidePart);
 
+                        //Get all text shape
+                        List<SceneObject> shapelist = GetTextShapesFromSlidePart(slidePart);
+
                         //Get background
                         List<SceneObject> backgroundShapelist = GetBackgroundShapesFromSlidePart(slidePart);
 
                         //Add all scene object to the scene
                         scene.addSceneObjects(textShapelist);
                         scene.addSceneObjects(imageShapelist);
+                        scene.addSceneObjects(shapelist);
                         scene.addSceneObjects(backgroundShapelist);
 
                         //Add scene to presentation
@@ -93,6 +97,13 @@ namespace ConsoleApplication
             //{
             //    Console.WriteLine("Error with reading: " + _path);
             //}
+        }
+
+        private List<SceneObject> GetShapesFromSlidePart(SlidePart slidePart)
+        {
+            List<SceneObject> shapelist = new List<SceneObject>();
+
+            return shapelist;
         }
 
         private List<SceneObject> GetBackgroundShapesFromSlidePart(SlidePart slidePart)
