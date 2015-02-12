@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Xml;
 using System.Threading.Tasks;
 
 namespace ConsoleApplication
@@ -12,6 +13,7 @@ namespace ConsoleApplication
         private Boolean _bold, _underline, _italic;
         private int _fontSize, _fontColor;
         private string _font;
+        private XmlDocument _rootOfDocument;
 
         public TextStyle()
         {
@@ -23,12 +25,39 @@ namespace ConsoleApplication
             _font = "Default";
         }
 
-        public String toString()
+        public string attrubiteValue()
         {
-            return "Font:   " + _font + "\n" +
-                   "Size:   " + _fontSize + "\n" +
-                   "Color:  " + _fontColor + "\n" +
-                   "B U I:  (" + _bold + ", " + _underline + ", " + _italic + ") \n";
+            string style = "k";
+
+            if(_bold)
+                style += "b";
+            if(_underline)
+                style += "u";
+            if(_italic)
+                style += "i";
+
+            return _font + "," + _fontSize.ToString() + "," + _fontColor.ToString() + "," + style;
+        }
+
+        private XmlAttribute getStylesAttributes()
+        {
+            XmlAttribute attrStyle = _rootOfDocument.CreateAttribute("style");
+            attrStyle.Value = attrubiteValue();
+
+            return attrStyle;
+        }
+
+        public XmlElement getStylesChild()
+        {
+            XmlElement child = _rootOfDocument.CreateElement("s");
+            child.Attributes.Append(getStylesAttributes());
+
+            return child;
+        }
+
+        public void setXMLDocumentRoot(ref XmlDocument rootOfDocument)
+        {
+            _rootOfDocument = rootOfDocument;
         }
 
         public string Font
@@ -66,5 +95,14 @@ namespace ConsoleApplication
             get { return _bold; }
             set { _bold = value; }
         }
+
+        public string toString()
+        {
+            return "Font:   " + _font + "\n" +
+                   "Size:   " + _fontSize + "\n" +
+                   "Color:  " + _fontColor + "\n" +
+                   "B U I:  (" + _bold + ", " + _underline + ", " + _italic + ") \n";
+        }
+
     }
 }

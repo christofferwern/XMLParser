@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Xml;
 using System.Threading.Tasks;
 
 using DocumentFormat.OpenXml.Packaging;
@@ -15,8 +16,12 @@ namespace ConsoleApplication
     {
         private string _path;
         private PresentationObject _presentationObject;
+
         private string[,] _themeColors;
         private List<PowerPointText> _slideMasterPowerPointShapes;
+
+        private XmlDocument _rootXmlDoc;
+
 
         internal PresentationObject PresentationObject
         {
@@ -31,6 +36,9 @@ namespace ConsoleApplication
 
             _themeColors = new string[12, 2];
             _slideMasterPowerPointShapes = new List<PowerPointText>();
+
+            _presentationObject.getXmlDocument(out _rootXmlDoc);
+
         }
 
         public string Path
@@ -168,15 +176,20 @@ namespace ConsoleApplication
                         continue;
 
                     TextFragment textFragment = new TextFragment();
+                    textFragment.setXMLDocumentRoot(ref _rootXmlDoc);
                     textFragment.Text = run.Text.Text;
                     
                     TextStyle textStyle = new TextStyle();
+
+                    textStyle.setXMLDocumentRoot(ref _rootXmlDoc);
+
                     textStyle.Bold = powerPointText.Bold;
                     textStyle.Italic = powerPointText.Italic;
                     textStyle.Underline = powerPointText.Underline;
                     textStyle.Font = powerPointText.Font;
                     textStyle.FontColor = powerPointText.FontColor;
                     textStyle.FontSize = powerPointText.FontSize;
+                    
 
                     //Get font
                     foreach (var symbolFont in run.Elements<DrawingML.SymbolFont>())

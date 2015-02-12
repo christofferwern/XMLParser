@@ -17,12 +17,17 @@ namespace ConsoleApplication
         private float[] gradientAphas;
         private int[] gradientFills;
 
-        public ShapeObject(SceneObject sceneobject) : base(sceneobject) { }
+        public ShapeObject(SceneObject sceneobject) : base(sceneobject) 
+        {
+            string objectType = "com.yoob.shapes.X";
+            sceneobject.setObjectType(objectType);
+
+        }
 
         public override XmlElement getXMLTree()
         {
             XmlElement parent = base.getXMLTree();
-            XmlElement acce = getXMLDocumentRoot().CreateElement("accessorsSHAPE");
+            XmlElement acce = getXMLDocumentRoot().CreateElement("accessors");
             parent.AppendChild(acce);
 
             return parent;
