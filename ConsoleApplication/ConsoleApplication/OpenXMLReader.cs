@@ -135,6 +135,7 @@ namespace ConsoleApplication
                     textFragment.Text = run.Text.Text;
                     
                     TextStyle textStyle = new TextStyle();
+                    textStyle.setXMLDocumentRoot(ref _rootXmlDoc);
 
                     //Get font
                     foreach (var symbolFont in run.Elements<DrawingML.SymbolFont>())

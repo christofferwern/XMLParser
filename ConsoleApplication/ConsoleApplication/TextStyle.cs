@@ -50,7 +50,7 @@ namespace ConsoleApplication
         public XmlElement getStylesChild()
         {
             XmlElement child = _rootOfDocument.CreateElement("s");
-            child.AppendChild(getStylesChild());
+            child.Attributes.Append(getStylesAttributes());
 
             return child;
         }
