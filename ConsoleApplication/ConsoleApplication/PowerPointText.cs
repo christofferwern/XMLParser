@@ -8,19 +8,19 @@ namespace ConsoleApplication
 {
     class PowerPointText
     {
-        private int _fontColor, _fontSize, _x, _y, _cx, _cy, _rotation;
-        private string _type, _font, _alignment, _anchor;
+        private int _fontSize, _x, _y, _cx, _cy, _rotation;
+        private string _type, _font, _alignment, _anchor, _fontColor;
         private Boolean _bold, _italic, _underline;
 
         public PowerPointText()
         {
-            _fontColor = 0;
             _fontSize = 0;
             _x = 0;
             _y = 0;
             _cx = 0;
             _cy = 0;
             _rotation = 0;
+            _fontColor = "";
             _type = "";
             _font = "";
             _alignment = "";
@@ -35,7 +35,7 @@ namespace ConsoleApplication
             return "Type: " + _type + "\n" + 
                    "  Font:        " + _font + "\n" +
                    "  Font size:   " + _fontSize + "\n" +
-                   "  Font color:  " + _fontColor.ToString("X") + "\n" +
+                   "  Font color:  " + _fontColor + "\n" +
                    "  Size:        (" + _x + "," + _y + ")\n" +
                    "  Position:    (" + _cx + "," + _cy + ")\n" +
                    "  Anchor:      " + _anchor + "\n" +
@@ -121,7 +121,7 @@ namespace ConsoleApplication
             set { _fontSize = value; }
         }
 
-        public int FontColor
+        public string FontColor
         {
             get { return _fontColor; }
             set { _fontColor = value; }
