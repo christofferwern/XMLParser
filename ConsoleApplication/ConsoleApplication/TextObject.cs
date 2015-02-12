@@ -18,14 +18,62 @@ namespace ConsoleApplication
 
         public TextObject(SceneObject sceneobject) : base(sceneobject) 
         {
+            string objectType = "com.customObjects.TextObject";
             _styleList = new List<TextStyle>();
             _fragmentsList = new List<TextFragment>();
+
+            sceneobject.setObjectType(objectType);
+        }
+
+        public XmlElement getTextObjectPropertiesNode()
+        {
+            XmlElement textObjectPropNode = getXMLDocumentRoot().CreateElement("textObjectProperties");
+            XmlElement stylesNode = getStylesNode();
+            XmlElement fragmentNode = getFragmentsNode();
+
+            textObjectPropNode.AppendChild(stylesNode);
+            textObjectPropNode.AppendChild(fragmentNode);
+
+            return textObjectPropNode;
+        }
+
+        public XmlElement getFragmentsNode()
+        {
+            XmlElement fragments = getXMLDocumentRoot().CreateElement("fragments");
+
+            foreach (TextFragment tFragment in _fragmentsList)
+            {
+                XmlElement f = tFragment.getFragmentChild();
+                fragments.AppendChild(f);
+            }
+
+            return fragments;
+        }
+
+        public XmlElement getStylesNode()
+        {
+            XmlElement styles = getXMLDocumentRoot().CreateElement("styles");
+
+            foreach (TextStyle tStyle in _styleList)
+            {
+                XmlElement s = getXMLDocumentRoot().CreateElement("s");
+                XmlAttribute attrStyle = getXMLDocumentRoot().CreateAttribute("style");
+                attrStyle.Value = tStyle.attrubiteValue();
+                s.Attributes.Append(attrStyle);
+
+                styles.AppendChild(s);
+            }
+
+            return styles;
         }
 
         public override XmlElement getXMLTree()
         {
             XmlElement parent = base.getXMLTree();
-            XmlElement acce = getXMLDocumentRoot().CreateElement("accessorsTEXT");
+            XmlElement acce = getXMLDocumentRoot().CreateElement("accessors");
+            XmlElement textObjectProps = getTextObjectPropertiesNode();
+
+            acce.AppendChild(textObjectProps);
             parent.AppendChild(acce);
 
             return parent;

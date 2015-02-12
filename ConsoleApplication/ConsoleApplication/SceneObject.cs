@@ -14,5 +14,6 @@ namespace ConsoleApplication
         XmlElement getXMLTree();
         void setXMLDocumentRoot(ref XmlDocument xmldocument);
         XmlDocument getXMLDocumentRoot();
+        void setObjectType(string objectType);
     }
 }

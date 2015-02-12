@@ -23,12 +23,26 @@ namespace ConsoleApplication
             _font = "Default";
         }
 
-        public String toString()
+        public string toString()
         {
             return "Font:   " + _font + "\n" +
                    "Size:   " + _fontSize + "\n" +
                    "Color:  " + _fontColor + "\n" +
                    "B U I:  (" + _bold + ", " + _underline + ", " + _italic + ") \n";
+        }
+
+        public string attrubiteValue()
+        {
+            string style = "k";
+
+            if(_bold)
+                style += "b";
+            if(_underline)
+                style += "u";
+            if(_italic)
+                style += "i";
+
+            return _font + "," + _fontSize.ToString() + "," + _fontColor.ToString() + "," + style;
         }
 
         public string Font

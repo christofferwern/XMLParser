@@ -13,9 +13,9 @@ namespace ConsoleApplication
 
         //BoundsX and BoundsY corresponds to positions from left top corner
         //ClipHeight and ClipWidth are the height and width of the scene object
-        private int _boundsX, _boundsY, _clipHeight, _clipWidth;
+        private int _boundsX, _boundsY, _clipHeight, _clipWidth, _flip;
 
-        private string _clipID, _name, _type;
+        private string _clipID, _AttrName, _type, _name;
 
         private Boolean _hidden;
 
@@ -29,11 +29,14 @@ namespace ConsoleApplication
         {
             _clipID = Guid.NewGuid().ToString();
             _name = "SimpleSceneObject";
+            _AttrName = Guid.NewGuid().ToString();
             _doc = new XmlDocument();
             _alpha = 1;
             _hidden = false;
             _width = 0;
             _height = 0;
+            _z = 0;
+            _flip = 0;
             _properties = new Properties();
             _objectAttributes = new List<XmlAttribute>();
         }
@@ -41,33 +44,33 @@ namespace ConsoleApplication
         private void generateAttributes()
         {
             XmlAttribute type = _doc.CreateAttribute("type");
-            type.Value = "";
+            type.Value = _type;
             XmlAttribute clipID = _doc.CreateAttribute("clipID");
-            clipID.Value = "";
+            clipID.Value = _clipID;
             XmlAttribute z = _doc.CreateAttribute("z");
-            z.Value = "";
+            z.Value = _z.ToString();
             XmlAttribute boundsX = _doc.CreateAttribute("boundsX");
-            boundsX.Value = "";
+            boundsX.Value = _boundsX.ToString();
             XmlAttribute boundsY = _doc.CreateAttribute("boundsY");
-            boundsY.Value = "";
+            boundsY.Value = _boundsY.ToString();
             XmlAttribute clipWidth = _doc.CreateAttribute("clipWidth");
-            clipWidth.Value = "";
+            clipWidth.Value = _clipWidth.ToString();
             XmlAttribute clipHeight = _doc.CreateAttribute("clipHeight");
-            clipHeight.Value = "";
+            clipHeight.Value = _clipHeight.ToString();
             XmlAttribute width = _doc.CreateAttribute("width");
-            width.Value = "";
+            width.Value = _width.ToString();
             XmlAttribute height = _doc.CreateAttribute("height");
-            height.Value = "";
+            height.Value = _height.ToString();
             XmlAttribute rotation = _doc.CreateAttribute("rotation");
-            rotation.Value = "";
+            rotation.Value = _rotation.ToString();
             XmlAttribute alpha = _doc.CreateAttribute("alpha");
-            alpha.Value = "";
+            alpha.Value = _alpha.ToString();
             XmlAttribute name = _doc.CreateAttribute("name");
-            name.Value = "";
+            name.Value = _AttrName;
             XmlAttribute hidden = _doc.CreateAttribute("hidden");
-            hidden.Value = "";
+            hidden.Value = _hidden.ToString();
             XmlAttribute flip = _doc.CreateAttribute("flip");
-            flip.Value = "";
+            flip.Value = _flip.ToString();
 
             _objectAttributes.Add(type);
             _objectAttributes.Add(clipID);
@@ -98,7 +101,11 @@ namespace ConsoleApplication
         public void setXMLDocumentRoot(ref XmlDocument xmldocument)
         {
             _doc = xmldocument;
-            //generateAttributes();
+        }
+
+        public void setObjectType(string objectType)
+        {
+            _type = objectType;
         }
 
         public XmlDocument getXMLDocumentRoot()
@@ -108,6 +115,9 @@ namespace ConsoleApplication
 
         public XmlElement getXMLTree()
         {
+            generateAttributes();
+            
+
             XmlElement XE = _doc.CreateElement("sceneObject");
 
             foreach (XmlAttribute XA in _objectAttributes)
@@ -169,7 +179,9 @@ namespace ConsoleApplication
         public int BoundsX
         {
             get { return _boundsX; }
-            set { _boundsX = value; }
+            set { _boundsX = value;
+            Console.WriteLine(_boundsX);
+            }
         }
 
         public string Type

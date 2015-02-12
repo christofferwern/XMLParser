@@ -38,6 +38,11 @@ namespace ConsoleApplication
             sceneList.Remove(scene);
         }
 
+        public void getXmlDocument(out XmlDocument outs)
+        {
+            outs = _xmlDoc;
+        }
+
         public void createXMLTree()
         {
             _xmlDoc = new XmlDocument();
