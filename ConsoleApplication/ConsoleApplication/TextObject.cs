@@ -56,11 +56,7 @@ namespace ConsoleApplication
 
             foreach (TextStyle tStyle in _styleList)
             {
-                XmlElement s = getXMLDocumentRoot().CreateElement("s");
-                XmlAttribute attrStyle = getXMLDocumentRoot().CreateAttribute("style");
-                attrStyle.Value = tStyle.attrubiteValue();
-                s.Attributes.Append(attrStyle);
-
+                XmlElement s = tStyle.getStylesChild();
                 styles.AppendChild(s);
             }
 
