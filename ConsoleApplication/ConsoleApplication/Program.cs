@@ -18,13 +18,13 @@ namespace ConsoleApplication
         {
             var watch = Stopwatch.StartNew();
 
-            string path = @"C:\Users\ex1\Desktop\NonTheme.pptx";
-
+            string path = @"C:\Users\ex1\Downloads\test2.pptx";            
+            
             OpenXMLReader reader = new OpenXMLReader(path);
 
             reader.read();
 
-            //reader.PresentationObject.getXMLTree().Save(Console.Out);
+            reader.PresentationObject.getXMLTree().Save(Console.Out);
 
             watch.Stop();
             Console.WriteLine("\nCompilation time: " + (double)watch.ElapsedMilliseconds/1000 + "s");
