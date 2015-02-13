@@ -78,7 +78,7 @@ namespace ConsoleApplication
                         List<SceneObject> imageShapelist = GetImageShapesFromSlidePart(slidePart);
 
                         //Get all text shape
-                        List<SceneObject> shapelist = GetTextShapesFromSlidePart(slidePart);
+                        List<SceneObject> shapelist = GetShapesFromSlidePart(slidePart);
 
                         //Get background
                         List<SceneObject> backgroundShapelist = GetBackgroundShapesFromSlidePart(slidePart);
@@ -229,9 +229,19 @@ namespace ConsoleApplication
                     textStyle.Italic    = (run.RunProperties.Italic != null)    ? (Boolean)run.RunProperties.Italic : textStyle.Italic;
                     textStyle.Underline = (run.RunProperties.Underline != null) ? true                              : textStyle.Underline;
 
-                    sceneObject.StyleList.Add(textStyle);
+                    //Add textStyle to StyleList of the sceneObject
+                    sceneObject.addToStyleList(textStyle);
 
-                    textFragment.StyleId = sceneObject.StyleList.IndexOf(textStyle);
+                    //Iteratates through StyleList of sceneObject for items that is equal to textstyle and returns the index of that style
+                    if (sceneObject.StyleList.IndexOf(textStyle) == -1)
+                    {
+                        foreach (TextStyle item in sceneObject.StyleList)
+                            if (textStyle.isEqual(item))
+                                textFragment.StyleId = sceneObject.StyleList.IndexOf(item);
+                    }
+                    else
+                        textFragment.StyleId = sceneObject.StyleList.IndexOf(textStyle);
+                        
 
                     //Calculate the internal text fragments position (inside the scene object)
                     var xy = CalculateInternalTextFragmentPositions(textFragment, 
