@@ -48,6 +48,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Background.cs" />
     <Compile Include="ImageObject.cs" />
     <Compile Include="OpenXMLReader.cs" />
     <Compile Include="PowerPointText.cs" />

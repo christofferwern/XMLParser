@@ -65,11 +65,18 @@ namespace ConsoleApplication
                     //Get all styles stored in the slide master, <PowerPoint Type, TextStyle>
                     _slideMasterPowerPointShapes = GetSlideMasterPowerPointShapes(presentationDocument);
 
+                    //Counter of scene
+                    int sceneCounter = 1;
+
                     //Go through all Slides in the PowerPoint presentation
                     foreach (PresentationML.SlideId slideID in presentation.SlideIdList)
                     {
                         SlidePart slidePart = presentationDocument.PresentationPart.GetPartById(slideID.RelationshipId) as SlidePart;
-                        Scene scene = new Scene();
+                        Scene scene = new Scene(sceneCounter);
+
+
+                        //Get background
+                        List<SceneObject> backgroundShapelist = GetBackgroundShapesFromSlidePart(slidePart);
 
                         //Get all text shape
                         List<SceneObject> textShapelist = GetTextShapesFromSlidePart(slidePart);
@@ -80,17 +87,16 @@ namespace ConsoleApplication
                         //Get all text shape
                         List<SceneObject> shapelist = GetShapesFromSlidePart(slidePart);
 
-                        //Get background
-                        List<SceneObject> backgroundShapelist = GetBackgroundShapesFromSlidePart(slidePart);
-
                         //Add all scene object to the scene
+                        scene.addSceneObjects(backgroundShapelist);
                         scene.addSceneObjects(textShapelist);
                         scene.addSceneObjects(imageShapelist);
                         scene.addSceneObjects(shapelist);
-                        scene.addSceneObjects(backgroundShapelist);
-
+                        
                         //Add scene to presentation
                         _presentationObject.addScene(scene);
+
+                        sceneCounter++;
                     }
                 }
             }
@@ -110,6 +116,88 @@ namespace ConsoleApplication
         private List<SceneObject> GetBackgroundShapesFromSlidePart(SlidePart slidePart)
         {
             List<SceneObject> backgroundShapelist = new List<SceneObject>();
+
+            //Get the actual slide
+            PresentationML.Slide slide = slidePart.Slide;
+
+            Background customBg = new Background();
+            //Check for each backgroundproperty in each slide
+            foreach (var bg in slide.Descendants<PresentationML.BackgroundProperties>())
+            {
+                //If no background tag, go to next iteration
+                if (bg == null)
+                    continue;
+
+                SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
+
+                string slide_name = splitUriToImageName(slidePart.Uri); //Get the slide for this background
+                Console.WriteLine(slide_name);
+
+                var bg_type = bg.FirstChild;
+
+                //Check if first child in background tag is a solidFill, gradFill or blipFill
+                switch (bg_type.XmlQualifiedName.Name)
+                {
+
+                    case "solidFill":
+                        Console.WriteLine("solidFill");
+                        ShapeObject shapeObject = new ShapeObject(simpleSceneObject);
+
+                        if (bg_type.FirstChild.GetType().Equals(typeof(DrawingML.RgbColorModelHex)))
+                        {
+                            foreach (var value in bg_type.Descendants<DrawingML.RgbColorModelHex>())
+                                customBg.BgColor = int.Parse(value.Val, System.Globalization.NumberStyles.HexNumber);
+                            foreach (var alpha in bg_type.Descendants<DrawingML.Alpha>())
+                                customBg.Alpha = alpha.Val;
+                        }
+                        else
+                        { //Theme color
+                            foreach (var value in bg_type.Descendants<DrawingML.SchemeColor>())
+                                customBg.BgColor = int.Parse(getColorFromTheme(value.Val), System.Globalization.NumberStyles.HexNumber);
+                            foreach (var value in bg_type.Descendants<DrawingML.Alpha>())
+                                customBg.Alpha = value.Val; 
+                        }
+
+                        shapeObject.FillColor = customBg.BgColor;
+                        shapeObject.FillAlpha = customBg.Alpha;
+
+                        backgroundShapelist.Add(shapeObject);
+
+                        break;
+                    case "gradFill":
+                        Console.WriteLine("gradFill");
+                        List<KeyValuePair<int, string>> gradPosCol = new List<KeyValuePair<int, string>>();
+                        foreach (var gs in bg_type.FirstChild.Descendants<DrawingML.GradientStop>())
+                        {
+
+                            if (gs.RgbColorModelHex != null) // self-defined color
+                                gradPosCol.Add(new KeyValuePair<int, string>(gs.Position.Value, getColorFromTheme(gs.RgbColorModelHex.Val)));
+                            else //Theme color
+                                gradPosCol.Add(new KeyValuePair<int, string>(gs.Position.Value, getColorFromTheme(gs.SchemeColor.Val)));
+
+                        }
+                        foreach (var item in gradPosCol)
+                        {
+                            Console.WriteLine(item);
+                        }
+
+                        break;
+                    case "blipFill":
+                        Console.WriteLine("blipFill");
+                        foreach (var blip in bg_type.Descendants<DrawingML.Blip>())
+                        {
+                            string embeded_id = blip.Embed.Value;
+                            ImagePart image_part = (ImagePart)slide.SlidePart.GetPartById(embeded_id);
+                            Console.WriteLine(image_part.Uri.OriginalString);
+
+                        }
+
+                        break;
+                }
+
+
+            }
+
 
             return backgroundShapelist;
         }
@@ -523,6 +611,16 @@ namespace ConsoleApplication
             }
 
             return "";
+        }
+
+        //Get the name of file
+        private string splitUriToImageName(Uri uri)
+        {
+
+            string[] image = uri.OriginalString.Split('/');
+            string[] image_name = image[3].Split('.');
+
+            return image_name[0];
         }
     }
 }
