@@ -8,12 +8,13 @@ namespace ConsoleApplication
 {
     class PowerPointText
     {
-        private int _fontSize, _x, _y, _cx, _cy, _rotation;
+        private int _fontSize, _x, _y, _cx, _cy, _rotation, _idx;
         private string _type, _font, _alignment, _anchor, _fontColor;
         private Boolean _bold, _italic, _underline;
 
         public PowerPointText()
         {
+            _idx = -1;
             _fontSize = 0;
             _x = 0;
             _y = 0;
@@ -32,15 +33,21 @@ namespace ConsoleApplication
 
         public String toString()
         {
-            return "Type: " + _type + "\n" + 
+            return "Placeholder: (" + _type + ", " + _idx + ")\n" +
                    "  Font:        " + _font + "\n" +
                    "  Font size:   " + _fontSize + "\n" +
                    "  Font color:  " + _fontColor + "\n" +
-                   "  Size:        (" + _x + "," + _y + ")\n" +
-                   "  Position:    (" + _cx + "," + _cy + ")\n" +
+                   "  Size:        (" + _cx + "," + _cy + ")\n" +
+                   "  Position:    (" + _x + "," + _y + ")\n" +
                    "  Anchor:      " + _anchor + "\n" +
                    "  Alignment:   " + _alignment + "\n" + 
                    "  B U I:       (" + _bold + ", " + _underline + ", " + _italic + ") \n";
+        }
+
+        public int Idx
+        {
+            get { return _idx; }
+            set { _idx = value; }
         }
 
         public Boolean Underline
