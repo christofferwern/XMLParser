@@ -231,9 +231,18 @@ namespace ConsoleApplication
                     textStyle.Italic    = (run.RunProperties.Italic != null)    ? (Boolean)run.RunProperties.Italic : textStyle.Italic;
                     textStyle.Underline = (run.RunProperties.Underline != null) ? true                              : textStyle.Underline;
 
-                    sceneObject.StyleList.Add(textStyle);
+                    //Add textStyle to StyleList of the sceneObject
+                    sceneObject.addToStyleList(textStyle);
 
-                    textFragment.StyleId = sceneObject.StyleList.IndexOf(textStyle);
+                    //Iteratates through StyleList of sceneObject for items that is equal to textstyle and returns the index of that style
+                    if (sceneObject.StyleList.IndexOf(textStyle) == -1)
+                    {
+                        foreach (TextStyle item in sceneObject.StyleList)
+                            if (textStyle.isEqual(item))
+                                textFragment.StyleId = sceneObject.StyleList.IndexOf(item);
+                    }
+                    else
+                        textFragment.StyleId = sceneObject.StyleList.IndexOf(textStyle);
 
                     //Calculate the internal text fragments position (inside the scene object)
                     var xy = CalculateInternalTextFragmentPositions(textFragment, 
@@ -308,7 +317,15 @@ namespace ConsoleApplication
                             powerPointText.FontSize = (defRPR.FontSize != null) ? (int)defRPR.FontSize : powerPointText.FontSize;
                             powerPointText.Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointText.Bold;
                             powerPointText.Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointText.Italic;
-                            powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
+                            //powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
+
+                            if (defRPR.Underline != null)
+                            {
+                                if (defRPR.Underline.Value.ToString() == "sng")
+                                {
+                                    powerPointText.Underline = true;
+                                }
+                            }
 
                             //Get font
                             foreach (DrawingML.LatinFont font in defRPR.Descendants<DrawingML.LatinFont>())
@@ -341,7 +358,15 @@ namespace ConsoleApplication
                             powerPointText.FontSize = (defRPR.FontSize != null) ? (int)defRPR.FontSize : powerPointText.FontSize;
                             powerPointText.Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointText.Bold;
                             powerPointText.Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointText.Italic;
-                            powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
+                            //powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
+
+                            if (defRPR.Underline != null)
+                            {
+                                if (defRPR.Underline.Value.ToString() == "sng")
+                                {
+                                    powerPointText.Underline = true;
+                                }
+                            }
 
                             //Get font
                             foreach (DrawingML.LatinFont font in defRPR.Descendants<DrawingML.LatinFont>())
@@ -379,14 +404,25 @@ namespace ConsoleApplication
                         if (otherStyle.Level1ParagraphProperties.Alignment != null)
                             powerPointText.Alignment = otherStyle.Level1ParagraphProperties.Alignment;
 
+
+
                         foreach (DrawingML.DefaultRunProperties defRPR in otherStyle.Level1ParagraphProperties.Descendants<DrawingML.DefaultRunProperties>())
                         {
                             //Get run properties (size, bold, italic, underline) and insert into style
                             powerPointText.FontSize = (defRPR.FontSize != null) ? (int)defRPR.FontSize : powerPointText.FontSize;
                             powerPointText.Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointText.Bold;
                             powerPointText.Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointText.Italic;
-                            powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
+                            //powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
 
+                            if (defRPR.Underline != null)
+                            {
+                                if (defRPR.Underline.Value.ToString() == "sng")
+                                {
+                                    powerPointText.Underline = true;
+                                }
+                            }
+
+                            
                             //Get font
                             foreach (DrawingML.LatinFont font in defRPR.Descendants<DrawingML.LatinFont>())
                             {
@@ -413,6 +449,8 @@ namespace ConsoleApplication
                         }
                     }
                 }
+
+                
 
                 //Get the position
                 if (sp.ShapeProperties.Transform2D.Offset != null)

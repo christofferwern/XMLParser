@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ConsoleApplication
 {
-    class TextStyle
+    public class TextStyle
     {
         private Boolean _bold, _underline, _italic;
         private int _fontSize, _fontColor;
@@ -94,6 +94,30 @@ namespace ConsoleApplication
         {
             get { return _bold; }
             set { _bold = value; }
+        }
+
+        public bool isEqual(object obj)
+        {
+            TextStyle other = obj as TextStyle;
+
+            if (other == null)
+                return false;
+
+            if ((Font == other.Font) && (FontColor == other.FontColor) && (FontSize == other.FontSize) && (Italic == other.Italic) && (Underline == other.Underline) && (Bold == other.Bold))
+            {
+                return true; 
+            }
+            else
+            {
+                return false;
+            }
+
+          /*  return (Font == other.Font)
+                && (FontColor == other.FontColor)
+                && (FontSize == other.FontSize)
+                && (Italic == other.Italic)
+                && (Underline == other.Underline)
+                && (Bold == other.Bold);*/
         }
 
         public string toString()
