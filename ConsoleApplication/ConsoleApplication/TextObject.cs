@@ -25,6 +25,27 @@ namespace ConsoleApplication
             sceneobject.setObjectType(objectType);
         }
 
+        public void addToStyleList(TextStyle textStyle)
+        {
+            bool isEqual = false;
+
+            if (_styleList.Count == 0)
+                _styleList.Add(textStyle);
+            else
+            {
+                foreach (TextStyle item in _styleList)
+                    if (textStyle.isEqual(item))
+                    {
+                        isEqual = true;
+                        break;
+                    }
+                
+                if (!isEqual)
+                    _styleList.Add(textStyle);
+            }
+            
+        }
+
         public XmlElement getTextObjectPropertiesNode()
         {
             XmlElement textObjectPropNode = getXMLDocumentRoot().CreateElement("textObjectProperties");
