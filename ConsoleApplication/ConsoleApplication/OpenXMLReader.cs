@@ -20,6 +20,7 @@ namespace ConsoleApplication
         private const int _nrOfThemeColors = 16;
         private string[,] _themeColors;
         private List<PowerPointText> _slideMasterPowerPointShapes;
+        private PresentationDocument _presentationDocument;
 
         private XmlDocument _rootXmlDoc;
 
@@ -51,24 +52,24 @@ namespace ConsoleApplication
         public void read()
         {
 
-            try
-            {
+            //try
+            //{
                 // Open the presentation file as read-only.
-                using (PresentationDocument presentationDocument = PresentationDocument.Open(_path, false))
+                using (_presentationDocument = PresentationDocument.Open(_path, false))
                 {
                     //Read all colors from theme
-                    readColorFromTheme(presentationDocument);
+                    readColorFromTheme();
 
                     //Retrive the presentation part
-                    var presentation = presentationDocument.PresentationPart.Presentation;
+                    var presentation = _presentationDocument.PresentationPart.Presentation;
 
                     //Get all styles stored in the slide master, <PowerPoint Type, TextStyle>
-                    _slideMasterPowerPointShapes = GetSlideMasterPowerPointShapes(presentationDocument);
+                    _slideMasterPowerPointShapes = GetSlideMasterPowerPointShapes(_presentationDocument);
 
                     //Go through all Slides in the PowerPoint presentation
                     foreach (PresentationML.SlideId slideID in presentation.SlideIdList)
                     {
-                        SlidePart slidePart = presentationDocument.PresentationPart.GetPartById(slideID.RelationshipId) as SlidePart;
+                        SlidePart slidePart = _presentationDocument.PresentationPart.GetPartById(slideID.RelationshipId) as SlidePart;
                         Scene scene = new Scene();
 
                         //Get all text shape
@@ -93,11 +94,11 @@ namespace ConsoleApplication
                         _presentationObject.addScene(scene);
                     }
                 }
-            }
-            catch
-            {
-                Console.WriteLine("Error reading: " + _path);
-            }
+            //}
+            //catch
+            //{
+            //    Console.WriteLine("Error reading: " + _path);
+            //}
         }
 
         private List<SceneObject> GetShapesFromSlidePart(SlidePart slidePart)
@@ -136,16 +137,23 @@ namespace ConsoleApplication
             {
                 PowerPointText powerPointText = new PowerPointText();
 
-                //Get the PowerPoint type for the shape so it can get the information from both 
+                //Get the PowerPoint type and index for the shape so it can get the information from both 
                 //its slideLayout and from the slideMaster/theme.
-                var nvPr = sp.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties;
-                foreach (var ph in nvPr.Descendants<PresentationML.PlaceholderShape>())
+                if (sp.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.HasChildren)
                 {
-                    powerPointText.Type = ph.Type;
+                    var placeholder = sp.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.PlaceholderShape;
+
+                    foreach (var attr in placeholder.GetAttributes())
+                    {
+                        if (attr.LocalName == "idx")
+                            powerPointText.Idx = int.Parse(attr.Value.ToString());
+
+                        if (attr.LocalName == "type")
+                            powerPointText.Type = attr.Value;
+                    }
                 }
 
-                powerPointText = GetPowerPointObjectOnType(slideLayoutPowerPointShapes, powerPointText.Type);
-
+                powerPointText = GetPowerPointObject(slideLayoutPowerPointShapes, powerPointText);
 
                 SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
                 simpleSceneObject.BoundsX = powerPointText.X;
@@ -203,17 +211,11 @@ namespace ConsoleApplication
                         textStyle.FontColor = int.Parse(powerPointText.FontColor, System.Globalization.NumberStyles.HexNumber); 
 
                     textStyle.FontSize = powerPointText.FontSize;
-                    
 
                     //Get font
-                    foreach (var symbolFont in run.Descendants<DrawingML.SymbolFont>())
-                    {
-                        textStyle.Font = symbolFont.Typeface;
-                    }
-
                     foreach (var latinFont in run.Descendants<DrawingML.LatinFont>())
                     {
-                        textStyle.Font = latinFont.Typeface;
+                        textStyle.Font = getFontFromTheme(latinFont.Typeface);
                     }
 
                     //Get the texy body color, if it has been changed manually in the ppt file.
@@ -241,7 +243,6 @@ namespace ConsoleApplication
                     }
                     else
                         textFragment.StyleId = sceneObject.StyleList.IndexOf(textStyle);
-                        
 
                     //Calculate the internal text fragments position (inside the scene object)
                     var xy = CalculateInternalTextFragmentPositions(textFragment, 
@@ -264,6 +265,11 @@ namespace ConsoleApplication
         //Returns a list of all the template shapes in the slide master
         private List<PowerPointText> GetSlideMasterPowerPointShapes(PresentationDocument presentationDocument)
         {
+            //Read generel fonts
+            var fontScheme = presentationDocument.PresentationPart.ThemePart.Theme.ThemeElements.FontScheme;
+            string majorFont = fontScheme.MajorFont.LatinFont.Typeface,
+                   minorFont = fontScheme.MinorFont.LatinFont.Typeface;
+            
             List<PowerPointText> slideMasterPowerPointShapes = new List<PowerPointText>();
 
             PresentationML.SlideMaster slideMaster = presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster;
@@ -273,16 +279,178 @@ namespace ConsoleApplication
             {
                 PowerPointText powerPointText = new PowerPointText();
 
-                //Get the PowerPoint type for the shape so it can get the information from both 
+                //Get the PowerPoint type and index for the shape so it can get the information from both 
                 //its slideLayout and from the slideMaster/theme.
-                var nvPr = sp.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties;
-                foreach (var ph in nvPr.Descendants<PresentationML.PlaceholderShape>())
+                if (sp.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.HasChildren)
                 {
-                    powerPointText.Type = ph.Type;
+                    var placeholder = sp.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.PlaceholderShape;
+
+                    foreach (var attr in placeholder.GetAttributes())
+                    {
+                        if (attr.LocalName == "idx")
+                            powerPointText.Idx = int.Parse(attr.Value.ToString());
+
+                        if (attr.LocalName == "type")
+                            powerPointText.Type = attr.Value;
+                    }
                 }
 
-                if (powerPointText.Type.Equals(""))
+                //Neither type or index exists for the template
+                if (powerPointText.Type.Equals("") && powerPointText.Idx<0)
                     continue;
+
+                //Get the general title attributes
+                if (powerPointText.Type.Equals("title"))
+                {
+                    var titleStyle = slideMaster.TextStyles.TitleStyle;
+
+                    if (titleStyle.HasChildren)
+                    {
+                        if (titleStyle.Level1ParagraphProperties.Alignment != null)
+                        {
+                            powerPointText.Alignment = titleStyle.Level1ParagraphProperties.Alignment;
+                        } 
+
+                        foreach (DrawingML.DefaultRunProperties defRPR in titleStyle.Level1ParagraphProperties.Descendants<DrawingML.DefaultRunProperties>())
+                        {
+                            //Get run properties (size, bold, italic, underline) and insert into style
+                            powerPointText.FontSize = (defRPR.FontSize != null) ? (int)defRPR.FontSize : powerPointText.FontSize;
+                            powerPointText.Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointText.Bold;
+                            powerPointText.Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointText.Italic;
+                            //powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
+
+                            if (defRPR.Underline != null)
+                            {
+                                if (defRPR.Underline.Value.ToString() == "sng")
+                                {
+                                    powerPointText.Underline = true;
+                                }
+                            }
+
+                            //Get font
+                            foreach (DrawingML.LatinFont font in defRPR.Descendants<DrawingML.LatinFont>())
+                            {
+                                powerPointText.Font = getFontFromTheme(font.Typeface);
+                            }
+
+                            //Get font color
+                            foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
+                            {
+                                powerPointText.FontColor = getColorFromTheme(color.Val);
+                                powerPointText.FontColor = (powerPointText.FontColor == "") ? color.Val : powerPointText.FontColor;
+                            }
+                        }
+                    }
+                }
+                //Get the general body attributes 
+                else if (powerPointText.Type.Equals("body"))
+                {
+                    var bodyStyle = slideMaster.TextStyles.BodyStyle;
+
+                    if (bodyStyle.HasChildren)
+                    {
+                        if (bodyStyle.Level1ParagraphProperties.Alignment != null)
+                            powerPointText.Alignment = bodyStyle.Level1ParagraphProperties.Alignment;
+
+                        foreach (DrawingML.DefaultRunProperties defRPR in bodyStyle.Level1ParagraphProperties.Descendants<DrawingML.DefaultRunProperties>())
+                        {
+                            //Get run properties (size, bold, italic, underline) and insert into style
+                            powerPointText.FontSize = (defRPR.FontSize != null) ? (int)defRPR.FontSize : powerPointText.FontSize;
+                            powerPointText.Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointText.Bold;
+                            powerPointText.Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointText.Italic;
+                            //powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
+
+                            if (defRPR.Underline != null)
+                            {
+                                if (defRPR.Underline.Value.ToString() == "sng")
+                                {
+                                    powerPointText.Underline = true;
+                                }
+                            }
+
+                            //Get font
+                            foreach (DrawingML.LatinFont font in defRPR.Descendants<DrawingML.LatinFont>())
+                            {
+                                powerPointText.Font = font.Typeface;
+
+                                if (powerPointText.Font.Equals("+mj-lt"))
+                                {
+                                    powerPointText.Font = majorFont;
+                                }
+
+                                if (powerPointText.Font.Equals("+mn-lt"))
+                                {
+                                    powerPointText.Font = minorFont;
+                                }
+                                    
+                            }
+
+                            //Get font color
+                            foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
+                            {
+                                powerPointText.FontColor = getColorFromTheme(color.Val);
+                                powerPointText.FontColor = (powerPointText.FontColor == "") ? color.Val : powerPointText.FontColor;
+                            }
+                        }
+                    }
+                }
+                //Get the general other style attributes
+                else
+                {
+                    var otherStyle = slideMaster.TextStyles.OtherStyle;
+
+                    if (otherStyle.HasChildren)
+                    {
+                        if (otherStyle.Level1ParagraphProperties.Alignment != null)
+                            powerPointText.Alignment = otherStyle.Level1ParagraphProperties.Alignment;
+
+
+
+                        foreach (DrawingML.DefaultRunProperties defRPR in otherStyle.Level1ParagraphProperties.Descendants<DrawingML.DefaultRunProperties>())
+                        {
+                            //Get run properties (size, bold, italic, underline) and insert into style
+                            powerPointText.FontSize = (defRPR.FontSize != null) ? (int)defRPR.FontSize : powerPointText.FontSize;
+                            powerPointText.Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointText.Bold;
+                            powerPointText.Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointText.Italic;
+                            //powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
+
+                            if (defRPR.Underline != null)
+                            {
+                                if (defRPR.Underline.Value.ToString() == "sng")
+                                {
+                                    powerPointText.Underline = true;
+                                }
+                            }
+
+                            
+                            //Get font
+                            foreach (DrawingML.LatinFont font in defRPR.Descendants<DrawingML.LatinFont>())
+                            {
+                                powerPointText.Font = font.Typeface;
+
+                                if (powerPointText.Font.Equals("+mj-lt"))
+                                {
+                                    powerPointText.Font = majorFont;
+                                }
+
+                                if (powerPointText.Font.Equals("+mn-lt"))
+                                {
+                                    powerPointText.Font = minorFont;
+                                }
+
+                            }
+
+                            //Get font color
+                            foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
+                            {
+                                powerPointText.FontColor = getColorFromTheme(color.Val);
+                                powerPointText.FontColor = (powerPointText.FontColor == "") ? color.Val : powerPointText.FontColor;
+                            }
+                        }
+                    }
+                }
+
+                
 
                 //Get the position
                 if (sp.ShapeProperties.Transform2D.Offset != null)
@@ -307,10 +475,13 @@ namespace ConsoleApplication
                 {
                     if (pPr.Alignment != null)
                         powerPointText.Alignment = pPr.Alignment;
-                }
+                }                        
 
                 if (sp.TextBody.ListStyle.HasChildren)
                 {
+                    if (sp.TextBody.ListStyle.Level1ParagraphProperties.Alignment!=null)
+                        powerPointText.Alignment = sp.TextBody.ListStyle.Level1ParagraphProperties.Alignment;
+
                     foreach (DrawingML.DefaultRunProperties defRPR in sp.TextBody.ListStyle.Level1ParagraphProperties.Descendants<DrawingML.DefaultRunProperties>())
                     {
                         //Get run properties (size, bold, italic, underline) and insert into style
@@ -320,7 +491,7 @@ namespace ConsoleApplication
                         powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
 
                         //Get font
-                        foreach (DrawingML.SymbolFont font in defRPR.Descendants<DrawingML.SymbolFont>())
+                        foreach (DrawingML.LatinFont font in defRPR.Descendants<DrawingML.LatinFont>())
                         {
                             powerPointText.Font = font.Typeface;
                         }
@@ -345,25 +516,27 @@ namespace ConsoleApplication
             List<PowerPointText> slideLayoutPowerPointShapes = new List<PowerPointText>();
 
             PresentationML.ShapeTree shapeTree = slidePart.SlideLayoutPart.SlideLayout.CommonSlideData.ShapeTree;
-
             foreach (PresentationML.Shape sp in shapeTree.Descendants<PresentationML.Shape>())
             {
                 PowerPointText powerPointText = new PowerPointText();
 
-                //Get the PowerPoint type for the shape so it can get the information from both 
+                //Get the PowerPoint type and index for the shape so it can get the information from both 
                 //its slideLayout and from the slideMaster/theme.
-                var nvPr = sp.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties;
-                foreach (var ph in nvPr.Descendants<PresentationML.PlaceholderShape>())
+                if (sp.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.HasChildren)
                 {
-                    powerPointText.Type = ph.Type;
+                    var placeholder = sp.NonVisualShapeProperties.ApplicationNonVisualDrawingProperties.PlaceholderShape;
+
+                    foreach (var attr in placeholder.GetAttributes())
+                    {
+                        if (attr.LocalName == "idx")
+                            powerPointText.Idx = int.Parse(attr.Value.ToString());
+
+                        if (attr.LocalName == "type")
+                            powerPointText.Type = attr.Value;
+                    }
                 }
 
-                if (powerPointText.Type==null)
-                    continue;
-                if (powerPointText.Type.Equals(""))
-                    continue;
-
-                powerPointText = GetPowerPointObjectOnType(_slideMasterPowerPointShapes, powerPointText.Type);
+                powerPointText = GetPowerPointObject(_slideMasterPowerPointShapes, powerPointText);
 
                 //Get the position and size
                 if (sp.ShapeProperties.Transform2D != null)
@@ -398,13 +571,14 @@ namespace ConsoleApplication
                         //Get font
                         foreach (DrawingML.SymbolFont font in defRPR.Descendants<DrawingML.SymbolFont>())
                         {
-                            powerPointText.Font = font.Typeface;
+                            powerPointText.Font = getFontFromTheme(font.Typeface);
                         }
 
                         //Get font color
                         foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
                         {
                             powerPointText.FontColor = getColorFromTheme(color.Val);
+                            powerPointText.FontColor = (powerPointText.FontColor == "") ? color.Val : powerPointText.FontColor;
                         }
                     }
                 }
@@ -413,6 +587,30 @@ namespace ConsoleApplication
             }
 
             return slideLayoutPowerPointShapes;
+        }
+
+        private PowerPointText GetPowerPointObject(List<PowerPointText> list, PowerPointText powerPointText)
+        {
+            PowerPointText temp = new PowerPointText();
+
+            foreach (PowerPointText ppt in list)
+            {
+                if (ppt.Type == powerPointText.Type && ppt.Type!="")
+                {
+                    temp = ppt;
+                    temp.Idx = powerPointText.Idx;
+                    return temp;
+                }
+
+                if (ppt.Idx == powerPointText.Idx && ppt.Idx>0)
+                {
+                    temp = ppt;
+                    temp.Type = powerPointText.Type;
+                    return temp;
+                }
+            }
+
+            return powerPointText;
         }
 
         //Get the power point text object in the list that corresponds to the type
@@ -440,12 +638,25 @@ namespace ConsoleApplication
             return Tuple.Create(x, y);
         }
 
-        //Read all the colors in the theme
-        private void readColorFromTheme(PresentationDocument presentationDocument)
+        //get font from theme
+        private string getFontFromTheme(string font)
         {
-            var colorScheme = presentationDocument.PresentationPart.ThemePart.Theme.ThemeElements.ColorScheme;
+            var fontScheme = _presentationDocument.PresentationPart.ThemePart.Theme.ThemeElements.FontScheme;
 
-            var colorMap = presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster.ColorMap;
+            if (font == "+mj-lt")
+                return fontScheme.MajorFont.LatinFont.Typeface;
+            else if (font == "+mn-lt")
+                return fontScheme.MinorFont.LatinFont.Typeface;
+            else
+                return font;
+        }
+
+        //Read all the colors in the theme
+        private void readColorFromTheme()
+        {
+            var colorScheme = _presentationDocument.PresentationPart.ThemePart.Theme.ThemeElements.ColorScheme;
+
+            var colorMap = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster.ColorMap;
 
             int index = 0;
 
@@ -498,6 +709,7 @@ namespace ConsoleApplication
             }
         }
 
+        //Check if color exists in theme
         public bool colorExistInTheme(string color)
         {
             for (int i = 0; i < _nrOfThemeColors; i++)
@@ -510,7 +722,6 @@ namespace ConsoleApplication
             return false;
         }
 
-
         //Get the color from the theme
         private string getColorFromTheme(string color)
         {
@@ -522,7 +733,7 @@ namespace ConsoleApplication
                 }
             }
 
-            return "";
+            return color;
         }
     }
 }
