@@ -7,12 +7,14 @@ using System.Threading.Tasks;
 
 namespace ConsoleApplication
 {
-    class Scene
+    public class Scene
     {
         private Properties _properties;
         private List<SceneObject> _sceneObjectList;
         private string _sceneLabel;
         private XmlDocument _doc;
+
+
 
         public  Properties Properties
         {
@@ -27,10 +29,10 @@ namespace ConsoleApplication
         }
 
 
-        public Scene()
+        public Scene(int sceneNumber)
         {
             _properties = new Properties();
-            _sceneLabel = "Scene Label";
+            _sceneLabel = "Scene " + sceneNumber.ToString();
             _sceneObjectList = new List<SceneObject>();
 
             //_sceneObjectList.Add(new TextObject(new SimpleSceneObject()));
@@ -59,6 +61,9 @@ namespace ConsoleApplication
         public XmlElement getXMLTree()
         {
             XmlElement _rootElement = _doc.CreateElement("scene");
+            XmlAttribute sceneLabel = _doc.CreateAttribute("sceneLabel");
+            sceneLabel.Value = _sceneLabel;
+            _rootElement.Attributes.Append(sceneLabel);
             _doc.DocumentElement.AppendChild(_rootElement);
 
             foreach (SceneObject scenObject in _sceneObjectList)
