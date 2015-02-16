@@ -117,6 +117,7 @@ namespace ConsoleApplication
         {
             generateAttributes();
             XmlElement XE = _doc.CreateElement("sceneObject");
+            XmlElement prop = _doc.CreateElement("properties");
 
             foreach (XmlAttribute XA in _objectAttributes)
                 XE.Attributes.Append(XA);
