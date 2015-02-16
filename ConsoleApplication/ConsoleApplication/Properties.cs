@@ -77,6 +77,44 @@ namespace ConsoleApplication
             _ypos = ypos;
         }
 
+        public Properties(SceneObject sceneObject)
+        {
+            Console.WriteLine();
+        }
+
+        public void setProperties(  Boolean flip,
+                                    Boolean formEnabled,
+                                    Boolean fx,
+                                    Boolean height,
+                                    Boolean isActionExectuer,
+                                    Boolean isCopyable,
+                                    Boolean isMovable,
+                                    Boolean isRemovable,
+                                    Boolean isSwapable,
+                                    Boolean opacity,
+                                    Boolean rotation,
+                                    Boolean text,
+                                    Boolean width,
+                                    Boolean xpos,
+                                    Boolean ypos)
+        {
+            _flip = flip;
+            _formEnabled = formEnabled;
+            _fx = fx;
+            _height = height;
+            _isActionExectuer = isActionExectuer;
+            _isCopyable = isCopyable;
+            _isMovable = isMovable;
+            _isRemovable = isRemovable;
+            _isSwapable = isSwapable;
+            _opacity = opacity;
+            _rotation = rotation;
+            _text = text;
+            _width = width;
+            _xpos = xpos;
+            _ypos = ypos;
+        }
+
         public Boolean Ypos
         {
             get { return _ypos; }
@@ -167,7 +205,31 @@ namespace ConsoleApplication
             set { _flip = value; }
         }
 
+        public string toString()
+        {
+            string output = "";
 
+            output += (_flip) ? "flip, " : "";
+            output += (_formEnabled) ? "formEnabled, " : "";
+            output += (_fx) ? "fx, " : "";
+            output += (_height) ? "height, " : "";
+            output += (_isActionExectuer) ? "isActionExectuer, " : "";
+            output += (_isCopyable) ? "isCopyable, " : "";
+            output += (_isMovable) ? "isMovable, " : "";
+            output += (_isRemovable) ? "isRemovable, " : "";
+            output += (_isSwapable) ? "isSwapable, " : "";
+            output += (_opacity) ? "opacity, " : "";
+            output += (_rotation) ? "rotation, " : "";
+            output += (_text) ? "text, " : "";
+            output += (_width) ? "width, " : "";
+            output += (_xpos) ? "xpos, " : "";
+            output += (_ypos) ? "ypos, " : "";
+
+            if (output.Contains(","))
+                output = output.Remove(output.LastIndexOf(","));
+
+            return output;
+        }
 
 
 
