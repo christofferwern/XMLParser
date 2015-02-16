@@ -31,6 +31,25 @@ namespace ConsoleApplication
             _underline = false;
         }
 
+        public PowerPointText(PowerPointText ppt)
+        {
+            _idx = ppt.Idx;
+            _fontSize = ppt.FontSize;
+            _x = ppt.X;
+            _y = ppt.Y;
+            _cx = ppt.Cx;
+            _cy = ppt.Cy;
+            _rotation = ppt.Rotation;
+            _fontColor = ppt.FontColor;
+            _type = ppt.Type;
+            _font = ppt.Font;
+            _alignment = ppt.Alignment;
+            _anchor = ppt.Anchor;
+            _bold = ppt.Bold;
+            _italic = ppt.Italic;
+            _underline = ppt.Underline; 
+        }
+
         public String toString()
         {
             return "Placeholder: (" + _type + ", " + _idx + ")\n" +

@@ -209,21 +209,21 @@ namespace ConsoleApplication
         {
             string output = "";
 
-            output += (_flip) ? "flip, " : "";
-            output += (_formEnabled) ? "formEnabled, " : "";
-            output += (_fx) ? "fx, " : "";
-            output += (_height) ? "height, " : "";
-            output += (_isActionExectuer) ? "isActionExectuer, " : "";
-            output += (_isCopyable) ? "isCopyable, " : "";
-            output += (_isMovable) ? "isMovable, " : "";
-            output += (_isRemovable) ? "isRemovable, " : "";
-            output += (_isSwapable) ? "isSwapable, " : "";
-            output += (_opacity) ? "opacity, " : "";
-            output += (_rotation) ? "rotation, " : "";
-            output += (_text) ? "text, " : "";
-            output += (_width) ? "width, " : "";
-            output += (_xpos) ? "xpos, " : "";
-            output += (_ypos) ? "ypos, " : "";
+            output += (_flip) ? "flip," : "";
+            output += (_formEnabled) ? "formEnabled," : "";
+            output += (_fx) ? "fx," : "";
+            output += (_height) ? "height," : "";
+            output += (_isActionExectuer) ? "isActionExectuer," : "";
+            output += (_isCopyable) ? "isCopyable," : "";
+            output += (_isMovable) ? "isMovable," : "";
+            output += (_isRemovable) ? "isRemovable," : "";
+            output += (_isSwapable) ? "isSwapable," : "";
+            output += (_opacity) ? "opacity," : "";
+            output += (_rotation) ? "rotation," : "";
+            output += (_text) ? "text," : "";
+            output += (_width) ? "width," : "";
+            output += (_xpos) ? "xpos," : "";
+            output += (_ypos) ? "ypos," : "";
 
             if (output.Contains(","))
                 output = output.Remove(output.LastIndexOf(","));

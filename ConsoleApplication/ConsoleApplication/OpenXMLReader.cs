@@ -273,8 +273,6 @@ namespace ConsoleApplication
                 //Add text info to scene object
                 TextObject sceneObject = new TextObject(simpleSceneObject);
 
-
-                sceneObject.Align = "l";
                 //Go trough all the runs in the text body
                 //they contains the text and some properties
                 foreach (DrawingML.Run run in sp.TextBody.Descendants<DrawingML.Run>())
@@ -306,6 +304,9 @@ namespace ConsoleApplication
                     {
                         textStyle.Font = getFontFromTheme(latinFont.Typeface);
                     }
+
+                    if (textStyle.Font == "")
+                        textStyle.Font = getFontFromTheme("+mj-lt");
 
                     //Get the texy body color, if it has been changed manually in the ppt file.
                     foreach (var color in run.Descendants<DrawingML.RgbColorModelHex>())
@@ -343,6 +344,7 @@ namespace ConsoleApplication
 
                     sceneObject.FragmentsList.Add(textFragment);
                 }
+
 
                 sceneObjectList.Add(sceneObject);
             }
@@ -625,7 +627,19 @@ namespace ConsoleApplication
                     }
                 }
 
-                powerPointText = GetPowerPointObject(_slideMasterPowerPointShapes, powerPointText);
+                if (powerPointText == GetPowerPointObject(_slideMasterPowerPointShapes, powerPointText) &&
+                    powerPointText.Type.Contains("Title"))
+                { 
+                        PowerPointText temp = new PowerPointText();
+                        temp.Type = "title";
+                        temp = new PowerPointText(GetPowerPointObject(_slideMasterPowerPointShapes, temp));
+                        temp.Type = powerPointText.Type;
+                        powerPointText = temp;
+                }
+                else
+                {
+                    powerPointText = GetPowerPointObject(_slideMasterPowerPointShapes, powerPointText);
+                }
 
                 //Get the position and size
                 if (sp.ShapeProperties.Transform2D != null)
@@ -667,7 +681,6 @@ namespace ConsoleApplication
                         foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
                         {
                             powerPointText.FontColor = getColorFromTheme(color.Val);
-                            powerPointText.FontColor = (powerPointText.FontColor == "") ? color.Val : powerPointText.FontColor;
                         }
                     }
                 }
@@ -814,7 +827,7 @@ namespace ConsoleApplication
         //Get the color from the theme
         private string getColorFromTheme(string color)
         {
-            for(int i=0;i<16;i++)
+            for(int i=0;i<_nrOfThemeColors;i++)
             {
                 if (color == _themeColors.GetValue(i, 0).ToString())
                 {
