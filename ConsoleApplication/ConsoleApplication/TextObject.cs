@@ -22,6 +22,9 @@ namespace ConsoleApplication
             _styleList = new List<TextStyle>();
             _fragmentsList = new List<TextFragment>();
 
+            setProperties(new Properties(true, false, true, true, true, true, true, true,
+                                         false, true, true, true, true, true, true));
+
             sceneobject.setObjectType(objectType);
         }
 

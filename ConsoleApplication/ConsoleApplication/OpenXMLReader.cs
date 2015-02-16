@@ -273,6 +273,8 @@ namespace ConsoleApplication
                 //Add text info to scene object
                 TextObject sceneObject = new TextObject(simpleSceneObject);
 
+
+                sceneObject.Align = "l";
                 //Go trough all the runs in the text body
                 //they contains the text and some properties
                 foreach (DrawingML.Run run in sp.TextBody.Descendants<DrawingML.Run>())
@@ -725,7 +727,7 @@ namespace ConsoleApplication
             return Tuple.Create(x, y);
         }
 
-        //get font from theme
+        //get font from theme, ( inte snyggt alls =/ )
         private string getFontFromTheme(string font)
         {
             var fontScheme = _presentationDocument.PresentationPart.ThemePart.Theme.ThemeElements.FontScheme;
