@@ -18,13 +18,19 @@ namespace ConsoleApplication
         {
             var watch = Stopwatch.StartNew();
 
-            string path = @"C:\Users\ex1\desktop\Compare.pptx";            
+            string path = @"C:\Users\ex1\downloads\Compare.pptx";            
 
             OpenXMLReader reader = new OpenXMLReader(path);
 
             reader.read();
 
             reader.PresentationObject.getXMLTree().Save(Console.Out);
+
+            //// Write the XML to a file.
+            //System.IO.StreamWriter file = new System.IO.StreamWriter(@"C:\Users\ex1\Desktop\text.txt", true);
+            //file.WriteLine(reader.PresentationObject.getXMLTree());
+
+            //file.Close();
 
             watch.Stop();
             Console.WriteLine("\nCompilation time: " + (double)watch.ElapsedMilliseconds/1000 + "s");
