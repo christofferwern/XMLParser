@@ -305,6 +305,9 @@ namespace ConsoleApplication
                         textStyle.Font = getFontFromTheme(latinFont.Typeface);
                     }
 
+                    if (textStyle.Font == "")
+                        textStyle.Font = getFontFromTheme("+mj-lt");
+
                     //Get the texy body color, if it has been changed manually in the ppt file.
                     foreach (var color in run.Descendants<DrawingML.RgbColorModelHex>())
                     {
@@ -341,6 +344,7 @@ namespace ConsoleApplication
 
                     sceneObject.FragmentsList.Add(textFragment);
                 }
+
 
                 sceneObjectList.Add(sceneObject);
             }
