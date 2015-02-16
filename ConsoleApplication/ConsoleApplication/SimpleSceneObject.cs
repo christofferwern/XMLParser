@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,26 +11,21 @@ namespace ConsoleApplication
     public class SimpleSceneObject : SceneObject
     {
         private float _alpha, _height, _width, _rotation, _z;
-
         //BoundsX and BoundsY corresponds to positions from left top corner
         //ClipHeight and ClipWidth are the height and width of the scene object
         private int _boundsX, _boundsY, _clipHeight, _clipWidth, _flip;
-
-        private string _clipID, _AttrName, _type, _name;
-
+        private string _clipID, _type, _name;
         private Boolean _hidden;
-
         private XmlDocument _doc;
-
         private Properties _properties;
 
-        private List<XmlAttribute> _objectAttributes;
+        private string[] _attributes = new string[14]{  "type", "clipID","z", "boundsX", "boundsY", "clipWidth", "clipHeight",
+                                                        "width","height", "rotation", "alpha","name", "hidden", "flip"};
 
         public SimpleSceneObject()
         {
             _clipID = Guid.NewGuid().ToString();
-            _name = "SimpleSceneObject";
-            _AttrName = Guid.NewGuid().ToString();
+            _name = Guid.NewGuid().ToString();
             _doc = new XmlDocument();
             _alpha = 1;
             _hidden = false;
@@ -38,54 +34,6 @@ namespace ConsoleApplication
             _z = 0;
             _flip = 0;
             _properties = new Properties();
-            _objectAttributes = new List<XmlAttribute>();
-        }
-
-        private void generateAttributes()
-        {
-            XmlAttribute type = _doc.CreateAttribute("type");
-            type.Value = _type;
-            XmlAttribute clipID = _doc.CreateAttribute("clipID");
-            clipID.Value = _clipID;
-            XmlAttribute z = _doc.CreateAttribute("z");
-            z.Value = _z.ToString();
-            XmlAttribute boundsX = _doc.CreateAttribute("boundsX");
-            boundsX.Value = _boundsX.ToString();
-            XmlAttribute boundsY = _doc.CreateAttribute("boundsY");
-            boundsY.Value = _boundsY.ToString();
-            XmlAttribute clipWidth = _doc.CreateAttribute("clipWidth");
-            clipWidth.Value = _clipWidth.ToString();
-            XmlAttribute clipHeight = _doc.CreateAttribute("clipHeight");
-            clipHeight.Value = _clipHeight.ToString();
-            XmlAttribute width = _doc.CreateAttribute("width");
-            width.Value = _width.ToString();
-            XmlAttribute height = _doc.CreateAttribute("height");
-            height.Value = _height.ToString();
-            XmlAttribute rotation = _doc.CreateAttribute("rotation");
-            rotation.Value = _rotation.ToString();
-            XmlAttribute alpha = _doc.CreateAttribute("alpha");
-            alpha.Value = _alpha.ToString();
-            XmlAttribute name = _doc.CreateAttribute("name");
-            name.Value = _AttrName;
-            XmlAttribute hidden = _doc.CreateAttribute("hidden");
-            hidden.Value = _hidden.ToString();
-            XmlAttribute flip = _doc.CreateAttribute("flip");
-            flip.Value = _flip.ToString();
-
-            _objectAttributes.Add(type);
-            _objectAttributes.Add(clipID);
-            _objectAttributes.Add(z);
-            _objectAttributes.Add(boundsX);
-            _objectAttributes.Add(boundsY);
-            _objectAttributes.Add(clipWidth);
-            _objectAttributes.Add(clipHeight);
-            _objectAttributes.Add(width);
-            _objectAttributes.Add(height);
-            _objectAttributes.Add(rotation);
-            _objectAttributes.Add(alpha);
-            _objectAttributes.Add(name);
-            _objectAttributes.Add(hidden);
-            _objectAttributes.Add(flip);
         }
 
         public Properties getProperties()
@@ -115,15 +63,22 @@ namespace ConsoleApplication
 
         public XmlElement getXMLTree()
         {
-            generateAttributes();
-            XmlElement XE = _doc.CreateElement("sceneObject");
+            //generateAttributes();
+            XmlElement xmlElement = _doc.CreateElement("sceneObject");
 
-            foreach (XmlAttribute XA in _objectAttributes)
-                XE.Attributes.Append(XA);
-            
+            foreach (string s in _attributes)
+            {
+                XmlAttribute xmlAttr = _doc.CreateAttribute(s);
 
-            _doc.DocumentElement.AppendChild(XE);
-            return XE;
+                FieldInfo fieldInfo = GetType().GetField("_" + s, BindingFlags.NonPublic | BindingFlags.Instance);
+                if (fieldInfo != null)
+                    xmlAttr.Value = fieldInfo.GetValue(this).ToString();
+
+                xmlElement.Attributes.Append(xmlAttr);
+            }
+
+            _doc.DocumentElement.AppendChild(xmlElement);
+            return xmlElement;
         }
 
         public float Z
