@@ -86,10 +86,145 @@ namespace ConsoleApplication
                 textObjectPropNode.Attributes.Append(xmlAttr);
             }
 
-            textObjectPropNode.AppendChild(stylesNode);
-            textObjectPropNode.AppendChild(fragmentNode);
+            XmlElement textNode = getXMLDocumentRoot().CreateElement("text");
+            textNode.InnerText = getHTML();
+
+            textObjectPropNode.AppendChild(textNode);
+
+            //textObjectPropNode.AppendChild(stylesNode);
+            //textObjectPropNode.AppendChild(fragmentNode);
 
             return textObjectPropNode;
+        }
+
+        public string getHTML()
+        {
+            string HTML = "";
+
+            HTML += "<TEXTFORMAT LEFTMARGIN='1' RIGHTMARGIN='2'>";
+            HTML += "<P>";
+
+            TextStyle newStyle = new TextStyle(), oldStyle = new TextStyle();
+
+            bool bold = false, underline = false, italic = false;
+            int fontCount = 0;
+
+            foreach(TextFragment textFragment in _fragmentsList)
+            {
+                newStyle = StyleList[textFragment.StyleId];
+
+                //First fragment
+                if (_fragmentsList.IndexOf(textFragment) == 0)
+                {
+                    fontCount++;
+                    HTML += "<FONT FACE='" + newStyle.Font + "' SIZE='" + newStyle.FontSize + "' COLOR='" + newStyle.FontColor + "' LETTERSPACING='0' KERNING='1'>";
+
+                    if (newStyle.Bold)
+                    {
+                        HTML += "<B>";
+                        bold = true;
+                    }
+                    if (newStyle.Underline)
+                    {
+                        HTML += "<U>";
+                        underline = true;
+                    }
+                    if (newStyle.Italic)
+                    {
+                        HTML += "<I>";
+                        italic = true;
+                    }
+
+                    HTML += textFragment.Text;
+
+                    oldStyle = newStyle;
+                    continue;
+                }
+
+                if (oldStyle != newStyle)
+                {
+                    if(oldStyle.Font != newStyle.Font || 
+                       oldStyle.FontColor != newStyle.FontColor ||
+                       oldStyle.FontSize != newStyle.FontSize)
+                    {
+                        HTML += (bold) ? "</B>" : "";
+                        HTML += (underline) ? "</U>" : "";
+                        HTML += (italic) ? "</I>" : "";
+
+                        bold = false;
+                        underline = false;
+                        italic = false;
+
+                        fontCount++;
+
+                        HTML += "\n<FONT ";
+
+                        if(oldStyle.Font != newStyle.Font)
+                            HTML += "FACE='" + newStyle.Font + "' ";
+                        if (oldStyle.FontSize != newStyle.FontSize)
+                            HTML += "SIZE='" + newStyle.FontSize + "' ";
+                        if (oldStyle.FontSize != newStyle.FontColor)
+                            HTML += "COLOR='" + newStyle.FontColor + "' ";
+
+                        HTML += ">";
+
+                        if (newStyle.Bold)
+                        {
+                            HTML += "<B>";
+                            bold = true;
+                        }
+                        if (newStyle.Underline)
+                        {
+                            HTML += "<U>";
+                            underline = true;
+                        }
+                        if (newStyle.Italic)
+                        {
+                            HTML += "<I>";
+                            Italic = true;
+                        }
+
+                        HTML += textFragment.Text;
+                    }
+                    else
+                    {
+                        if (newStyle.Bold != oldStyle.Bold)
+                        {
+                            HTML += (newStyle.Bold)?"<B>":"</B>";
+                            bold = (newStyle.Bold) ? true : false;
+                        }
+                        if (newStyle.Underline != oldStyle.Underline)
+                        {
+                            HTML += (newStyle.Underline) ? "<U>" : "</U>";
+                            underline = (newStyle.Underline) ? true : false;
+                        }
+                        if (newStyle.Italic != oldStyle.Italic)
+                        {
+                            HTML += (newStyle.Italic) ? "<I>" : "</I>";
+                            italic = (newStyle.Italic) ? true : false;
+                        }
+
+                        HTML += textFragment.Text;
+                    }
+                }
+
+                oldStyle = newStyle;
+            }
+
+            HTML += (bold) ? "</B>" : "";
+            HTML += (underline) ? "</U>" : "";
+            HTML += (italic) ? "</I>" : "";
+
+            for (int i = 0; i < fontCount; i++)
+                HTML += "</FONT>";
+
+            HTML += "</P>";
+            HTML += "</TEXTFORMAT>";
+
+            HTML = HTML.Replace("<", "&lt");
+            HTML = HTML.Replace(">", "&gt");
+
+            return HTML;
         }
 
         public XmlElement getFragmentsNode()
