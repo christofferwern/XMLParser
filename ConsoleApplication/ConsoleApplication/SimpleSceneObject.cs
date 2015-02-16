@@ -118,11 +118,12 @@ namespace ConsoleApplication
             generateAttributes();
             XmlElement XE = _doc.CreateElement("sceneObject");
             XmlElement prop = _doc.CreateElement("properties");
+            prop.InnerText = _properties.toString();
 
             foreach (XmlAttribute XA in _objectAttributes)
                 XE.Attributes.Append(XA);
-            
 
+            XE.AppendChild(prop);
             _doc.DocumentElement.AppendChild(XE);
             return XE;
         }

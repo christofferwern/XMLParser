@@ -55,6 +55,30 @@ namespace ConsoleApplication
             return child;
         }
 
+        public XmlElement getFontNode()
+        {
+            XmlElement FONT = _rootOfDocument.CreateElement("FONT");
+
+            return FONT;
+
+        }
+
+        public string getTextNode(string text)
+        {
+
+            string temp = text;
+
+            if (Bold)
+                temp = "<B>" + text + "</B>";
+            if(Italic)
+                temp = "<I>" + text + "</I>";
+            if(Underline)
+                temp = "<U>" + text + "</U>";
+
+            return temp;
+
+        }
+
         public void setXMLDocumentRoot(ref XmlDocument rootOfDocument)
         {
             _rootOfDocument = rootOfDocument;
