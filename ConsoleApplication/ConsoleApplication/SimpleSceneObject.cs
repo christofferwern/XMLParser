@@ -63,6 +63,7 @@ namespace ConsoleApplication
 
         public XmlElement getXMLTree()
         {
+
             //generateAttributes();
             XmlElement xmlElement = _doc.CreateElement("sceneObject");
 

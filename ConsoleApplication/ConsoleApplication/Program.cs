@@ -20,6 +20,7 @@ namespace ConsoleApplication
 
             string path = @"C:\Users\ex1\downloads\test3.pptx";            
 
+
             OpenXMLReader reader = new OpenXMLReader(path);
 
             reader.read();

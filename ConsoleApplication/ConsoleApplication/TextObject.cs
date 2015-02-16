@@ -72,6 +72,12 @@ namespace ConsoleApplication
             XmlElement textObjectPropNode = getXMLDocumentRoot().CreateElement("textObjectProperties");
             XmlElement stylesNode = getStylesNode();
             XmlElement fragmentNode = getFragmentsNode();
+            //XmlElement textNode = getTextNode();
+            //textObjectPropNode.AppendChild(textNode);
+
+            XmlElement textNode = getXMLDocumentRoot().CreateElement("text");
+            textNode.InnerText = getHTML();
+            textObjectPropNode.AppendChild(textNode);
 
             _doc = base.getXMLDocumentRoot();
 
@@ -86,11 +92,6 @@ namespace ConsoleApplication
                 textObjectPropNode.Attributes.Append(xmlAttr);
             }
 
-            XmlElement textNode = getXMLDocumentRoot().CreateElement("text");
-            textNode.InnerText = getHTML();
-
-            textObjectPropNode.AppendChild(textNode);
-
             //textObjectPropNode.AppendChild(stylesNode);
             //textObjectPropNode.AppendChild(fragmentNode);
 
@@ -101,15 +102,15 @@ namespace ConsoleApplication
         {
             string HTML = "";
 
-            HTML += "<TEXTFORMAT LEFTMARGIN='1' RIGHTMARGIN='2'>";
-            HTML += "<P>";
+            HTML += "<TEXTFORMAT LEFTMARGIN=\"1\" RIGHTMARGIN=\"2\">";
+            HTML += "<P ALIGN=\"left\">";
 
             TextStyle newStyle = new TextStyle(), oldStyle = new TextStyle();
 
             bool bold = false, underline = false, italic = false;
             int fontCount = 0;
 
-            foreach(TextFragment textFragment in _fragmentsList)
+            foreach (TextFragment textFragment in _fragmentsList)
             {
                 newStyle = StyleList[textFragment.StyleId];
 
@@ -117,7 +118,7 @@ namespace ConsoleApplication
                 if (_fragmentsList.IndexOf(textFragment) == 0)
                 {
                     fontCount++;
-                    HTML += "<FONT FACE='" + newStyle.Font + "' SIZE='" + newStyle.FontSize + "' COLOR='" + newStyle.FontColor + "' LETTERSPACING='0' KERNING='1'>";
+                    HTML += "<FONT FACE=\"" + newStyle.Font + "\" SIZE=\"" + newStyle.FontSize + "\" COLOR=\"" + newStyle.FontColor + "\" LETTERSPACING=\"0\" KERNING=\"1\">";
 
                     if (newStyle.Bold)
                     {
@@ -143,7 +144,7 @@ namespace ConsoleApplication
 
                 if (oldStyle != newStyle)
                 {
-                    if(oldStyle.Font != newStyle.Font || 
+                    if (oldStyle.Font != newStyle.Font ||
                        oldStyle.FontColor != newStyle.FontColor ||
                        oldStyle.FontSize != newStyle.FontSize)
                     {
@@ -159,12 +160,12 @@ namespace ConsoleApplication
 
                         HTML += "\n<FONT ";
 
-                        if(oldStyle.Font != newStyle.Font)
-                            HTML += "FACE='" + newStyle.Font + "' ";
+                        if (oldStyle.Font != newStyle.Font)
+                            HTML += "FACE=\"" + newStyle.Font + "\" ";
                         if (oldStyle.FontSize != newStyle.FontSize)
-                            HTML += "SIZE='" + newStyle.FontSize + "' ";
+                            HTML += "SIZE=\"" + newStyle.FontSize + "\" ";
                         if (oldStyle.FontSize != newStyle.FontColor)
-                            HTML += "COLOR='" + newStyle.FontColor + "' ";
+                            HTML += "COLOR=\"" + newStyle.FontColor + "\" ";
 
                         HTML += ">";
 
@@ -190,7 +191,7 @@ namespace ConsoleApplication
                     {
                         if (newStyle.Bold != oldStyle.Bold)
                         {
-                            HTML += (newStyle.Bold)?"<B>":"</B>";
+                            HTML += (newStyle.Bold) ? "<B>" : "</B>";
                             bold = (newStyle.Bold) ? true : false;
                         }
                         if (newStyle.Underline != oldStyle.Underline)
@@ -221,10 +222,126 @@ namespace ConsoleApplication
             HTML += "</P>";
             HTML += "</TEXTFORMAT>";
 
-            HTML = HTML.Replace("<", "&lt");
-            HTML = HTML.Replace(">", "&gt");
+            //HTML = HTML.Replace("<", "&lt");
+            //HTML = HTML.Replace(">", "&gt");
 
             return HTML;
+        }
+
+        public XmlElement getTextNode()
+        {
+            XmlElement textNode = getXMLDocumentRoot().CreateElement("text");
+            XmlElement textFormatNode = getXMLDocumentRoot().CreateElement("TEXTFORMAT");
+            XmlElement pNode = getPnode();
+
+            textFormatNode.AppendChild(pNode);
+            textNode.AppendChild(textFormatNode);
+
+            return textNode;
+        }
+
+        public XmlElement getPnode()
+        {
+            XmlElement pNode = getXMLDocumentRoot().CreateElement("P");
+            
+            List<XmlElement> fontList = new List<XmlElement>();
+            TextStyle old_style = new TextStyle();
+
+            for (int i = 0; i < _fragmentsList.Count; i++)
+            {
+                XmlElement temp = getXMLDocumentRoot().CreateElement("FONT");
+                TextStyle style = _styleList[_fragmentsList[i].StyleId];
+
+                if (i == 0)
+                {
+                    XmlAttribute font = getXMLDocumentRoot().CreateAttribute("FACE");
+                    font.Value = style.Font;
+                    XmlAttribute size = getXMLDocumentRoot().CreateAttribute("SIZE");
+                    size.Value = style.FontSize.ToString();
+                    XmlAttribute color = getXMLDocumentRoot().CreateAttribute("COLOR");
+                    color.Value = style.FontColor.ToString();
+                    temp.Attributes.Append(font);
+                    temp.Attributes.Append(size);
+                    temp.Attributes.Append(color);
+
+                    style.getTextNode(_fragmentsList[i].Text);
+
+                    temp.InnerText = _fragmentsList[i].Text;
+                    fontList.Add(temp);
+                    //pNode.AppendChild(temp);
+                    old_style = style;
+                    continue;
+                }
+
+                if (_fragmentsList[i].StyleId != _fragmentsList[i - 1].StyleId)
+                {
+                    string BIU = style.getTextNode(_fragmentsList[i].Text);
+                    if (old_style.FontColor != style.FontColor || !old_style.FontSize.Equals(style.FontSize) || !old_style.Font.Equals(style.Font))
+                    {
+
+                        if (!old_style.Font.Equals(style.Font))
+                        {
+                            XmlAttribute font = getXMLDocumentRoot().CreateAttribute("FACE");
+                            font.Value = style.Font;
+                            temp.Attributes.Append(font);
+                        }
+                        if (old_style.FontSize != style.FontSize)
+                        {
+                            XmlAttribute fontSize = getXMLDocumentRoot().CreateAttribute("SIZE");
+                            fontSize.Value = style.FontSize.ToString();
+                            temp.Attributes.Append(fontSize);
+                        }
+                        if (old_style.FontColor != style.FontColor)
+                        {
+                            XmlAttribute color = getXMLDocumentRoot().CreateAttribute("COLOR");
+                            color.Value = style.FontColor.ToString();
+                            temp.Attributes.Append(color);
+                        }
+
+                        temp.InnerText = BIU;
+                        fontList.Add(temp);
+
+                    }
+                    else
+                    {
+                        fontList[i - 1].InnerText += BIU;
+                    }
+                }
+
+
+                    old_style = style;
+            }
+
+            /*fontList.Reverse();
+
+            XmlElement fontRoot = getXMLDocumentRoot().CreateElement("TEST");
+            XmlElement oldItem = new XmlElement();
+
+            int counter = 0;
+
+            foreach (XmlElement item in fontList)
+            {
+                XmlElement temp = item;
+
+                if (counter == 0)
+                {
+                    fontRoot = temp;
+                    temp.AppendChild(oldItem);
+                    oldItem = temp;
+                    continue;
+                }
+                else
+                {
+                    temp.AppendChild(oldItem);
+                    fontRoot = temp;
+                    oldItem = temp;
+                }
+                
+            }*/
+
+            //pNode.AppendChild(fontRoot);
+
+            return pNode;
         }
 
         public XmlElement getFragmentsNode()
