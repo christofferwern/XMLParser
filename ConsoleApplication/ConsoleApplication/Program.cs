@@ -18,7 +18,7 @@ namespace ConsoleApplication
         {
             var watch = Stopwatch.StartNew();
 
-            string path = @"C:\Users\ex1\desktop\Compare.pptx";            
+            string path = @"C:\Users\ex1\downloads\test3.pptx";            
 
 
             OpenXMLReader reader = new OpenXMLReader(path);
@@ -28,10 +28,10 @@ namespace ConsoleApplication
             reader.PresentationObject.getXMLTree().Save(Console.Out);
 
             //// Write the XML to a file.
-            //System.IO.StreamWriter file = new System.IO.StreamWriter(@"C:\Users\ex1\Desktop\text.txt", true);
-            //file.WriteLine(reader.PresentationObject.getXMLTree());
+            System.IO.StreamWriter file = new System.IO.StreamWriter(@"C:\Users\ex1\Desktop\output.txt", true);
+            file.WriteLine(reader.PresentationObject.getXMLTree().InnerXml);
 
-            //file.Close();
+            file.Close();
 
             watch.Stop();
             Console.WriteLine("\nCompilation time: " + (double)watch.ElapsedMilliseconds/1000 + "s");

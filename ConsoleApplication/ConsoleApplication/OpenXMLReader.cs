@@ -131,7 +131,7 @@ namespace ConsoleApplication
                 SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
 
                 string slide_name = splitUriToImageName(slidePart.Uri); //Get the slide for this background
-                Console.WriteLine(slide_name);
+                //console.WriteLine(slide_name);
 
                 var bg_type = bg.FirstChild;
 
@@ -140,7 +140,7 @@ namespace ConsoleApplication
                 {
 
                     case "solidFill":
-                        Console.WriteLine("solidFill");
+                        //Console.WriteLine("solidFill");
                         ShapeObject shapeObject = new ShapeObject(simpleSceneObject);
 
                         if (bg_type.FirstChild.GetType().Equals(typeof(DrawingML.RgbColorModelHex)))
