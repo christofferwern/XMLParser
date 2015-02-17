@@ -10,10 +10,10 @@ namespace ConsoleApplication
 {
     public class TextObject : SceneObjectDecorator
     {
-        private string _align, _antiAlias, _font, _autosize;
+        private string _align, _antiAlias, _font, _autosize, _color;
         private List<TextStyle> _styleList;
         private List<TextFragment> _fragmentsList;
-        private int _color, _leading, _letterSpacing, _size;
+        private int _leading, _letterSpacing, _size;
         private Boolean _bold, _italic, _underline, _selectable, _runningText, _useScroller;
         private XmlDocument _doc;
         private string[] _textObjectPropertiesAttributes = new string[14]{   "font", "align", "color", "italic", "bold", "underline", "size", "runningText",
@@ -25,7 +25,7 @@ namespace ConsoleApplication
             _antiAlias = "normal";
             _font = "Arial";
             _autosize = "none";
-            _color = 0;
+            _color = "000000";
             _leading = 0;
             _letterSpacing = 0;
             _size = 20;
@@ -33,7 +33,7 @@ namespace ConsoleApplication
             _italic = false;
             _underline = false;
             _selectable = false;
-            _runningText = false;
+            _runningText = true;
             _useScroller = false;
 
             string objectType = "com.customObjects.TextObject";
@@ -110,10 +110,11 @@ namespace ConsoleApplication
 
         public string getHTML()
         {
+            Console.WriteLine("HTML");
             string HTML = "";
 
             HTML += "<TEXTFORMAT LEFTMARGIN=\"1\" RIGHTMARGIN=\"2\">";
-            HTML += "<P ALIGN=\"left\">";
+            HTML += "<P ALIGN=\"" + _align + "\">";
 
             TextStyle newStyle = new TextStyle(), oldStyle = new TextStyle();
 
@@ -128,8 +129,8 @@ namespace ConsoleApplication
                 if (_fragmentsList.IndexOf(textFragment) == 0)
                 {
                     fontCount++;
-                    HTML += "<FONT FACE=\"" + newStyle.Font + "\" SIZE=\"" + newStyle.FontSize + "\" COLOR=\"" + newStyle.FontColor + "\" LETTERSPACING=\"0\" KERNING=\"1\">";
-
+                    HTML += "<FONT FACE=\"" + newStyle.Font + "\" SIZE=\"" + newStyle.FontSize + "\" COLOR=\"#" + newStyle.FontColor + "\" LETTERSPACING=\"0\" KERNING=\"1\">";
+                    
                     if (newStyle.Bold)
                     {
                         HTML += "<B>";
@@ -168,14 +169,14 @@ namespace ConsoleApplication
 
                         fontCount++;
 
-                        HTML += "\n<FONT ";
+                        HTML += "<FONT ";
 
                         if (oldStyle.Font != newStyle.Font)
                             HTML += "FACE=\"" + newStyle.Font + "\" ";
                         if (oldStyle.FontSize != newStyle.FontSize)
                             HTML += "SIZE=\"" + newStyle.FontSize + "\" ";
-                        if (oldStyle.FontSize != newStyle.FontColor)
-                            HTML += "COLOR=\"" + newStyle.FontColor + "\" ";
+                        if (oldStyle.FontColor != newStyle.FontColor)
+                            HTML += "COLOR=\"#" + newStyle.FontColor + "\" ";
 
                         HTML += ">";
 
@@ -414,6 +415,40 @@ namespace ConsoleApplication
             base.setProperties(properties);
         }
 
+        public override void ConvertToYoobaUnits()
+        {
+            base.ConvertToYoobaUnits();
+
+            //FONT, SIZE, COLOR, ALIGNMENT
+
+            //Font size convertion
+            _size /= 100;
+
+            //Font color
+            _color = getFontColorAsInteger(_color).ToString();
+
+            foreach(TextStyle style in StyleList)
+            {
+                //Font size convertion
+                style.FontSize /= 100;
+
+                //Fake font and color
+                style.Font = "Arial";
+
+            }
+
+            //Alignment
+            _align = (_align.ToLower() == "l" || _align.ToLower() == "left") ? "left" : _align;
+            _align = (_align.ToLower() == "r" || _align.ToLower() == "right") ? "right" : _align;
+            _align = (_align.ToLower() == "c" || _align.ToLower() == "ctr" || _align.ToLower() == "center") ? "center" : _align;
+        
+        }
+
+        public int getFontColorAsInteger(string color)
+        {
+            return int.Parse(color, System.Globalization.NumberStyles.HexNumber);
+        }
+
         public string Align
         {
             get { return _align; }
@@ -468,7 +503,7 @@ namespace ConsoleApplication
             set { _leading = value; }
         }
 
-        public int Color
+        public string Color
         {
             get { return _color; }
             set { _color = value; }

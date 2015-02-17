@@ -98,6 +98,8 @@ namespace ConsoleApplication
 
                         sceneCounter++;
                     }
+
+                    _presentationObject.ConvertToYoobaUnits();
                 }
             //}
             //catch
@@ -131,7 +133,6 @@ namespace ConsoleApplication
                 SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
 
                 string slide_name = splitUriToImageName(slidePart.Uri); //Get the slide for this background
-                //console.WriteLine(slide_name);
 
                 var bg_type = bg.FirstChild;
 
@@ -140,20 +141,19 @@ namespace ConsoleApplication
                 {
 
                     case "solidFill":
-                        //Console.WriteLine("solidFill");
                         ShapeObject shapeObject = new ShapeObject(simpleSceneObject);
 
                         if (bg_type.FirstChild.GetType().Equals(typeof(DrawingML.RgbColorModelHex)))
                         {
                             foreach (var value in bg_type.Descendants<DrawingML.RgbColorModelHex>())
-                                customBg.BgColor = int.Parse(value.Val, System.Globalization.NumberStyles.HexNumber);
+                                customBg.BgColor = value.Val;
                             foreach (var alpha in bg_type.Descendants<DrawingML.Alpha>())
                                 customBg.Alpha = alpha.Val;
                         }
                         else
                         { //Theme color
                             foreach (var value in bg_type.Descendants<DrawingML.SchemeColor>())
-                                customBg.BgColor = int.Parse(getColorFromTheme(value.Val), System.Globalization.NumberStyles.HexNumber);
+                                customBg.BgColor = getColorFromTheme(value.Val);
                             foreach (var value in bg_type.Descendants<DrawingML.Alpha>())
                                 customBg.Alpha = value.Val; 
                         }
@@ -266,8 +266,20 @@ namespace ConsoleApplication
                 //Get the size of the shape object
                 foreach (var ext in sp.Descendants<DrawingML.Extents>())
                 {
-                    simpleSceneObject.ClipHeight = (ext.Cx != null) ? (int)ext.Cx : simpleSceneObject.ClipHeight;
-                    simpleSceneObject.ClipWidth = (ext.Cy != null) ? (int)ext.Cy : simpleSceneObject.ClipWidth;
+                    simpleSceneObject.ClipWidth = (ext.Cx != null) ? (int)ext.Cx : simpleSceneObject.ClipWidth;
+                    simpleSceneObject.ClipHeight = (ext.Cy != null) ? (int)ext.Cy : simpleSceneObject.ClipHeight;
+                }
+
+                //Get the alignment of the shape object
+                foreach (DrawingML.Paragraph p in sp.Descendants<DrawingML.Paragraph>())
+                {
+                    if (p.ParagraphProperties.HasAttributes)
+                    {
+                        if (p.ParagraphProperties.Alignment != null)
+                        {
+                            powerPointText.Alignment = p.ParagraphProperties.Alignment.Value.ToString();
+                        }
+                    }
                 }
 
                 //Add text info to scene object
@@ -295,7 +307,7 @@ namespace ConsoleApplication
                     textStyle.Font = powerPointText.Font;
 
                     if (powerPointText.FontColor.Length==6)
-                        textStyle.FontColor = int.Parse(powerPointText.FontColor, System.Globalization.NumberStyles.HexNumber); 
+                        textStyle.FontColor = powerPointText.FontColor; 
 
                     textStyle.FontSize = powerPointText.FontSize;
 
@@ -312,7 +324,7 @@ namespace ConsoleApplication
                     foreach (var color in run.Descendants<DrawingML.RgbColorModelHex>())
                     {
                         //Convert Hexadeciamal color to integer color
-                        textStyle.FontColor = int.Parse(color.Val, System.Globalization.NumberStyles.HexNumber);
+                        textStyle.FontColor = color.Val;
                     }
 
                     //Get run properties (size, bold, italic, underline) and insert into style
@@ -320,6 +332,20 @@ namespace ConsoleApplication
                     textStyle.Bold      = (run.RunProperties.Bold != null)      ? (Boolean)run.RunProperties.Bold   : textStyle.Bold;
                     textStyle.Italic    = (run.RunProperties.Italic != null)    ? (Boolean)run.RunProperties.Italic : textStyle.Italic;
                     textStyle.Underline = (run.RunProperties.Underline != null) ? true                              : textStyle.Underline;
+
+                    //If font size still is 0, change it to default size
+                    if (textStyle.FontSize == 0)
+                    {
+                        var textStyles = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster.TextStyles;
+
+                        foreach (DrawingML.DefaultRunProperties defRPR in textStyles.BodyStyle.Level1ParagraphProperties.Descendants<DrawingML.DefaultRunProperties>())
+                        {
+                            if (defRPR.FontSize != null)
+                            {
+                                textStyle.FontSize = defRPR.FontSize;
+                            }
+                        }
+                    }
 
                     //Add textStyle to StyleList of the sceneObject
                     sceneObject.addToStyleList(textStyle);
@@ -345,6 +371,19 @@ namespace ConsoleApplication
                     sceneObject.FragmentsList.Add(textFragment);
                 }
 
+                //Put the text object properties to the first style in style list
+                if (sceneObject.StyleList.Count > 0)
+                {
+                    sceneObject.Bold = sceneObject.StyleList[0].Bold;
+                    sceneObject.Italic = sceneObject.StyleList[0].Italic;
+                    sceneObject.Underline = sceneObject.StyleList[0].Underline;
+                    sceneObject.Size = sceneObject.StyleList[0].FontSize;
+                    sceneObject.Color = sceneObject.StyleList[0].FontColor;
+                    sceneObject.Align = powerPointText.Alignment;
+                }
+
+                if (sceneObject.FragmentsList.Count < 1)
+                    continue;
 
                 sceneObjectList.Add(sceneObject);
             }
@@ -629,12 +668,12 @@ namespace ConsoleApplication
 
                 if (powerPointText == GetPowerPointObject(_slideMasterPowerPointShapes, powerPointText) &&
                     powerPointText.Type.Contains("Title"))
-                { 
-                        PowerPointText temp = new PowerPointText();
-                        temp.Type = "title";
-                        temp = new PowerPointText(GetPowerPointObject(_slideMasterPowerPointShapes, temp));
-                        temp.Type = powerPointText.Type;
-                        powerPointText = temp;
+                {
+                    PowerPointText temp = new PowerPointText();
+                    temp.Type = "title";
+                    temp = new PowerPointText(GetPowerPointObject(_slideMasterPowerPointShapes, temp));
+                    temp.Type = powerPointText.Type;
+                    powerPointText = temp;
                 }
                 else
                 {
@@ -684,6 +723,9 @@ namespace ConsoleApplication
                         }
                     }
                 }
+
+                if (powerPointText.isEmpty())
+                    continue;
 
                 slideLayoutPowerPointShapes.Add(powerPointText);
             }

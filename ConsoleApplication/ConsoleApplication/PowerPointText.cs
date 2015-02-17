@@ -152,5 +152,28 @@ namespace ConsoleApplication
             get { return _fontColor; }
             set { _fontColor = value; }
         }
+
+        public bool isEmpty()
+        {
+            if( _idx == -1 &&
+                _fontSize == 0 &&
+                //_x == 0 &&
+                //_y == 0 &&
+                //_cx == 0 &&
+                //_cy == 0 &&
+                _rotation == 0 &&
+                _fontColor == "" &&
+                _type == "" &&
+                _font == "" &&
+                //_alignment == "" &&
+                //_anchor == "" &&
+                _bold == false &&
+                _italic == false &&
+                _underline == false
+            )
+                return true;
+            else
+                return false;
+        }
     }
 }

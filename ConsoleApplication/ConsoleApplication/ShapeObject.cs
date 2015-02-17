@@ -10,10 +10,10 @@ namespace ConsoleApplication
     public class ShapeObject : SceneObjectDecorator
     {
         private float _alpha, _fillAlpha, _gradientAngle, _rotation, _rotationX, _rotationY, _rotationZ;
-        private int _fillColor, _lineAlpha, _lineColor, _lineSize, _x, _y, _z;
+        private int _lineAlpha, _lineSize, _x, _y, _z;
 
         private Boolean _cacheAsBitmap, _fillEnable, _lineEnable, _visible;
-        private string _fillType, _gradientType;
+        private string _fillType, _gradientType, _fillColor, _lineColor;
 
         private float[] gradientAphas;
         private int[] gradientFills;
@@ -31,11 +31,11 @@ namespace ConsoleApplication
             _gradientAngle = 90;
             _gradientType = "linear";
             _fillAlpha = 0;
-            _fillColor = 16743690;
+            _fillColor = "ffffff";
             _fillEnable = false;
             _fillType = "solid";
             _lineAlpha = 1;
-            _lineColor = 8338949;
+            _lineColor = "000000";
             _lineEnable = true;
             _lineSize = 4;
             _rotation = 0;
@@ -216,7 +216,7 @@ namespace ConsoleApplication
             set { _lineSize = value; }
         }
 
-        public int LineColor
+        public string LineColor
         {
             get { return _lineColor; }
             set { _lineColor = value; }
@@ -228,7 +228,7 @@ namespace ConsoleApplication
             set { _lineAlpha = value; }
         }
 
-        public int FillColor
+        public string FillColor
         {
             get { return _fillColor; }
             set { _fillColor = value; }

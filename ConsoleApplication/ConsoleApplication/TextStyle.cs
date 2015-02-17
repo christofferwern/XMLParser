@@ -11,8 +11,8 @@ namespace ConsoleApplication
     public class TextStyle
     {
         private Boolean _bold, _underline, _italic;
-        private int _fontSize, _fontColor;
-        private string _font;
+        private int _fontSize;
+        private string _font, _fontColor;
         private XmlDocument _rootOfDocument;
 
         public TextStyle()
@@ -21,7 +21,7 @@ namespace ConsoleApplication
             _underline = false;
             _italic = false;
             _fontSize = 0;
-            _fontColor = Color.Black.ToArgb();
+            _fontColor = "000000";
             _font = "Default";
         }
 
@@ -90,10 +90,15 @@ namespace ConsoleApplication
             set { _font = value; }
         }
 
-        public int FontColor
+        public string FontColor
         {
             get { return _fontColor; }
             set { _fontColor = value; }
+        }
+
+        public int FontColorInteger()
+        {
+            return int.Parse(_fontColor, System.Globalization.NumberStyles.HexNumber);
         }
 
         public int FontSize
@@ -143,6 +148,27 @@ namespace ConsoleApplication
                 && (Underline == other.Underline)
                 && (Bold == other.Bold);*/
         }
+
+        //public static bool operator ==(TextStyle x, TextStyle y)
+        //{
+        //    if (x == null || y == null)
+        //        return false;
+
+        //     return      (x.Font == y.Font)
+        //              && (x.FontColor == y.FontColor)
+        //              && (x.FontSize == y.FontSize)
+        //              && (x.Italic == y.Italic)
+        //              && (x.Underline == y.Underline)
+        //              && (x.Bold == y.Bold);
+        //}
+
+        //public static bool operator !=(TextStyle x, TextStyle y)
+        //{
+        //    if (x == null || y == null)
+        //        return false;
+
+        //    return !(x == y);
+        //}
 
         public string toString()
         {
