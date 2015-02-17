@@ -103,7 +103,7 @@ namespace ConsoleApplication
             string HTML = "";
 
             HTML += "<TEXTFORMAT LEFTMARGIN=\"1\" RIGHTMARGIN=\"2\">";
-            HTML += "<P ALIGN=\"left\">";
+            HTML += "<P ALIGN=\"" + _align + "\">";
 
             TextStyle newStyle = new TextStyle(), oldStyle = new TextStyle();
 

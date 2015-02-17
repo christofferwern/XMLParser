@@ -213,6 +213,11 @@ namespace ConsoleApplication
         {
             //Get all the slide layout power point shapes
             List<PowerPointText> slideLayoutPowerPointShapes = GetSlideLayoutPowerPointShapes(slidePart);
+            Console.WriteLine("SLIDE LAYOT............................");
+            foreach (PowerPointText p in slideLayoutPowerPointShapes)
+            {
+                Console.WriteLine(p.toString() + "\n");
+            }
 
             List<SceneObject> sceneObjectList = new List<SceneObject>();
 
@@ -270,6 +275,18 @@ namespace ConsoleApplication
                     simpleSceneObject.ClipWidth = (ext.Cy != null) ? (int)ext.Cy : simpleSceneObject.ClipWidth;
                 }
 
+                //Get the alignment of the shape object
+                foreach (DrawingML.Paragraph p in sp.Descendants<DrawingML.Paragraph>())
+                {
+                    if (p.ParagraphProperties.HasAttributes)
+                    {
+                        if (p.ParagraphProperties.Alignment != null)
+                        {
+                            powerPointText.Alignment = p.ParagraphProperties.Alignment.Value.ToString();
+                        }
+                    }
+                }
+
                 //Add text info to scene object
                 TextObject sceneObject = new TextObject(simpleSceneObject);
 
@@ -321,6 +338,20 @@ namespace ConsoleApplication
                     textStyle.Italic    = (run.RunProperties.Italic != null)    ? (Boolean)run.RunProperties.Italic : textStyle.Italic;
                     textStyle.Underline = (run.RunProperties.Underline != null) ? true                              : textStyle.Underline;
 
+                    //If font size still is 0, change it to default size
+                    if (textStyle.FontSize == 0)
+                    {
+                        var textStyles = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster.TextStyles;
+
+                        foreach (DrawingML.DefaultRunProperties defRPR in textStyles.BodyStyle.Level1ParagraphProperties.Descendants<DrawingML.DefaultRunProperties>())
+                        {
+                            if (defRPR.FontSize != null)
+                            {
+                                textStyle.FontSize = defRPR.FontSize;
+                            }
+                        }
+                    }
+
                     //Add textStyle to StyleList of the sceneObject
                     sceneObject.addToStyleList(textStyle);
 
@@ -343,8 +374,25 @@ namespace ConsoleApplication
                     textFragment.Y = xy.Item2;                 
 
                     sceneObject.FragmentsList.Add(textFragment);
+
+                    //Console.WriteLine(textFragment.Text);
+                    //Console.WriteLine("Align: " + powerPointText.Alignment);
+                    //Console.WriteLine(textStyle.toString() + "\n");
                 }
 
+                //Put the text object properties to the first style in style list
+                if (sceneObject.StyleList.Count > 0)
+                {
+                    sceneObject.Bold = sceneObject.StyleList[0].Bold;
+                    sceneObject.Italic = sceneObject.StyleList[0].Italic;
+                    sceneObject.Underline = sceneObject.StyleList[0].Underline;
+                    sceneObject.Size = sceneObject.StyleList[0].FontSize;
+                    sceneObject.Color = sceneObject.StyleList[0].FontColor;
+                    sceneObject.Align = powerPointText.Alignment;
+                }
+
+                if (sceneObject.FragmentsList.Count < 1)
+                    continue;
 
                 sceneObjectList.Add(sceneObject);
             }
@@ -629,12 +677,12 @@ namespace ConsoleApplication
 
                 if (powerPointText == GetPowerPointObject(_slideMasterPowerPointShapes, powerPointText) &&
                     powerPointText.Type.Contains("Title"))
-                { 
-                        PowerPointText temp = new PowerPointText();
-                        temp.Type = "title";
-                        temp = new PowerPointText(GetPowerPointObject(_slideMasterPowerPointShapes, temp));
-                        temp.Type = powerPointText.Type;
-                        powerPointText = temp;
+                {
+                    PowerPointText temp = new PowerPointText();
+                    temp.Type = "title";
+                    temp = new PowerPointText(GetPowerPointObject(_slideMasterPowerPointShapes, temp));
+                    temp.Type = powerPointText.Type;
+                    powerPointText = temp;
                 }
                 else
                 {
@@ -684,6 +732,9 @@ namespace ConsoleApplication
                         }
                     }
                 }
+
+                if (powerPointText.isEmpty())
+                    continue;
 
                 slideLayoutPowerPointShapes.Add(powerPointText);
             }

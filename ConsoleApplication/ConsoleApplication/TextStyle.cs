@@ -144,6 +144,27 @@ namespace ConsoleApplication
                 && (Bold == other.Bold);*/
         }
 
+        //public static bool operator ==(TextStyle x, TextStyle y)
+        //{
+        //    if (x == null || y == null)
+        //        return false;
+
+        //     return      (x.Font == y.Font)
+        //              && (x.FontColor == y.FontColor)
+        //              && (x.FontSize == y.FontSize)
+        //              && (x.Italic == y.Italic)
+        //              && (x.Underline == y.Underline)
+        //              && (x.Bold == y.Bold);
+        //}
+
+        //public static bool operator !=(TextStyle x, TextStyle y)
+        //{
+        //    if (x == null || y == null)
+        //        return false;
+
+        //    return !(x == y);
+        //}
+
         public string toString()
         {
             return "Font:   " + _font + "\n" +
