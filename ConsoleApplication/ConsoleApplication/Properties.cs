@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Xml;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -205,6 +206,13 @@ namespace ConsoleApplication
             set { _flip = value; }
         }
 
+        public XmlElement getNode(XmlDocument root)
+        {
+            XmlElement node = root.CreateElement("properties");
+            node.InnerText = toString();
+
+            return node;
+        }
         public string toString()
         {
             string output = "";
