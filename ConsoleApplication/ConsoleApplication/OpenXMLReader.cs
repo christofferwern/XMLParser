@@ -76,7 +76,7 @@ namespace ConsoleApplication
                         Scene scene = new Scene(sceneCounter);
 
                         //Get background
-                        List<SceneObject> backgroundShapelist = GetBackgroundShapesFromSlidePart(slidePart);
+                        //List<SceneObject> backgroundShapelist = GetBackgroundShapesFromSlidePart(slidePart);
 
                         //Get all text shape
                         List<SceneObject> textShapelist = GetTextShapesFromSlidePart(slidePart);
@@ -88,7 +88,7 @@ namespace ConsoleApplication
                         List<SceneObject> shapelist = GetShapesFromSlidePart(slidePart);
 
                         //Add all scene object to the scene
-                        scene.addSceneObjects(backgroundShapelist);
+                        //scene.addSceneObjects(backgroundShapelist);
                         scene.addSceneObjects(textShapelist);
                         scene.addSceneObjects(imageShapelist);
                         scene.addSceneObjects(shapelist);
@@ -131,7 +131,6 @@ namespace ConsoleApplication
                 SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
 
                 string slide_name = splitUriToImageName(slidePart.Uri); //Get the slide for this background
-                //console.WriteLine(slide_name);
 
                 var bg_type = bg.FirstChild;
 
@@ -140,7 +139,6 @@ namespace ConsoleApplication
                 {
 
                     case "solidFill":
-                        //Console.WriteLine("solidFill");
                         ShapeObject shapeObject = new ShapeObject(simpleSceneObject);
 
                         if (bg_type.FirstChild.GetType().Equals(typeof(DrawingML.RgbColorModelHex)))
@@ -213,11 +211,6 @@ namespace ConsoleApplication
         {
             //Get all the slide layout power point shapes
             List<PowerPointText> slideLayoutPowerPointShapes = GetSlideLayoutPowerPointShapes(slidePart);
-            Console.WriteLine("SLIDE LAYOT............................");
-            foreach (PowerPointText p in slideLayoutPowerPointShapes)
-            {
-                Console.WriteLine(p.toString() + "\n");
-            }
 
             List<SceneObject> sceneObjectList = new List<SceneObject>();
 
@@ -374,10 +367,6 @@ namespace ConsoleApplication
                     textFragment.Y = xy.Item2;                 
 
                     sceneObject.FragmentsList.Add(textFragment);
-
-                    //Console.WriteLine(textFragment.Text);
-                    //Console.WriteLine("Align: " + powerPointText.Alignment);
-                    //Console.WriteLine(textStyle.toString() + "\n");
                 }
 
                 //Put the text object properties to the first style in style list

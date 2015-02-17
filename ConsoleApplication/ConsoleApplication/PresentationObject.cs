@@ -46,8 +46,11 @@ namespace ConsoleApplication
         public void createXMLTree()
         {
             _xmlDoc = new XmlDocument();
+            XmlDeclaration xmlDeclaration = _xmlDoc.CreateXmlDeclaration("1.0", "utf-8", null);
             XmlElement root = _xmlDoc.CreateElement("yoobaProject");
+            _xmlDoc.InsertBefore(xmlDeclaration, _xmlDoc.DocumentElement);
             _xmlDoc.AppendChild(root);
+
             root.AppendChild(getSceneTransitionNode());
             root.AppendChild(getBackgroundSceneNode());
             root.AppendChild(getForegroundSceneNode());
