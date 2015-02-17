@@ -17,16 +17,13 @@ namespace ConsoleApplication
         static void Main(string[] args)
         {
             var watch = Stopwatch.StartNew();
-            string path = @"C:\Users\ex1\downloads\presentation.pptx";
+            string path = @"C:\Users\ex1\downloads\pres.pptx";
 
             OpenXMLReader reader = new OpenXMLReader(path);
 
             reader.read();
 
-            Console.WriteLine("READ DONE");
-
             reader.PresentationObject.getXMLTree().Save(@"C:\Users\ex1\Desktop\out.xml");
-
 
             ////// Write the XML to a file.
             //System.IO.StreamWriter file = new System.IO.StreamWriter(@"C:\Users\ex1\Desktop\output.txt", true);
