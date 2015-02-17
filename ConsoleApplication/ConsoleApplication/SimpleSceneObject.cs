@@ -18,6 +18,7 @@ namespace ConsoleApplication
         private Boolean _hidden;
         private XmlDocument _doc;
         private Properties _properties;
+        private OptimizedClip _optimizedClip;
 
         private string[] _attributes = new string[14]{  "type", "clipID","z", "boundsX", "boundsY", "clipWidth", "clipHeight",
                                                         "width","height", "rotation", "alpha","name", "hidden", "flip"};
@@ -34,6 +35,7 @@ namespace ConsoleApplication
             _z = 0;
             _flip = 0;
             _properties = new Properties();
+            _optimizedClip = new OptimizedClip();
         }
 
         public Properties getProperties()
@@ -67,6 +69,9 @@ namespace ConsoleApplication
             //generateAttributes();
             XmlElement xmlElement = _doc.CreateElement("sceneObject");
 
+            xmlElement.AppendChild(_optimizedClip.getOptimizedClipNode(_doc));
+            xmlElement.AppendChild(getDsColNode());
+
             foreach (string s in _attributes)
             {
                 XmlAttribute xmlAttr = _doc.CreateAttribute(s);
@@ -79,7 +84,18 @@ namespace ConsoleApplication
             }
 
             _doc.DocumentElement.AppendChild(xmlElement);
+
             return xmlElement;
+        }
+
+        public XmlElement getDsColNode()
+        {
+            XmlElement dsCol = getXMLDocumentRoot().CreateElement("dsCol");
+            XmlCDataSection cData = getXMLDocumentRoot().CreateCDataSection("");
+
+            dsCol.AppendChild(cData);
+
+            return dsCol;
         }
 
         public float Z
