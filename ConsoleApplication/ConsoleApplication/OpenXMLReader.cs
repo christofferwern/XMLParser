@@ -76,7 +76,7 @@ namespace ConsoleApplication
                         Scene scene = new Scene(sceneCounter);
 
                         //Get background
-                        List<SceneObject> backgroundShapelist = GetBackgroundShapesFromSlidePart(slidePart);
+                        //List<SceneObject> backgroundShapelist = GetBackgroundShapesFromSlidePart(slidePart);
 
                         //Get all text shape
                         List<SceneObject> textShapelist = GetTextShapesFromSlidePart(slidePart);
@@ -88,7 +88,7 @@ namespace ConsoleApplication
                         List<SceneObject> shapelist = GetShapesFromSlidePart(slidePart);
 
                         //Add all scene object to the scene
-                        scene.addSceneObjects(backgroundShapelist);
+                        //scene.addSceneObjects(backgroundShapelist);
                         scene.addSceneObjects(textShapelist);
                         scene.addSceneObjects(imageShapelist);
                         scene.addSceneObjects(shapelist);

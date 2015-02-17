@@ -70,8 +70,9 @@ namespace ConsoleApplication
         public XmlElement getTextObjectPropertiesNode()
         {
             XmlElement textObjectPropNode = getXMLDocumentRoot().CreateElement("textObjectProperties");
-            XmlElement stylesNode = getStylesNode();
-            XmlElement fragmentNode = getFragmentsNode();
+
+            //XmlElement stylesNode = getStylesNode();
+            //XmlElement fragmentNode = getFragmentsNode();
             //XmlElement textNode = getTextNode();
             //textObjectPropNode.AppendChild(textNode);
 
@@ -96,6 +97,15 @@ namespace ConsoleApplication
             //textObjectPropNode.AppendChild(fragmentNode);
 
             return textObjectPropNode;
+        }
+
+        public XmlElement getPropertiesNode()
+        {
+            string properties = getProperties().toString();
+            XmlElement prop = getXMLDocumentRoot().CreateElement("properties");
+            prop.InnerText = properties;
+
+            return prop;
         }
 
         public string getHTML()
@@ -373,10 +383,12 @@ namespace ConsoleApplication
         public override XmlElement getXMLTree()
         {
             XmlElement parent = base.getXMLTree();
+            XmlElement properties = getPropertiesNode();
             XmlElement acce = getXMLDocumentRoot().CreateElement("accessors");
             XmlElement textObjectProps = getTextObjectPropertiesNode();
 
             acce.AppendChild(textObjectProps);
+            parent.AppendChild(properties);
             parent.AppendChild(acce);
 
             return parent;
