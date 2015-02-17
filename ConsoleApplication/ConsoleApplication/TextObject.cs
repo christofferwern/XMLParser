@@ -110,7 +110,6 @@ namespace ConsoleApplication
 
         public string getHTML()
         {
-            Console.WriteLine("HTML");
             string HTML = "";
 
             HTML += "<TEXTFORMAT LEFTMARGIN=\"1\" RIGHTMARGIN=\"2\">";
