@@ -146,7 +146,8 @@ namespace ConsoleApplication
                         italic = true;
                     }
 
-                    HTML += textFragment.Text;
+                    
+                    HTML += textFragment.Text.Replace("<","(").Replace(">",")");
 
                     oldStyle = newStyle;
                     continue;
@@ -195,7 +196,7 @@ namespace ConsoleApplication
                             italic = true;
                         }
 
-                        HTML += textFragment.Text;
+                        HTML += textFragment.Text.Replace("<", "(").Replace(">", ")");
                     }
                     else
                     {
@@ -215,8 +216,12 @@ namespace ConsoleApplication
                             italic = (newStyle.Italic) ? true : false;
                         }
 
-                        HTML += textFragment.Text;
+                        HTML += textFragment.Text.Replace("<", "(").Replace(">", ")");
                     }
+                }
+                else
+                {
+                    HTML += " " + textFragment.Text;
                 }
 
                 oldStyle = newStyle;

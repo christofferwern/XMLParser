@@ -41,7 +41,7 @@ namespace ConsoleApplication
         public void ConvertToYoobaUnits()
         {
             //_boundsX, _boundsY, _clipHeight, _clipWidth,
-            int pptWidth = 9144000, pptHeight = 5143500, yoobaWidth = 1024, yoobaHeight = 768;
+            int pptWidth = 9144000, pptHeight = 6858000, yoobaWidth = 1024, yoobaHeight = 768;
 
             float scaleWidth = (float)yoobaWidth / (float)pptWidth, scaleHeight = (float)yoobaHeight / (float)pptHeight;
 

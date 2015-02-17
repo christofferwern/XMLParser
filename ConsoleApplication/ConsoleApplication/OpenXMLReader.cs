@@ -273,12 +273,16 @@ namespace ConsoleApplication
                 //Get the alignment of the shape object
                 foreach (DrawingML.Paragraph p in sp.Descendants<DrawingML.Paragraph>())
                 {
-                    if (p.ParagraphProperties.HasAttributes)
+                    foreach(var child in p.ChildElements)
                     {
-                        if (p.ParagraphProperties.Alignment != null)
+                        if (child.LocalName == "pPr")
                         {
-                            powerPointText.Alignment = p.ParagraphProperties.Alignment.Value.ToString();
+                            if (p.ParagraphProperties.Alignment != null)
+                            {
+                                powerPointText.Alignment = p.ParagraphProperties.Alignment.Value.ToString();
+                            }
                         }
+
                     }
                 }
 
@@ -679,6 +683,7 @@ namespace ConsoleApplication
                     }
                 }
 
+                
                 if (powerPointText == GetPowerPointObject(_slideMasterPowerPointShapes, powerPointText) &&
                     powerPointText.Type.Contains("Title"))
                 {
@@ -692,6 +697,8 @@ namespace ConsoleApplication
                 {
                     powerPointText = GetPowerPointObject(_slideMasterPowerPointShapes, powerPointText);
                 }
+                
+                powerPointText = GetPowerPointObject(_slideMasterPowerPointShapes, powerPointText);
 
                 //Get the position and size
                 if (sp.ShapeProperties.Transform2D != null)
@@ -754,14 +761,14 @@ namespace ConsoleApplication
             {
                 if (ppt.Type == powerPointText.Type && ppt.Type!="")
                 {
-                    temp = ppt;
+                    temp = new PowerPointText(ppt);
                     temp.Idx = powerPointText.Idx;
                     return temp;
                 }
 
                 if (ppt.Idx == powerPointText.Idx && ppt.Idx>0)
                 {
-                    temp = ppt;
+                    temp = new PowerPointText(ppt);
                     temp.Type = powerPointText.Type;
                     return temp;
                 }
