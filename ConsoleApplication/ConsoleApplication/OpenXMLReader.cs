@@ -60,12 +60,6 @@ namespace ConsoleApplication
                     //Read all colors from theme
                     readColorFromTheme();
 
-                    foreach (var i in _themeColors)
-                    {
-                        Console.WriteLine(i);
-                    }
-
-
                     //Retrive the presentation part
                     var presentation = _presentationDocument.PresentationPart.Presentation;
 
@@ -353,6 +347,8 @@ namespace ConsoleApplication
                         }
                     }
 
+
+
                     //Add textStyle to StyleList of the sceneObject
                     sceneObject.addToStyleList(textStyle);
 
@@ -387,6 +383,10 @@ namespace ConsoleApplication
                     sceneObject.Color = sceneObject.StyleList[0].FontColor;
                     sceneObject.Align = powerPointText.Alignment;
                 }
+
+                //If alignment is empty, set it to left
+                if (sceneObject.Align == "")
+                    sceneObject.Align = "left";
 
                 if (sceneObject.FragmentsList.Count < 1)
                     continue;
