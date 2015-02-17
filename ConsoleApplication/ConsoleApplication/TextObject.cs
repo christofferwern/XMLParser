@@ -21,14 +21,14 @@ namespace ConsoleApplication
 
         public TextObject(SceneObject sceneobject) : base(sceneobject) 
         {
-            _align = "";
-            _antiAlias = "";
-            _font = "";
-            _autosize = "";
+            _align = "left";
+            _antiAlias = "normal";
+            _font = "Arial";
+            _autosize = "none";
             _color = 0;
             _leading = 0;
             _letterSpacing = 0;
-            _size = 0;
+            _size = 20;
             _bold = false;
             _italic = false;
             _underline = false;
@@ -88,7 +88,7 @@ namespace ConsoleApplication
 
                 FieldInfo fieldInfo = GetType().GetField("_" + s, BindingFlags.NonPublic | BindingFlags.Instance);
                 if (fieldInfo!=null)
-                    xmlAttr.Value = fieldInfo.GetValue(this).ToString();
+                    xmlAttr.Value = fieldInfo.GetValue(this).ToString().ToLower();
 
                 textObjectPropNode.Attributes.Append(xmlAttr);
             }
@@ -192,24 +192,24 @@ namespace ConsoleApplication
                         if (newStyle.Italic)
                         {
                             HTML += "<I>";
-                            Italic = true;
+                            italic = true;
                         }
 
                         HTML += textFragment.Text;
                     }
                     else
                     {
-                        if (newStyle.Bold != oldStyle.Bold)
+                        if (newStyle.Bold != bold)
                         {
                             HTML += (newStyle.Bold) ? "<B>" : "</B>";
                             bold = (newStyle.Bold) ? true : false;
                         }
-                        if (newStyle.Underline != oldStyle.Underline)
+                        if (newStyle.Underline != underline)
                         {
                             HTML += (newStyle.Underline) ? "<U>" : "</U>";
                             underline = (newStyle.Underline) ? true : false;
                         }
-                        if (newStyle.Italic != oldStyle.Italic)
+                        if (newStyle.Italic != italic)
                         {
                             HTML += (newStyle.Italic) ? "<I>" : "</I>";
                             italic = (newStyle.Italic) ? true : false;
