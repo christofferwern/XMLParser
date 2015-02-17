@@ -60,12 +60,18 @@ namespace ConsoleApplication
                     //Read all colors from theme
                     readColorFromTheme();
 
+                    foreach (var i in _themeColors)
+                    {
+                        Console.WriteLine(i);
+                    }
+
+
                     //Retrive the presentation part
                     var presentation = _presentationDocument.PresentationPart.Presentation;
 
                     //Get all styles stored in the slide master, <PowerPoint Type, TextStyle>
                     _slideMasterPowerPointShapes = GetSlideMasterPowerPointShapes(_presentationDocument);
-
+                    
                     //Counter of scene
                     int sceneCounter = 1;
 
@@ -165,7 +171,7 @@ namespace ConsoleApplication
 
                         break;
                     case "gradFill":
-                        Console.WriteLine("gradFill");
+                        //Console.WriteLine("gradFill");
                         List<KeyValuePair<int, string>> gradPosCol = new List<KeyValuePair<int, string>>();
                         foreach (var gs in bg_type.FirstChild.Descendants<DrawingML.GradientStop>())
                         {
@@ -178,7 +184,7 @@ namespace ConsoleApplication
                         }
                         foreach (var item in gradPosCol)
                         {
-                            Console.WriteLine(item);
+                           // Console.WriteLine(item);
                         }
 
                         break;
@@ -188,7 +194,7 @@ namespace ConsoleApplication
                         {
                             string embeded_id = blip.Embed.Value;
                             ImagePart image_part = (ImagePart)slide.SlidePart.GetPartById(embeded_id);
-                            Console.WriteLine(image_part.Uri.OriginalString);
+                            //Console.WriteLine(image_part.Uri.OriginalString);
 
                         }
 
@@ -580,7 +586,14 @@ namespace ConsoleApplication
                     }
                 }
 
-                
+                //Get the rotation
+                if (sp.ShapeProperties.Transform2D.HasAttributes)
+                {
+                    if (sp.ShapeProperties.Transform2D.Rotation != null)
+                    {
+                        powerPointText.Rotation = sp.ShapeProperties.Transform2D.Rotation.Value;
+                    }
+                }
 
                 //Get the position
                 if (sp.ShapeProperties.Transform2D.Offset != null)
@@ -633,7 +646,7 @@ namespace ConsoleApplication
                         }
                     }
                 }
-
+                
                 slideMasterPowerPointShapes.Add(powerPointText);
             }
 
@@ -798,9 +811,10 @@ namespace ConsoleApplication
         //Read all the colors in the theme
         private void readColorFromTheme()
         {
-            var colorScheme = _presentationDocument.PresentationPart.ThemePart.Theme.ThemeElements.ColorScheme;
+            var slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster;
 
-            var colorMap = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster.ColorMap;
+            var colorScheme = slideMaster.SlideMasterPart.ThemePart.Theme.ThemeElements.ColorScheme;
+            var colorMap = slideMaster.ColorMap;
 
             int index = 0;
 
@@ -871,7 +885,7 @@ namespace ConsoleApplication
         {
             for(int i=0;i<_nrOfThemeColors;i++)
             {
-                if (color == _themeColors.GetValue(i, 0).ToString())
+                if (color.Equals(_themeColors.GetValue(i, 0).ToString()))
                 {
                     return (string) _themeColors.GetValue(i, 1);
                 }

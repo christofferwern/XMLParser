@@ -162,11 +162,6 @@ namespace ConsoleApplication
                 {
                     sceneObject.ConvertToYoobaUnits();  
                 }
-
-                foreach (TextObject sceneObject in scene.SceneObjectList)
-                {
-                    Console.WriteLine(sceneObject.Size);
-                }
             }
         }
     }
