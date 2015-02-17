@@ -21,6 +21,11 @@ namespace ConsoleApplication
             return _sceneObject.getXMLTree();
         }
 
+        public virtual void ConvertToYoobaUnits()
+        {
+            _sceneObject.ConvertToYoobaUnits();
+        }
+
         public virtual Properties getProperties()
         {
             return _sceneObject.getProperties();

@@ -23,6 +23,8 @@ namespace ConsoleApplication
 
             reader.read();
 
+            Console.WriteLine("READ DONE");
+
             reader.PresentationObject.getXMLTree().Save(@"C:\Users\ex1\Desktop\out.xml");
 
 

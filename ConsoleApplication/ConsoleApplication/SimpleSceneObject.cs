@@ -38,6 +38,24 @@ namespace ConsoleApplication
             _optimizedClip = new OptimizedClip();
         }
 
+        public void ConvertToYoobaUnits()
+        {
+            //_boundsX, _boundsY, _clipHeight, _clipWidth,
+            int pptWidth = 9144000, pptHeight = 5143500, yoobaWidth = 1024, yoobaHeight = 768;
+
+            float scaleWidth = (float)yoobaWidth / (float)pptWidth, scaleHeight = (float)yoobaHeight / (float)pptHeight;
+
+            _boundsX = (int) (_boundsX * scaleWidth);
+            _boundsY = (int) (_boundsY * scaleHeight);
+            _clipWidth = (int)(_clipWidth * scaleWidth);
+            _clipHeight = (int)(_clipHeight * scaleHeight);
+
+            //rotation
+            _rotation /= 60000;
+
+            
+        }
+
         public Properties getProperties()
         {
             return _properties;

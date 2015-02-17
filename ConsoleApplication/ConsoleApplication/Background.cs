@@ -9,7 +9,7 @@ namespace ConsoleApplication
     class Background
     {
         private List<KeyValuePair<int, string>> gradientList = null;
-        private int bgColor;
+        private string bgColor;
         private float alpha;
 
         
@@ -18,7 +18,7 @@ namespace ConsoleApplication
 
         public Background()
         {
-
+            bgColor = "ffffff";
             BgImageLocation = "No picture";
         }
 
@@ -54,7 +54,7 @@ namespace ConsoleApplication
             set { alpha = 1 - ((value / 1000) / 100);}
         }
 
-        public int BgColor
+        public string BgColor
         {
             get { return bgColor; }
             set { bgColor = value; }

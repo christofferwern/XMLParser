@@ -11,6 +11,12 @@ namespace ConsoleApplication
     {
         private Properties _properties;
         private List<SceneObject> _sceneObjectList;
+
+        public List<SceneObject> SceneObjectList
+        {
+            get { return _sceneObjectList; }
+            set { _sceneObjectList = value; }
+        }
         private string _sceneLabel;
         private XmlDocument _doc;
 

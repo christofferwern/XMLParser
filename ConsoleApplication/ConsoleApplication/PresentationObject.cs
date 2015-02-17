@@ -153,5 +153,21 @@ namespace ConsoleApplication
             get { return _backgroundColor; }
             set { _backgroundColor = value; }
         }
+
+        public void ConvertToYoobaUnits()
+        {
+            foreach(Scene scene in this.sceneList)
+            {
+                foreach (SceneObject sceneObject in scene.SceneObjectList)
+                {
+                    sceneObject.ConvertToYoobaUnits();  
+                }
+
+                foreach (TextObject sceneObject in scene.SceneObjectList)
+                {
+                    Console.WriteLine(sceneObject.Size);
+                }
+            }
+        }
     }
 }

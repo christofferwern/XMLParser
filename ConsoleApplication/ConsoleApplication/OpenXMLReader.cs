@@ -98,6 +98,8 @@ namespace ConsoleApplication
 
                         sceneCounter++;
                     }
+
+                    _presentationObject.ConvertToYoobaUnits();
                 }
             //}
             //catch
@@ -144,14 +146,14 @@ namespace ConsoleApplication
                         if (bg_type.FirstChild.GetType().Equals(typeof(DrawingML.RgbColorModelHex)))
                         {
                             foreach (var value in bg_type.Descendants<DrawingML.RgbColorModelHex>())
-                                customBg.BgColor = int.Parse(value.Val, System.Globalization.NumberStyles.HexNumber);
+                                customBg.BgColor = value.Val;
                             foreach (var alpha in bg_type.Descendants<DrawingML.Alpha>())
                                 customBg.Alpha = alpha.Val;
                         }
                         else
                         { //Theme color
                             foreach (var value in bg_type.Descendants<DrawingML.SchemeColor>())
-                                customBg.BgColor = int.Parse(getColorFromTheme(value.Val), System.Globalization.NumberStyles.HexNumber);
+                                customBg.BgColor = getColorFromTheme(value.Val);
                             foreach (var value in bg_type.Descendants<DrawingML.Alpha>())
                                 customBg.Alpha = value.Val; 
                         }
@@ -264,8 +266,8 @@ namespace ConsoleApplication
                 //Get the size of the shape object
                 foreach (var ext in sp.Descendants<DrawingML.Extents>())
                 {
-                    simpleSceneObject.ClipHeight = (ext.Cx != null) ? (int)ext.Cx : simpleSceneObject.ClipHeight;
-                    simpleSceneObject.ClipWidth = (ext.Cy != null) ? (int)ext.Cy : simpleSceneObject.ClipWidth;
+                    simpleSceneObject.ClipWidth = (ext.Cx != null) ? (int)ext.Cx : simpleSceneObject.ClipWidth;
+                    simpleSceneObject.ClipHeight = (ext.Cy != null) ? (int)ext.Cy : simpleSceneObject.ClipHeight;
                 }
 
                 //Get the alignment of the shape object
@@ -305,7 +307,7 @@ namespace ConsoleApplication
                     textStyle.Font = powerPointText.Font;
 
                     if (powerPointText.FontColor.Length==6)
-                        textStyle.FontColor = int.Parse(powerPointText.FontColor, System.Globalization.NumberStyles.HexNumber); 
+                        textStyle.FontColor = powerPointText.FontColor; 
 
                     textStyle.FontSize = powerPointText.FontSize;
 
@@ -322,7 +324,7 @@ namespace ConsoleApplication
                     foreach (var color in run.Descendants<DrawingML.RgbColorModelHex>())
                     {
                         //Convert Hexadeciamal color to integer color
-                        textStyle.FontColor = int.Parse(color.Val, System.Globalization.NumberStyles.HexNumber);
+                        textStyle.FontColor = color.Val;
                     }
 
                     //Get run properties (size, bold, italic, underline) and insert into style
