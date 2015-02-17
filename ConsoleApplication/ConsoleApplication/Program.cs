@@ -25,13 +25,13 @@ namespace ConsoleApplication
 
             reader.read();
 
-            reader.PresentationObject.getXMLTree().Save(Console.Out);
+            reader.PresentationObject.getXMLTree().Save(@"C:\Users\ex1\Desktop\output.xml");
 
-            //// Write the XML to a file.
-            System.IO.StreamWriter file = new System.IO.StreamWriter(@"C:\Users\ex1\Desktop\output.txt", true);
-            file.WriteLine(reader.PresentationObject.getXMLTree().InnerXml);
+            ////// Write the XML to a file.
+            //System.IO.StreamWriter file = new System.IO.StreamWriter(@"C:\Users\ex1\Desktop\output.txt", true);
+            //file.WriteLine(reader.PresentationObject.getXMLTree().InnerXml);
 
-            file.Close();
+            //file.Close();
 
             watch.Stop();
             Console.WriteLine("\nCompilation time: " + (double)watch.ElapsedMilliseconds/1000 + "s");
