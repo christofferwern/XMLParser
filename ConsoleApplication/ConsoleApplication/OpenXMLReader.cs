@@ -71,6 +71,9 @@ namespace ConsoleApplication
                     //Get all styles stored in the slide master, <PowerPoint Type, TextStyle>
                     _slideMasterPowerPointShapes = GetSlideMasterPowerPointShapes(_presentationDocument);
 
+                    //foreach(PowerPointText p in _slideMasterPowerPointShapes)
+                    //    Console.WriteLine(p.toString());
+
                     //Counter of scene
                     int sceneCounter = 1;
 
@@ -381,6 +384,13 @@ namespace ConsoleApplication
 
                     bool HasRun = false;
 
+                    PowerPointText temp = new PowerPointText();
+                    temp.Level = level;
+                    temp.Type = powerPointText.Type;
+                    temp.Idx = powerPointText.Idx;
+
+                    temp = GetPowerPointObject(slideLayoutPowerPointShapes, temp);
+
                     //Go trough all the runs in the text body
                     //they contains the text and some properties
                     foreach (DrawingML.Run run in p.Descendants<DrawingML.Run>())
@@ -404,12 +414,12 @@ namespace ConsoleApplication
 
                         textStyle.setXMLDocumentRoot(ref _rootXmlDoc);
 
-                        textStyle.Bold = powerPointText.Bold;
-                        textStyle.Italic = powerPointText.Italic;
-                        textStyle.Underline = powerPointText.Underline;
-                        textStyle.Font = powerPointText.Font;
-                        textStyle.FontColor = powerPointText.FontColor;
-                        textStyle.FontSize = powerPointText.FontSize;
+                        textStyle.Bold = temp.Bold;
+                        textStyle.Italic = temp.Italic;
+                        textStyle.Underline = temp.Underline;
+                        textStyle.Font = temp.Font;
+                        textStyle.FontColor = temp.FontColor;
+                        textStyle.FontSize = temp.FontSize;
 
                         //Get font
                         foreach (var latinFont in run.Descendants<DrawingML.LatinFont>())
@@ -540,6 +550,8 @@ namespace ConsoleApplication
 
             foreach (PresentationML.Shape sp in shapeTree.Descendants<PresentationML.Shape>())
             {
+                List<PowerPointText> powerPointTextList = new List<PowerPointText>();
+
                 PowerPointText powerPointText = new PowerPointText();
 
                 //Get the PowerPoint type and index for the shape so it can get the information from both 
@@ -569,43 +581,25 @@ namespace ConsoleApplication
 
                     if (titleStyle.HasChildren)
                     {
-                        if (titleStyle.Level1ParagraphProperties.Alignment != null)
-                        {
-                            powerPointText.Alignment = titleStyle.Level1ParagraphProperties.Alignment;
-                        } 
+                        PowerPointText p1 = GetLevelProperties<DrawingML.Level1ParagraphProperties>(titleStyle.Level1ParagraphProperties); p1.Level = 0;
+                        PowerPointText p2 = GetLevelProperties<DrawingML.Level2ParagraphProperties>(titleStyle.Level2ParagraphProperties); p2.Level = 1;
+                        PowerPointText p3 = GetLevelProperties<DrawingML.Level3ParagraphProperties>(titleStyle.Level3ParagraphProperties); p3.Level = 2;
+                        PowerPointText p4 = GetLevelProperties<DrawingML.Level4ParagraphProperties>(titleStyle.Level4ParagraphProperties); p4.Level = 3;
+                        PowerPointText p5 = GetLevelProperties<DrawingML.Level5ParagraphProperties>(titleStyle.Level5ParagraphProperties); p5.Level = 4;
+                        PowerPointText p6 = GetLevelProperties<DrawingML.Level6ParagraphProperties>(titleStyle.Level6ParagraphProperties); p6.Level = 5;
+                        PowerPointText p7 = GetLevelProperties<DrawingML.Level7ParagraphProperties>(titleStyle.Level7ParagraphProperties); p7.Level = 6;
+                        PowerPointText p8 = GetLevelProperties<DrawingML.Level8ParagraphProperties>(titleStyle.Level8ParagraphProperties); p8.Level = 7;
+                        PowerPointText p9 = GetLevelProperties<DrawingML.Level9ParagraphProperties>(titleStyle.Level9ParagraphProperties); p9.Level = 8;
 
-                        foreach (DrawingML.DefaultRunProperties defRPR in titleStyle.Level1ParagraphProperties.Descendants<DrawingML.DefaultRunProperties>())
-                        {
-                            //Get run properties (size, bold, italic, underline) and insert into style
-                            powerPointText.FontSize = (defRPR.FontSize != null) ? (int)defRPR.FontSize : powerPointText.FontSize;
-                            powerPointText.Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointText.Bold;
-                            powerPointText.Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointText.Italic;
-                            //powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
-
-                            if (defRPR.Underline != null)
-                            {
-                                if (defRPR.Underline.Value.ToString() == "sng")
-                                {
-                                    powerPointText.Underline = true;
-                                }
-                            }
-
-                            //Get font
-                            foreach (DrawingML.LatinFont font in defRPR.Descendants<DrawingML.LatinFont>())
-                            {
-                                powerPointText.Font = getFontFromTheme(font.Typeface);
-                            }
-
-                            //Get font color
-                            foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
-                            {
-                                powerPointText.FontColor = getColorFromTheme(color.Val);
-                            }
-                            foreach (DrawingML.RgbColorModelHex color in defRPR.Descendants<DrawingML.RgbColorModelHex>())
-                            {
-                                powerPointText.FontColor = getColorFromTheme(color.Val);
-                            }
-                        }
+                        powerPointTextList.Add(p1);
+                        powerPointTextList.Add(p2);
+                        powerPointTextList.Add(p3);
+                        powerPointTextList.Add(p4);
+                        powerPointTextList.Add(p5);
+                        powerPointTextList.Add(p6);
+                        powerPointTextList.Add(p7);
+                        powerPointTextList.Add(p8);
+                        powerPointTextList.Add(p9);
                     }
                 }
                 //Get the general body attributes 
@@ -615,52 +609,25 @@ namespace ConsoleApplication
 
                     if (bodyStyle.HasChildren)
                     {
-                        if (bodyStyle.Level1ParagraphProperties.Alignment != null)
-                            powerPointText.Alignment = bodyStyle.Level1ParagraphProperties.Alignment;
+                        PowerPointText p1 = GetLevelProperties<DrawingML.Level1ParagraphProperties>(bodyStyle.Level1ParagraphProperties); p1.Level = 0;
+                        PowerPointText p2 = GetLevelProperties<DrawingML.Level2ParagraphProperties>(bodyStyle.Level2ParagraphProperties); p2.Level = 1;
+                        PowerPointText p3 = GetLevelProperties<DrawingML.Level3ParagraphProperties>(bodyStyle.Level3ParagraphProperties); p3.Level = 2;
+                        PowerPointText p4 = GetLevelProperties<DrawingML.Level4ParagraphProperties>(bodyStyle.Level4ParagraphProperties); p4.Level = 3;
+                        PowerPointText p5 = GetLevelProperties<DrawingML.Level5ParagraphProperties>(bodyStyle.Level5ParagraphProperties); p5.Level = 4;
+                        PowerPointText p6 = GetLevelProperties<DrawingML.Level6ParagraphProperties>(bodyStyle.Level6ParagraphProperties); p6.Level = 5;
+                        PowerPointText p7 = GetLevelProperties<DrawingML.Level7ParagraphProperties>(bodyStyle.Level7ParagraphProperties); p7.Level = 6;
+                        PowerPointText p8 = GetLevelProperties<DrawingML.Level8ParagraphProperties>(bodyStyle.Level8ParagraphProperties); p8.Level = 7;
+                        PowerPointText p9 = GetLevelProperties<DrawingML.Level9ParagraphProperties>(bodyStyle.Level9ParagraphProperties); p9.Level = 8;
 
-                        foreach (DrawingML.DefaultRunProperties defRPR in bodyStyle.Level1ParagraphProperties.Descendants<DrawingML.DefaultRunProperties>())
-                        {
-                            //Get run properties (size, bold, italic, underline) and insert into style
-                            powerPointText.FontSize = (defRPR.FontSize != null) ? (int)defRPR.FontSize : powerPointText.FontSize;
-                            powerPointText.Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointText.Bold;
-                            powerPointText.Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointText.Italic;
-                            //powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
-
-                            if (defRPR.Underline != null)
-                            {
-                                if (defRPR.Underline.Value.ToString() == "sng")
-                                {
-                                    powerPointText.Underline = true;
-                                }
-                            }
-
-                            //Get font
-                            foreach (DrawingML.LatinFont font in defRPR.Descendants<DrawingML.LatinFont>())
-                            {
-                                powerPointText.Font = font.Typeface;
-
-                                if (powerPointText.Font.Equals("+mj-lt"))
-                                {
-                                    powerPointText.Font = majorFont;
-                                }
-
-                                if (powerPointText.Font.Equals("+mn-lt"))
-                                {
-                                    powerPointText.Font = minorFont;
-                                }
-                                    
-                            }
-
-                            //Get font color
-                            foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
-                            {
-                                powerPointText.FontColor = getColorFromTheme(color.Val);
-                            }
-                            foreach (DrawingML.RgbColorModelHex color in defRPR.Descendants<DrawingML.RgbColorModelHex>())
-                            {
-                                powerPointText.FontColor = getColorFromTheme(color.Val);
-                            }
-                        }
+                        powerPointTextList.Add(p1);
+                        powerPointTextList.Add(p2);
+                        powerPointTextList.Add(p3);
+                        powerPointTextList.Add(p4);
+                        powerPointTextList.Add(p5);
+                        powerPointTextList.Add(p6);
+                        powerPointTextList.Add(p7);
+                        powerPointTextList.Add(p8);
+                        powerPointTextList.Add(p9);
                     }
                 }
                 //Get the general other style attributes
@@ -670,57 +637,32 @@ namespace ConsoleApplication
 
                     if (otherStyle.HasChildren)
                     {
-                        if (otherStyle.Level1ParagraphProperties.Alignment != null)
-                            powerPointText.Alignment = otherStyle.Level1ParagraphProperties.Alignment;
+                        PowerPointText p1 = GetLevelProperties<DrawingML.Level1ParagraphProperties>(otherStyle.Level1ParagraphProperties); p1.Level = 0;
+                        PowerPointText p2 = GetLevelProperties<DrawingML.Level2ParagraphProperties>(otherStyle.Level2ParagraphProperties); p2.Level = 1;
+                        PowerPointText p3 = GetLevelProperties<DrawingML.Level3ParagraphProperties>(otherStyle.Level3ParagraphProperties); p3.Level = 2;
+                        PowerPointText p4 = GetLevelProperties<DrawingML.Level4ParagraphProperties>(otherStyle.Level4ParagraphProperties); p4.Level = 3;
+                        PowerPointText p5 = GetLevelProperties<DrawingML.Level5ParagraphProperties>(otherStyle.Level5ParagraphProperties); p5.Level = 4;
+                        PowerPointText p6 = GetLevelProperties<DrawingML.Level6ParagraphProperties>(otherStyle.Level6ParagraphProperties); p6.Level = 5;
+                        PowerPointText p7 = GetLevelProperties<DrawingML.Level7ParagraphProperties>(otherStyle.Level7ParagraphProperties); p7.Level = 6;
+                        PowerPointText p8 = GetLevelProperties<DrawingML.Level8ParagraphProperties>(otherStyle.Level8ParagraphProperties); p8.Level = 7;
+                        PowerPointText p9 = GetLevelProperties<DrawingML.Level9ParagraphProperties>(otherStyle.Level9ParagraphProperties); p9.Level = 8;
 
-
-
-                        foreach (DrawingML.DefaultRunProperties defRPR in otherStyle.Level1ParagraphProperties.Descendants<DrawingML.DefaultRunProperties>())
-                        {
-                            //Get run properties (size, bold, italic, underline) and insert into style
-                            powerPointText.FontSize = (defRPR.FontSize != null) ? (int)defRPR.FontSize : powerPointText.FontSize;
-                            powerPointText.Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointText.Bold;
-                            powerPointText.Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointText.Italic;
-                            //powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
-
-                            if (defRPR.Underline != null)
-                            {
-                                if (defRPR.Underline.Value.ToString() == "sng")
-                                {
-                                    powerPointText.Underline = true;
-                                }
-                            }
-
-                            
-                            //Get font
-                            foreach (DrawingML.LatinFont font in defRPR.Descendants<DrawingML.LatinFont>())
-                            {
-                                powerPointText.Font = font.Typeface;
-
-                                if (powerPointText.Font.Equals("+mj-lt"))
-                                {
-                                    powerPointText.Font = majorFont;
-                                }
-
-                                if (powerPointText.Font.Equals("+mn-lt"))
-                                {
-                                    powerPointText.Font = minorFont;
-                                }
-
-                            }
-
-                            //Get font color
-                            foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
-                            {
-                                powerPointText.FontColor = getColorFromTheme(color.Val);
-                            }
-                            foreach (DrawingML.RgbColorModelHex color in defRPR.Descendants<DrawingML.RgbColorModelHex>())
-                            {
-                                powerPointText.FontColor = getColorFromTheme(color.Val);
-                            }
-                               
-                        }
+                        /*powerPointTextList.Add(p1);
+                        powerPointTextList.Add(p2);
+                        powerPointTextList.Add(p3);
+                        powerPointTextList.Add(p4);
+                        powerPointTextList.Add(p5);
+                        powerPointTextList.Add(p6);
+                        powerPointTextList.Add(p7);
+                        powerPointTextList.Add(p8);
+                        powerPointTextList.Add(p9);*/
                     }
+                }
+
+
+                foreach(PowerPointText p in powerPointTextList){
+                    p.Idx = powerPointText.Idx;
+                    p.Type = powerPointText.Type;
                 }
 
                 //Get the rotation
@@ -728,67 +670,99 @@ namespace ConsoleApplication
                 {
                     if (sp.ShapeProperties.Transform2D.Rotation != null)
                     {
-                        powerPointText.Rotation = sp.ShapeProperties.Transform2D.Rotation.Value;
+                        foreach (PowerPointText p in powerPointTextList)
+                            p.Rotation = sp.ShapeProperties.Transform2D.Rotation.Value;
                     }
                 }
 
                 //Get the position
                 if (sp.ShapeProperties.Transform2D.Offset != null)
                 {
-                    powerPointText.X = (int)sp.ShapeProperties.Transform2D.Offset.X;
-                    powerPointText.Y = (int)sp.ShapeProperties.Transform2D.Offset.Y;
+                    foreach (PowerPointText p in powerPointTextList)
+                    {
+                        p.X = (int)sp.ShapeProperties.Transform2D.Offset.X;
+                        p.Y = (int)sp.ShapeProperties.Transform2D.Offset.Y;
+                    }
+                        
                 }
 
                 //Get the size
                 if (sp.ShapeProperties.Transform2D.Extents != null)
                 {
-                    powerPointText.Cx = (int)sp.ShapeProperties.Transform2D.Extents.Cx;
-                    powerPointText.Cy = (int)sp.ShapeProperties.Transform2D.Extents.Cy;
+                    foreach (PowerPointText p in powerPointTextList)
+                    {
+                        p.Cx = (int)sp.ShapeProperties.Transform2D.Extents.Cx;
+                        p.Cy = (int)sp.ShapeProperties.Transform2D.Extents.Cy;
+                    }
                 }
 
                 //Get anchor point
-                if (sp.TextBody.BodyProperties.Anchor!=null)
-                    powerPointText.Anchor = sp.TextBody.BodyProperties.Anchor;
+                if (sp.TextBody.BodyProperties.Anchor != null)
+                {
+                    foreach (PowerPointText p in powerPointTextList)
+                    {
+                        p.Anchor = sp.TextBody.BodyProperties.Anchor;
+                    }
+                }
+                   
 
                 //Get alignment
                 foreach (var pPr in sp.TextBody.Descendants<DrawingML.ParagraphProperties>())
                 {
                     if (pPr.Alignment != null)
-                        powerPointText.Alignment = pPr.Alignment;
-                }                        
-
-                if (sp.TextBody.ListStyle.HasChildren)
-                {
-                    if (sp.TextBody.ListStyle.Level1ParagraphProperties.Alignment!=null)
-                        powerPointText.Alignment = sp.TextBody.ListStyle.Level1ParagraphProperties.Alignment;
-
-                    foreach (DrawingML.DefaultRunProperties defRPR in sp.TextBody.ListStyle.Level1ParagraphProperties.Descendants<DrawingML.DefaultRunProperties>())
                     {
-                        //Get run properties (size, bold, italic, underline) and insert into style
-                        powerPointText.FontSize = (defRPR.FontSize != null) ? (int)defRPR.FontSize : powerPointText.FontSize;
-                        powerPointText.Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointText.Bold;
-                        powerPointText.Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointText.Italic;
-                        powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
-
-                        //Get font
-                        foreach (DrawingML.LatinFont font in defRPR.Descendants<DrawingML.LatinFont>())
+                        foreach (PowerPointText p in powerPointTextList)
                         {
-                            powerPointText.Font = font.Typeface;
-                        }
-
-                        //Get font color
-                        foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
-                        {
-                            powerPointText.FontColor = getColorFromTheme(color.Val);
-                        }
-                        foreach (DrawingML.RgbColorModelHex color in defRPR.Descendants<DrawingML.RgbColorModelHex>())
-                        {
-                            powerPointText.FontColor = getColorFromTheme(color.Val);
+                            powerPointText.Alignment = pPr.Alignment;
                         }
                     }
-                }
+                        
+                }                        
+               
+                if (sp.TextBody.ListStyle.HasChildren)
+                {
+                    List<PowerPointText> tempList = new List<PowerPointText>();
+                    PowerPointText p1 = GetLevelProperties<DrawingML.Level1ParagraphProperties>(sp.TextBody.ListStyle.Level1ParagraphProperties); p1.Level = 1;
+                    PowerPointText p2 = GetLevelProperties<DrawingML.Level2ParagraphProperties>(sp.TextBody.ListStyle.Level2ParagraphProperties); p2.Level = 2;
+                    PowerPointText p3 = GetLevelProperties<DrawingML.Level3ParagraphProperties>(sp.TextBody.ListStyle.Level3ParagraphProperties); p3.Level = 3;
+                    PowerPointText p4 = GetLevelProperties<DrawingML.Level4ParagraphProperties>(sp.TextBody.ListStyle.Level4ParagraphProperties); p4.Level = 4;
+                    PowerPointText p5 = GetLevelProperties<DrawingML.Level5ParagraphProperties>(sp.TextBody.ListStyle.Level5ParagraphProperties); p5.Level = 5;
+                    PowerPointText p6 = GetLevelProperties<DrawingML.Level6ParagraphProperties>(sp.TextBody.ListStyle.Level6ParagraphProperties); p6.Level = 6;
+                    PowerPointText p7 = GetLevelProperties<DrawingML.Level7ParagraphProperties>(sp.TextBody.ListStyle.Level7ParagraphProperties); p7.Level = 7;
+                    PowerPointText p8 = GetLevelProperties<DrawingML.Level8ParagraphProperties>(sp.TextBody.ListStyle.Level8ParagraphProperties); p8.Level = 8;
+                    PowerPointText p9 = GetLevelProperties<DrawingML.Level9ParagraphProperties>(sp.TextBody.ListStyle.Level9ParagraphProperties); p9.Level = 9;
+                    tempList.Add(p1);
+                    tempList.Add(p2);
+                    tempList.Add(p3);
+                    tempList.Add(p4);
+                    tempList.Add(p5);
+                    tempList.Add(p6);
+                    tempList.Add(p7);
+                    tempList.Add(p8);
+                    tempList.Add(p9);
+
+                    for (int i = 0; i < powerPointTextList.Count; i++)
+                    {
+                        powerPointTextList[i].Alignment = (tempList[i].Alignment != "") ? tempList[i].Alignment : powerPointTextList[i].Alignment;
+                        powerPointTextList[i].Anchor = (tempList[i].Anchor != "") ? tempList[i].Anchor : powerPointTextList[i].Anchor;
+                        //powerPointTextList[i].Bold = (tempList[i].Bold != "") ? tempList[i].Bold : powerPointTextList[i].Bold;
+                        powerPointTextList[i].Font = (tempList[i].Font != "") ? tempList[i].Font : powerPointTextList[i].Font;
+                        powerPointTextList[i].Cx = (tempList[i].Cx != 0) ? tempList[i].Cx : powerPointTextList[i].Cx;
+                        powerPointTextList[i].Cy = (tempList[i].Cy != 0) ? tempList[i].Cy : powerPointTextList[i].Cy;
+                        powerPointTextList[i].FontColor = (tempList[i].FontColor != "") ? tempList[i].FontColor : powerPointTextList[i].FontColor;
+                        powerPointTextList[i].FontSize = (tempList[i].FontSize != 0) ? tempList[i].FontSize : powerPointTextList[i].FontSize;
+                        powerPointTextList[i].FontColor = (tempList[i].FontColor != "") ? tempList[i].FontColor : powerPointTextList[i].FontColor;
+                        //powerPointTextList[i].Italic = (tempList[i].Italic != "") ? tempList[i].Italic : powerPointTextList[i].Italic;
+                        //powerPointTextList[i].Underline = (tempList[i].Underline != "") ? tempList[i].Underline : powerPointTextList[i].Underline;
+                    }
                 
-                slideMasterPowerPointShapes.Add(powerPointText);
+                }
+
+                foreach (PowerPointText ppt in powerPointTextList)
+                {
+                    slideMasterPowerPointShapes.Add(ppt);
+                }
+                    
             }
 
             return slideMasterPowerPointShapes;
@@ -802,7 +776,8 @@ namespace ConsoleApplication
             PresentationML.ShapeTree shapeTree = slidePart.SlideLayoutPart.SlideLayout.CommonSlideData.ShapeTree;
             foreach (PresentationML.Shape sp in shapeTree.Descendants<PresentationML.Shape>())
             {
-                PowerPointText powerPointText = new PowerPointText();
+                PowerPointText tempPowerPointText = new PowerPointText();
+                List<PowerPointText> powerPointTextList = new List<PowerPointText>();
 
                 //Get the PowerPoint type and index for the shape so it can get the information from both 
                 //its slideLayout and from the slideMaster/theme.
@@ -813,82 +788,94 @@ namespace ConsoleApplication
                     foreach (var attr in placeholder.GetAttributes())
                     {
                         if (attr.LocalName == "idx")
-                            powerPointText.Idx = int.Parse(attr.Value.ToString());
+                            tempPowerPointText.Idx = int.Parse(attr.Value.ToString());
 
                         if (attr.LocalName == "type")
-                            powerPointText.Type = attr.Value;
+                            tempPowerPointText.Type = attr.Value;
                     }
                 }
 
-                
-                if (powerPointText == GetPowerPointObject(_slideMasterPowerPointShapes, powerPointText) &&
-                    powerPointText.Type.Contains("Title"))
+                for (int i = 0; i < 9; i++)
                 {
-                    PowerPointText temp = new PowerPointText();
-                    temp.Type = "title";
-                    temp = new PowerPointText(GetPowerPointObject(_slideMasterPowerPointShapes, temp));
-                    temp.Type = powerPointText.Type;
-                    powerPointText = temp;
-                }
-                else
-                {
-                    powerPointText = GetPowerPointObject(_slideMasterPowerPointShapes, powerPointText);
-                }
-                
-                powerPointText = GetPowerPointObject(_slideMasterPowerPointShapes, powerPointText);
-
-                //Get the position and size
-                if (sp.ShapeProperties.Transform2D != null)
-                {
-                    powerPointText.X = (int)sp.ShapeProperties.Transform2D.Offset.X;
-                    powerPointText.Y = (int)sp.ShapeProperties.Transform2D.Offset.Y;
-                    powerPointText.Cx = (int)sp.ShapeProperties.Transform2D.Extents.Cx;
-                    powerPointText.Cy = (int)sp.ShapeProperties.Transform2D.Extents.Cy;
+                    PowerPointText p = new PowerPointText();
+                    p.Type = tempPowerPointText.Type;
+                    p.Idx = tempPowerPointText.Idx;
+                    p.Level = i;
+                    powerPointTextList.Add(p);
                 }
 
-                //Get anchor point
-                if (sp.TextBody.BodyProperties.Anchor != null)
-                    powerPointText.Anchor = sp.TextBody.BodyProperties.Anchor;
-
-                //Get alignment
-                foreach (var pPr in sp.TextBody.Descendants<DrawingML.ParagraphProperties>())
+                for (int i = 0; i < powerPointTextList.Count;i++ )
                 {
-                    if (pPr.Alignment != null)
-                        powerPointText.Alignment = pPr.Alignment;
-                }
-
-                if (sp.TextBody.ListStyle.HasChildren)
-                {
-                    foreach (DrawingML.DefaultRunProperties defRPR in sp.TextBody.ListStyle.Level1ParagraphProperties.Descendants<DrawingML.DefaultRunProperties>())
+                    if (powerPointTextList[i] == GetPowerPointObject(_slideMasterPowerPointShapes, powerPointTextList[i]) &&
+                        powerPointTextList[i].Type.Contains("Title"))
                     {
-                        //Get run properties (size, bold, italic, underline) and insert into style
-                        powerPointText.FontSize = (defRPR.FontSize != null) ? (int)defRPR.FontSize : powerPointText.FontSize;
-                        powerPointText.Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointText.Bold;
-                        powerPointText.Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointText.Italic;
-                        powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
+                        PowerPointText temp = new PowerPointText();
+                        temp.Type = "title";
+                        temp = new PowerPointText(GetPowerPointObject(_slideMasterPowerPointShapes, temp));
+                        temp.Type = powerPointTextList[i].Type;
+                        powerPointTextList[i] = temp;
+                    }
+                    else
+                    {
+                        powerPointTextList[i] = GetPowerPointObject(_slideMasterPowerPointShapes, powerPointTextList[i]);
+                    }
 
-                        //Get font
-                        foreach (DrawingML.SymbolFont font in defRPR.Descendants<DrawingML.SymbolFont>())
-                        {
-                            powerPointText.Font = getFontFromTheme(font.Typeface);
-                        }
 
-                        //Get font color
-                        foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
+                    //Get the position and size
+                    if (sp.ShapeProperties.Transform2D != null)
+                    {
+                        powerPointTextList[i].X = (int)sp.ShapeProperties.Transform2D.Offset.X;
+                        powerPointTextList[i].Y = (int)sp.ShapeProperties.Transform2D.Offset.Y;
+                        powerPointTextList[i].Cx = (int)sp.ShapeProperties.Transform2D.Extents.Cx;
+                        powerPointTextList[i].Cy = (int)sp.ShapeProperties.Transform2D.Extents.Cy;
+                    }
+
+                    //Get anchor point
+                    if (sp.TextBody.BodyProperties.Anchor != null)
+                        powerPointTextList[i].Anchor = sp.TextBody.BodyProperties.Anchor;
+
+                    //Get alignment
+                    foreach (var pPr in sp.TextBody.Descendants<DrawingML.ParagraphProperties>())
+                    {
+                        if (pPr.Alignment != null)
+                            powerPointTextList[i].Alignment = pPr.Alignment;
+                    }
+
+                    if (sp.TextBody.ListStyle.HasChildren)
+                    {
+                        foreach (DrawingML.DefaultRunProperties defRPR in sp.TextBody.ListStyle.Level1ParagraphProperties.Descendants<DrawingML.DefaultRunProperties>())
                         {
-                            powerPointText.FontColor = getColorFromTheme(color.Val);
-                        }
-                        foreach (DrawingML.RgbColorModelHex color in defRPR.Descendants<DrawingML.RgbColorModelHex>())
-                        {
-                            powerPointText.FontColor = getColorFromTheme(color.Val);
+                            //Get run properties (size, bold, italic, underline) and insert into style
+                            powerPointTextList[i].FontSize = (defRPR.FontSize != null) ? (int)defRPR.FontSize : powerPointTextList[i].FontSize;
+                            powerPointTextList[i].Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointTextList[i].Bold;
+                            powerPointTextList[i].Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointTextList[i].Italic;
+                            powerPointTextList[i].Underline = (defRPR.Underline != null) ? true : powerPointTextList[i].Underline;
+
+                            //Get font
+                            foreach (DrawingML.SymbolFont font in defRPR.Descendants<DrawingML.SymbolFont>())
+                            {
+                                powerPointTextList[i].Font = getFontFromTheme(font.Typeface);
+                            }
+
+                            //Get font color
+                            foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
+                            {
+                                powerPointTextList[i].FontColor = getColorFromTheme(color.Val);
+                            }
+                            foreach (DrawingML.RgbColorModelHex color in defRPR.Descendants<DrawingML.RgbColorModelHex>())
+                            {
+                                powerPointTextList[i].FontColor = getColorFromTheme(color.Val);
+                            }
                         }
                     }
+
+                    if (powerPointTextList[i].isEmpty())
+                        continue;
+
+                    slideLayoutPowerPointShapes.Add(powerPointTextList[i]);
                 }
-
-                if (powerPointText.isEmpty())
-                    continue;
-
-                slideLayoutPowerPointShapes.Add(powerPointText);
+            
+            
             }
 
             return slideLayoutPowerPointShapes;
@@ -900,14 +887,14 @@ namespace ConsoleApplication
 
             foreach (PowerPointText ppt in list)
             {
-                if (ppt.Type == powerPointText.Type && ppt.Type!="")
+                if (ppt.Type == powerPointText.Type && ppt.Level == powerPointText.Level && ppt.Type!="")
                 {
                     temp = new PowerPointText(ppt);
                     temp.Idx = powerPointText.Idx;
                     return temp;
                 }
 
-                if (ppt.Idx == powerPointText.Idx && ppt.Idx>0)
+                if (ppt.Idx == powerPointText.Idx && ppt.Level == powerPointText.Level && ppt.Idx>0)
                 {
                     temp = new PowerPointText(ppt);
                     temp.Type = powerPointText.Type;
@@ -1051,5 +1038,72 @@ namespace ConsoleApplication
 
             return image_name[0];
         }
+
+        public PowerPointText GetLevelProperties<T>(T input)
+        {
+            
+            PowerPointText powerPointText = new PowerPointText();
+
+            if (input == null)
+                return powerPointText;
+
+            bool hasAttr = (bool) input.GetType().GetMethod("get_HasAttributes").Invoke(input,null);
+
+            if (hasAttr)
+            {
+                List<OpenXmlAttribute> attrs = (List<OpenXmlAttribute>)input.GetType().GetMethod("GetAttributes").Invoke(input, null);
+
+                foreach (var attr in attrs)
+                {
+                    if (attr.LocalName == "algn")
+                    {
+                        powerPointText.Alignment = input.GetType().GetMethod("get_Alignment").Invoke(input, null).ToString();
+                    }
+                }
+            }
+
+            OpenXmlElementList childElements = (OpenXmlElementList) input.GetType().GetMethod("get_ChildElements").Invoke(input, null);
+
+            foreach (var childElement in childElements)
+            {
+                if (childElement.LocalName == "defRPr")
+                {
+                    DrawingML.DefaultRunProperties defRPR = (DrawingML.DefaultRunProperties)childElement;
+
+                    //Get run properties (size, bold, italic, underline) and insert into style
+                    powerPointText.FontSize = (defRPR.FontSize != null) ? (int)defRPR.FontSize : powerPointText.FontSize;
+                    powerPointText.Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointText.Bold;
+                    powerPointText.Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointText.Italic;
+                    //powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
+
+                    if (defRPR.Underline != null)
+                    {
+                        if (defRPR.Underline.Value.ToString() == "sng")
+                        {
+                            powerPointText.Underline = true;
+                        }
+                    }
+
+                    //Get font
+                    foreach (DrawingML.LatinFont font in defRPR.Descendants<DrawingML.LatinFont>())
+                    {
+                        powerPointText.Font = getFontFromTheme(font.Typeface);
+                    }
+
+                    //Get font color
+                    foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
+                    {
+                        powerPointText.FontColor = getColorFromTheme(color.Val);
+                    }
+                    foreach (DrawingML.RgbColorModelHex color in defRPR.Descendants<DrawingML.RgbColorModelHex>())
+                    {
+                        powerPointText.FontColor = getColorFromTheme(color.Val);
+                    }
+                }
+            }
+                
+            return powerPointText;
+        }
+    
     }
 }
