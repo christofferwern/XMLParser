@@ -122,6 +122,9 @@ namespace ConsoleApplication
 
             foreach (TextFragment textFragment in _fragmentsList)
             {
+                if (textFragment.NewParagraph)
+                    HTML += "<br>";
+
                 newStyle = StyleList[textFragment.StyleId];
 
                 //First fragment
@@ -145,9 +148,11 @@ namespace ConsoleApplication
                         HTML += "<I>";
                         italic = true;
                     }
+                     
+                    for (int i = 0; i < textFragment.Level; i++)
+                        HTML += "\t";
 
-                    
-                    HTML += textFragment.Text.Replace("<","(").Replace(">",")");
+                    HTML += textFragment.Text.Replace("<", "(").Replace(">", ")");
 
                     oldStyle = newStyle;
                     continue;
@@ -196,6 +201,9 @@ namespace ConsoleApplication
                             italic = true;
                         }
 
+                        for (int i = 0; i < textFragment.Level; i++)
+                            HTML += "\t";
+
                         HTML += textFragment.Text.Replace("<", "(").Replace(">", ")");
                     }
                     else
@@ -216,13 +224,25 @@ namespace ConsoleApplication
                             italic = (newStyle.Italic) ? true : false;
                         }
 
+                        for (int i = 0; i < textFragment.Level; i++)
+                            HTML += "\t";
+
                         HTML += textFragment.Text.Replace("<", "(").Replace(">", ")");
                     }
                 }
                 else
                 {
-                    HTML += " " + textFragment.Text;
+                    if (!textFragment.NewParagraph)
+                        HTML += " ";
+
+                    for (int i = 0; i < textFragment.Level; i++)
+                        HTML += "\t";
+
+                    HTML += textFragment.Text.Replace("<", "(").Replace(">", ")");
                 }
+
+                for (int i = 0; i < textFragment.Breaks; i++)
+                    HTML += "<br>";
 
                 oldStyle = newStyle;
             }
@@ -236,9 +256,6 @@ namespace ConsoleApplication
 
             HTML += "</P>";
             HTML += "</TEXTFORMAT>";
-
-            //HTML = HTML.Replace("<", "&lt");
-            //HTML = HTML.Replace(">", "&gt");
 
             return HTML;
         }
@@ -450,7 +467,13 @@ namespace ConsoleApplication
 
         public int getFontColorAsInteger(string color)
         {
-            return int.Parse(color, System.Globalization.NumberStyles.HexNumber);
+            if(color.Length == 6)
+                return int.Parse(color, System.Globalization.NumberStyles.HexNumber);
+            else
+            {
+                Console.WriteLine("Error in color convertion, '" + color + "' could not be converted!");
+                return 0;
+            }
         }
 
         public string Align

@@ -10,8 +10,9 @@ namespace ConsoleApplication
     class TextFragment
     {
         private String _text;
-        private int _x, _y, _styleId;
+        private int _x, _y, _styleId, _level, _breaks;
         private XmlDocument _rootOfDocument;
+        private bool _newParagraph;
 
         public int StyleId
         {
@@ -24,6 +25,8 @@ namespace ConsoleApplication
             _text = "text";
             _x = 0;
             _y = 0;
+            _newParagraph = false;
+            _breaks = 0;
         }
 
         public XmlElement getFragmentChild()
@@ -73,6 +76,22 @@ namespace ConsoleApplication
             set { _text = value; }
         }
 
+        public bool NewParagraph
+        {
+            get { return _newParagraph; }
+            set { _newParagraph = value; }
+        }
 
+        public int Level
+        {
+            get { return _level; }
+            set { _level = value; }
+        }
+
+        public int Breaks
+        {
+            get { return _breaks; }
+            set { _breaks = value; }
+        }
     }
 }
