@@ -123,9 +123,7 @@ namespace ConsoleApplication
             foreach (TextFragment textFragment in _fragmentsList)
             {
                 if (textFragment.NewParagraph)
-                {
                     HTML += "<br>";
-                }
 
                 newStyle = StyleList[textFragment.StyleId];
 
@@ -240,8 +238,11 @@ namespace ConsoleApplication
                     for (int i = 0; i < textFragment.Level; i++)
                         HTML += "\t";
 
-                    HTML += textFragment.Text; 
+                    HTML += textFragment.Text.Replace("<", "(").Replace(">", ")");
                 }
+
+                for (int i = 0; i < textFragment.Breaks; i++)
+                    HTML += "<br>";
 
                 oldStyle = newStyle;
             }

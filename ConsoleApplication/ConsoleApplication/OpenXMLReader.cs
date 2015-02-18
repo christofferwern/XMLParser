@@ -66,11 +66,6 @@ namespace ConsoleApplication
                     //Get all styles stored in the slide master, <PowerPoint Type, TextStyle>
                     _slideMasterPowerPointShapes = GetSlideMasterPowerPointShapes(_presentationDocument);
 
-                    foreach (PowerPointText p in _slideMasterPowerPointShapes)
-                    {
-                        Console.WriteLine(p.toString());
-                    }
-
                     //Counter of scene
                     int sceneCounter = 1;
 
@@ -307,13 +302,16 @@ namespace ConsoleApplication
                         }
                     }
 
+                    bool HasRun = false;
+
                     //Go trough all the runs in the text body
                     //they contains the text and some properties
                     foreach (DrawingML.Run run in p.Descendants<DrawingML.Run>())
                     {
+                        HasRun = true;
                         //If there is a shape without any text, continue to next shape
-                        if (run.Text.Text.Equals(""))
-                            continue;
+                        //if (run.Text.Text.Equals(""))
+                        //    continue;
 
                         TextFragment textFragment = new TextFragment();
 
@@ -351,16 +349,20 @@ namespace ConsoleApplication
                         {
                             textStyle.FontColor = getColorFromTheme(color.Val);
                         }
-                        foreach (DrawingML.SchemeColor color in run.RunProperties.Descendants<DrawingML.SchemeColor>())
+                        if (run.RunProperties != null)
                         {
-                            textStyle.FontColor = getColorFromTheme(color.Val);
+                            foreach (DrawingML.SchemeColor color in run.RunProperties.Descendants<DrawingML.SchemeColor>())
+                            {
+                                textStyle.FontColor = getColorFromTheme(color.Val);
+                            }
+
+                            //Get run properties (size, bold, italic, underline) and insert into style
+                            textStyle.FontSize = (run.RunProperties.FontSize != null) ? (int)run.RunProperties.FontSize : textStyle.FontSize;
+                            textStyle.Bold = (run.RunProperties.Bold != null) ? (Boolean)run.RunProperties.Bold : textStyle.Bold;
+                            textStyle.Italic = (run.RunProperties.Italic != null) ? (Boolean)run.RunProperties.Italic : textStyle.Italic;
+                            textStyle.Underline = (run.RunProperties.Underline != null) ? true : textStyle.Underline;
                         }
 
-                        //Get run properties (size, bold, italic, underline) and insert into style
-                        textStyle.FontSize = (run.RunProperties.FontSize != null) ? (int)run.RunProperties.FontSize : textStyle.FontSize;
-                        textStyle.Bold = (run.RunProperties.Bold != null) ? (Boolean)run.RunProperties.Bold : textStyle.Bold;
-                        textStyle.Italic = (run.RunProperties.Italic != null) ? (Boolean)run.RunProperties.Italic : textStyle.Italic;
-                        textStyle.Underline = (run.RunProperties.Underline != null) ? true : textStyle.Underline;
 
                         //If font size still is 0, change it to default size
                         if (textStyle.FontSize == 0)
@@ -405,6 +407,15 @@ namespace ConsoleApplication
 
                         sceneObject.FragmentsList.Add(textFragment);
                     }
+
+                    
+                    //If paragraph has no run means it has no text, but it still will correspong to a new line 
+                    if (!HasRun)
+                    {
+                        if (sceneObject.FragmentsList.Count>0)
+                            sceneObject.FragmentsList.Last().Breaks++;
+                    }
+
 
                     //Increase the paragragh index
                     paragraphIndex++;
