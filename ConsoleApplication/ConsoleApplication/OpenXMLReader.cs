@@ -289,93 +289,101 @@ namespace ConsoleApplication
                 //Add text info to scene object
                 TextObject sceneObject = new TextObject(simpleSceneObject);
 
-                //Go trough all the runs in the text body
-                //they contains the text and some properties
-                foreach (DrawingML.Run run in sp.TextBody.Descendants<DrawingML.Run>())
+                int paragraphIndex = 0;
+                foreach (DrawingML.Paragraph p in sp.TextBody.Descendants<DrawingML.Paragraph>())
                 {
-                    //If there is a shape without any text, continue to next shape
-                    if (run.Text.Text.Equals(""))
-                        continue;
-
-                    TextFragment textFragment = new TextFragment();
-                    textFragment.setXMLDocumentRoot(ref _rootXmlDoc);
-                    textFragment.Text = run.Text.Text;
-                    
-                    TextStyle textStyle = new TextStyle();
-
-                    textStyle.setXMLDocumentRoot(ref _rootXmlDoc);
-
-                    textStyle.Bold = powerPointText.Bold;
-                    textStyle.Italic = powerPointText.Italic;
-                    textStyle.Underline = powerPointText.Underline;
-                    textStyle.Font = powerPointText.Font;
-
-                    if (powerPointText.FontColor.Length==6)
-                        textStyle.FontColor = powerPointText.FontColor; 
-
-                    textStyle.FontSize = powerPointText.FontSize;
-
-                    //Get font
-                    foreach (var latinFont in run.Descendants<DrawingML.LatinFont>())
+                    //Go trough all the runs in the text body
+                    //they contains the text and some properties
+                    foreach (DrawingML.Run run in p.Descendants<DrawingML.Run>())
                     {
-                        textStyle.Font = getFontFromTheme(latinFont.Typeface);
-                    }
+                        //If there is a shape without any text, continue to next shape
+                        if (run.Text.Text.Equals(""))
+                            continue;
 
-                    if (textStyle.Font == "")
-                        textStyle.Font = getFontFromTheme("+mj-lt");
+                        TextFragment textFragment = new TextFragment();
 
-                    //Get the texy body color, if it has been changed manually in the ppt file.
-                    foreach (var color in run.Descendants<DrawingML.RgbColorModelHex>())
-                    {
-                        //Convert Hexadeciamal color to integer color
-                        textStyle.FontColor = color.Val;
-                    }
+                        if (paragraphIndex > 0)
+                            textFragment.NewParagraph = true;
 
-                    //Get run properties (size, bold, italic, underline) and insert into style
-                    textStyle.FontSize  = (run.RunProperties.FontSize != null)  ? (int)run.RunProperties.FontSize   : textStyle.FontSize;
-                    textStyle.Bold      = (run.RunProperties.Bold != null)      ? (Boolean)run.RunProperties.Bold   : textStyle.Bold;
-                    textStyle.Italic    = (run.RunProperties.Italic != null)    ? (Boolean)run.RunProperties.Italic : textStyle.Italic;
-                    textStyle.Underline = (run.RunProperties.Underline != null) ? true                              : textStyle.Underline;
+                        textFragment.setXMLDocumentRoot(ref _rootXmlDoc);
+                        textFragment.Text = run.Text.Text;
 
-                    //If font size still is 0, change it to default size
-                    if (textStyle.FontSize == 0)
-                    {
-                        var textStyles = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster.TextStyles;
+                        TextStyle textStyle = new TextStyle();
 
-                        foreach (DrawingML.DefaultRunProperties defRPR in textStyles.BodyStyle.Level1ParagraphProperties.Descendants<DrawingML.DefaultRunProperties>())
+                        textStyle.setXMLDocumentRoot(ref _rootXmlDoc);
+
+                        textStyle.Bold = powerPointText.Bold;
+                        textStyle.Italic = powerPointText.Italic;
+                        textStyle.Underline = powerPointText.Underline;
+                        textStyle.Font = powerPointText.Font;
+                        textStyle.FontColor = powerPointText.FontColor;
+                        textStyle.FontSize = powerPointText.FontSize;
+
+                        //Get font
+                        foreach (var latinFont in run.Descendants<DrawingML.LatinFont>())
                         {
-                            if (defRPR.FontSize != null)
+                            textStyle.Font = getFontFromTheme(latinFont.Typeface);
+                        }
+
+                        if (textStyle.Font == "")
+                            textStyle.Font = getFontFromTheme("+mj-lt");
+
+                        //Get the texy body color, if it has been changed manually in the ppt file.
+                        foreach (var color in run.Descendants<DrawingML.RgbColorModelHex>())
+                        {
+                            //Convert Hexadeciamal color to integer color
+                            textStyle.FontColor = color.Val;
+                        }
+
+                        //Get run properties (size, bold, italic, underline) and insert into style
+                        textStyle.FontSize = (run.RunProperties.FontSize != null) ? (int)run.RunProperties.FontSize : textStyle.FontSize;
+                        textStyle.Bold = (run.RunProperties.Bold != null) ? (Boolean)run.RunProperties.Bold : textStyle.Bold;
+                        textStyle.Italic = (run.RunProperties.Italic != null) ? (Boolean)run.RunProperties.Italic : textStyle.Italic;
+                        textStyle.Underline = (run.RunProperties.Underline != null) ? true : textStyle.Underline;
+
+                        //If font size still is 0, change it to default size
+                        if (textStyle.FontSize == 0)
+                        {
+                            var textStyles = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster.TextStyles;
+
+                            foreach (DrawingML.DefaultRunProperties defRPR in textStyles.BodyStyle.Level1ParagraphProperties.Descendants<DrawingML.DefaultRunProperties>())
                             {
-                                textStyle.FontSize = defRPR.FontSize;
+                                if (defRPR.FontSize != null)
+                                {
+                                    textStyle.FontSize = defRPR.FontSize;
+                                }
                             }
                         }
+
+                        //Add textStyle to StyleList of the sceneObject
+                        sceneObject.addToStyleList(textStyle);
+
+                        //Iteratates through StyleList of sceneObject for items that is equal to textstyle and returns the index of that style
+                        if (sceneObject.StyleList.IndexOf(textStyle) == -1)
+                        {
+                            foreach (TextStyle item in sceneObject.StyleList)
+                                if (textStyle.isEqual(item))
+                                    textFragment.StyleId = sceneObject.StyleList.IndexOf(item);
+                        }
+                        else
+                            textFragment.StyleId = sceneObject.StyleList.IndexOf(textStyle);
+
+                        //Calculate the internal text fragments position (inside the scene object)
+                        var xy = CalculateInternalTextFragmentPositions(textFragment,
+                                                                        textStyle,
+                                                                        simpleSceneObject.ClipWidth,
+                                                                        simpleSceneObject.ClipHeight);
+                        textFragment.X = xy.Item1;
+                        textFragment.Y = xy.Item2;
+
+                        sceneObject.FragmentsList.Add(textFragment);
                     }
 
+                    //Increase the paragragh index
+                    paragraphIndex++;
 
-
-                    //Add textStyle to StyleList of the sceneObject
-                    sceneObject.addToStyleList(textStyle);
-
-                    //Iteratates through StyleList of sceneObject for items that is equal to textstyle and returns the index of that style
-                    if (sceneObject.StyleList.IndexOf(textStyle) == -1)
-                    {
-                        foreach (TextStyle item in sceneObject.StyleList)
-                            if (textStyle.isEqual(item))
-                                textFragment.StyleId = sceneObject.StyleList.IndexOf(item);
-                    }
-                    else
-                        textFragment.StyleId = sceneObject.StyleList.IndexOf(textStyle);
-
-                    //Calculate the internal text fragments position (inside the scene object)
-                    var xy = CalculateInternalTextFragmentPositions(textFragment, 
-                                                                    textStyle,
-                                                                    simpleSceneObject.ClipWidth, 
-                                                                    simpleSceneObject.ClipHeight);                    
-                    textFragment.X = xy.Item1;
-                    textFragment.Y = xy.Item2;                 
-
-                    sceneObject.FragmentsList.Add(textFragment);
                 }
+
 
                 //Put the text object properties to the first style in style list
                 if (sceneObject.StyleList.Count > 0)

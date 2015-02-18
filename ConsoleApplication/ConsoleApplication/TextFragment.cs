@@ -12,6 +12,7 @@ namespace ConsoleApplication
         private String _text;
         private int _x, _y, _styleId;
         private XmlDocument _rootOfDocument;
+        private bool _newParagraph;
 
         public int StyleId
         {
@@ -24,6 +25,7 @@ namespace ConsoleApplication
             _text = "text";
             _x = 0;
             _y = 0;
+            _newParagraph = false;
         }
 
         public XmlElement getFragmentChild()
@@ -73,6 +75,11 @@ namespace ConsoleApplication
             set { _text = value; }
         }
 
+        public bool NewParagraph
+        {
+            get { return _newParagraph; }
+            set { _newParagraph = value; }
+        }
 
     }
 }

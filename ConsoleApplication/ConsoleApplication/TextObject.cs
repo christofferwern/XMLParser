@@ -122,6 +122,11 @@ namespace ConsoleApplication
 
             foreach (TextFragment textFragment in _fragmentsList)
             {
+                if (textFragment.NewParagraph)
+                {
+                    HTML += "<br>";
+                }
+
                 newStyle = StyleList[textFragment.StyleId];
 
                 //First fragment
@@ -146,7 +151,6 @@ namespace ConsoleApplication
                         italic = true;
                     }
 
-                    
                     HTML += textFragment.Text.Replace("<","(").Replace(">",")");
 
                     oldStyle = newStyle;
@@ -221,7 +225,10 @@ namespace ConsoleApplication
                 }
                 else
                 {
-                    HTML += " " + textFragment.Text;
+                    if (!textFragment.NewParagraph)
+                        HTML += " ";
+
+                    HTML += textFragment.Text; 
                 }
 
                 oldStyle = newStyle;
@@ -450,7 +457,13 @@ namespace ConsoleApplication
 
         public int getFontColorAsInteger(string color)
         {
-            return int.Parse(color, System.Globalization.NumberStyles.HexNumber);
+            if(color.Length == 6)
+                return int.Parse(color, System.Globalization.NumberStyles.HexNumber);
+            else
+            {
+                Console.WriteLine("Error in color convertion, '" + color + "' could not be converted!");
+                return 0;
+            }
         }
 
         public string Align
