@@ -150,8 +150,11 @@ namespace ConsoleApplication
                         HTML += "<I>";
                         italic = true;
                     }
+                     
+                    for (int i = 0; i < textFragment.Level; i++)
+                        HTML += "\t";
 
-                    HTML += textFragment.Text.Replace("<","(").Replace(">",")");
+                    HTML += textFragment.Text.Replace("<", "(").Replace(">", ")");
 
                     oldStyle = newStyle;
                     continue;
@@ -200,6 +203,9 @@ namespace ConsoleApplication
                             italic = true;
                         }
 
+                        for (int i = 0; i < textFragment.Level; i++)
+                            HTML += "\t";
+
                         HTML += textFragment.Text.Replace("<", "(").Replace(">", ")");
                     }
                     else
@@ -220,6 +226,9 @@ namespace ConsoleApplication
                             italic = (newStyle.Italic) ? true : false;
                         }
 
+                        for (int i = 0; i < textFragment.Level; i++)
+                            HTML += "\t";
+
                         HTML += textFragment.Text.Replace("<", "(").Replace(">", ")");
                     }
                 }
@@ -227,6 +236,9 @@ namespace ConsoleApplication
                 {
                     if (!textFragment.NewParagraph)
                         HTML += " ";
+
+                    for (int i = 0; i < textFragment.Level; i++)
+                        HTML += "\t";
 
                     HTML += textFragment.Text; 
                 }
@@ -243,9 +255,6 @@ namespace ConsoleApplication
 
             HTML += "</P>";
             HTML += "</TEXTFORMAT>";
-
-            //HTML = HTML.Replace("<", "&lt");
-            //HTML = HTML.Replace(">", "&gt");
 
             return HTML;
         }

@@ -10,7 +10,13 @@ namespace ConsoleApplication
     class TextFragment
     {
         private String _text;
-        private int _x, _y, _styleId;
+        private int _x, _y, _styleId, _level;
+
+        public int Level
+        {
+            get { return _level; }
+            set { _level = value; }
+        }
         private XmlDocument _rootOfDocument;
         private bool _newParagraph;
 

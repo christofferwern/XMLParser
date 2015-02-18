@@ -65,7 +65,12 @@ namespace ConsoleApplication
 
                     //Get all styles stored in the slide master, <PowerPoint Type, TextStyle>
                     _slideMasterPowerPointShapes = GetSlideMasterPowerPointShapes(_presentationDocument);
-                    
+
+                    foreach (PowerPointText p in _slideMasterPowerPointShapes)
+                    {
+                        Console.WriteLine(p.toString());
+                    }
+
                     //Counter of scene
                     int sceneCounter = 1;
 
@@ -292,6 +297,16 @@ namespace ConsoleApplication
                 int paragraphIndex = 0;
                 foreach (DrawingML.Paragraph p in sp.TextBody.Descendants<DrawingML.Paragraph>())
                 {
+                    int level = 0;
+                    if (p.ParagraphProperties != null)
+                    {
+                        if (p.ParagraphProperties.HasAttributes)
+                        {
+                            if (p.ParagraphProperties.Level!=null)
+                                level = int.Parse(p.ParagraphProperties.Level.InnerText.ToString());
+                        }
+                    }
+
                     //Go trough all the runs in the text body
                     //they contains the text and some properties
                     foreach (DrawingML.Run run in p.Descendants<DrawingML.Run>())
@@ -304,6 +319,8 @@ namespace ConsoleApplication
 
                         if (paragraphIndex > 0)
                             textFragment.NewParagraph = true;
+
+                        textFragment.Level = level;
 
                         textFragment.setXMLDocumentRoot(ref _rootXmlDoc);
                         textFragment.Text = run.Text.Text;
@@ -325,14 +342,18 @@ namespace ConsoleApplication
                             textStyle.Font = getFontFromTheme(latinFont.Typeface);
                         }
 
+                        //If font is empty, set it to default font
                         if (textStyle.Font == "")
                             textStyle.Font = getFontFromTheme("+mj-lt");
 
                         //Get the texy body color, if it has been changed manually in the ppt file.
-                        foreach (var color in run.Descendants<DrawingML.RgbColorModelHex>())
+                        foreach (DrawingML.RgbColorModelHex color in run.Descendants<DrawingML.RgbColorModelHex>())
                         {
-                            //Convert Hexadeciamal color to integer color
-                            textStyle.FontColor = color.Val;
+                            textStyle.FontColor = getColorFromTheme(color.Val);
+                        }
+                        foreach (DrawingML.SchemeColor color in run.RunProperties.Descendants<DrawingML.SchemeColor>())
+                        {
+                            textStyle.FontColor = getColorFromTheme(color.Val);
                         }
 
                         //Get run properties (size, bold, italic, underline) and insert into style
@@ -353,6 +374,12 @@ namespace ConsoleApplication
                                     textStyle.FontSize = defRPR.FontSize;
                                 }
                             }
+                        }
+
+                        //If font color still is empty, set it to default color
+                        if (textStyle.FontColor == "")
+                        {
+                            textStyle.FontColor = "000000";
                         }
 
                         //Add textStyle to StyleList of the sceneObject
@@ -485,7 +512,10 @@ namespace ConsoleApplication
                             foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
                             {
                                 powerPointText.FontColor = getColorFromTheme(color.Val);
-                                powerPointText.FontColor = (powerPointText.FontColor == "") ? color.Val : powerPointText.FontColor;
+                            }
+                            foreach (DrawingML.RgbColorModelHex color in defRPR.Descendants<DrawingML.RgbColorModelHex>())
+                            {
+                                powerPointText.FontColor = getColorFromTheme(color.Val);
                             }
                         }
                     }
@@ -537,7 +567,10 @@ namespace ConsoleApplication
                             foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
                             {
                                 powerPointText.FontColor = getColorFromTheme(color.Val);
-                                powerPointText.FontColor = (powerPointText.FontColor == "") ? color.Val : powerPointText.FontColor;
+                            }
+                            foreach (DrawingML.RgbColorModelHex color in defRPR.Descendants<DrawingML.RgbColorModelHex>())
+                            {
+                                powerPointText.FontColor = getColorFromTheme(color.Val);
                             }
                         }
                     }
@@ -592,8 +625,12 @@ namespace ConsoleApplication
                             foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
                             {
                                 powerPointText.FontColor = getColorFromTheme(color.Val);
-                                powerPointText.FontColor = (powerPointText.FontColor == "") ? color.Val : powerPointText.FontColor;
                             }
+                            foreach (DrawingML.RgbColorModelHex color in defRPR.Descendants<DrawingML.RgbColorModelHex>())
+                            {
+                                powerPointText.FontColor = getColorFromTheme(color.Val);
+                            }
+                               
                         }
                     }
                 }
@@ -653,6 +690,10 @@ namespace ConsoleApplication
 
                         //Get font color
                         foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
+                        {
+                            powerPointText.FontColor = getColorFromTheme(color.Val);
+                        }
+                        foreach (DrawingML.RgbColorModelHex color in defRPR.Descendants<DrawingML.RgbColorModelHex>())
                         {
                             powerPointText.FontColor = getColorFromTheme(color.Val);
                         }
@@ -746,6 +787,10 @@ namespace ConsoleApplication
 
                         //Get font color
                         foreach (DrawingML.SchemeColor color in defRPR.Descendants<DrawingML.SchemeColor>())
+                        {
+                            powerPointText.FontColor = getColorFromTheme(color.Val);
+                        }
+                        foreach (DrawingML.RgbColorModelHex color in defRPR.Descendants<DrawingML.RgbColorModelHex>())
                         {
                             powerPointText.FontColor = getColorFromTheme(color.Val);
                         }
