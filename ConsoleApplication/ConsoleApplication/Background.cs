@@ -6,14 +6,11 @@ using System.Threading.Tasks;
 
 namespace ConsoleApplication
 {
-    class Background
+    public abstract class Background
     {
         private List<KeyValuePair<int, string>> gradientList = null;
         private string bgColor;
         private float alpha;
-
-        
-
         private string BgImageLocation;
 
         public Background()

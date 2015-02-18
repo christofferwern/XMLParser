@@ -49,6 +49,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Background.cs" />
+    <Compile Include="GradientBackground.cs" />
+    <Compile Include="GradientInfo.cs" />
     <Compile Include="ImageObject.cs" />
     <Compile Include="OpenXMLReader.cs" />
     <Compile Include="OptimizedClip.cs" />
@@ -62,6 +64,7 @@
     <Compile Include="SceneObjectDecorator.cs" />
     <Compile Include="ShapeObject.cs" />
     <Compile Include="SimpleSceneObject.cs" />
+    <Compile Include="SolidBackground.cs" />
     <Compile Include="TextFragment.cs" />
     <Compile Include="TextObject.cs" />
     <Compile Include="TextStyle.cs" />
