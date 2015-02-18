@@ -18,6 +18,7 @@ namespace ConsoleApplication
         private PresentationObject _presentationObject;
 
         private const int _nrOfThemeColors = 16;
+        private int _presentationSizeX, _presentationSizeY;
         private string[,] _themeColors;
         private List<PowerPointText> _slideMasterPowerPointShapes;
         private PresentationDocument _presentationDocument;
@@ -40,6 +41,10 @@ namespace ConsoleApplication
             _slideMasterPowerPointShapes = new List<PowerPointText>();
 
             _presentationObject.getXmlDocument(out _rootXmlDoc);
+
+            _presentationSizeX = 0;
+            _presentationSizeY = 0;
+
 
         }
 
@@ -72,6 +77,12 @@ namespace ConsoleApplication
                     //Counter of scene
                     int sceneCounter = 1;
 
+                    //Get the size of presentation
+
+                    PresentationML.SlideSize slideInfo = presentation.SlideSize;
+                    _presentationSizeX = slideInfo.Cx.Value;
+                    _presentationSizeY = slideInfo.Cy.Value;
+                    Console.WriteLine(_presentationSizeY);
                     //Go through all Slides in the PowerPoint presentation
                     foreach (PresentationML.SlideId slideID in presentation.SlideIdList)
                     {
@@ -79,7 +90,7 @@ namespace ConsoleApplication
                         Scene scene = new Scene(sceneCounter);
 
                         //Get background
-                        //List<SceneObject> backgroundShapelist = GetBackgroundShapesFromSlidePart(slidePart);
+                        List<SceneObject> backgroundShapelist = GetBackgroundShapesFromSlidePart(slidePart);
 
                         //Get all text shape
                         List<SceneObject> textShapelist = GetTextShapesFromSlidePart(slidePart);
@@ -91,7 +102,7 @@ namespace ConsoleApplication
                         List<SceneObject> shapelist = GetShapesFromSlidePart(slidePart);
 
                         //Add all scene object to the scene
-                        //scene.addSceneObjects(backgroundShapelist);
+                        scene.addSceneObjects(backgroundShapelist);
                         scene.addSceneObjects(textShapelist);
                         scene.addSceneObjects(imageShapelist);
                         scene.addSceneObjects(shapelist);
@@ -125,7 +136,6 @@ namespace ConsoleApplication
             //Get the actual slide
             PresentationML.Slide slide = slidePart.Slide;
 
-            Background customBg = new Background();
             //Check for each backgroundproperty in each slide
             foreach (var bg in slide.Descendants<PresentationML.BackgroundProperties>())
             {
@@ -134,6 +144,8 @@ namespace ConsoleApplication
                     continue;
 
                 SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
+                simpleSceneObject.ClipHeight = _presentationSizeY;
+                simpleSceneObject.ClipWidth = _presentationSizeX;
 
                 string slide_name = splitUriToImageName(slidePart.Uri); //Get the slide for this background
 
@@ -144,45 +156,111 @@ namespace ConsoleApplication
                 {
 
                     case "solidFill":
-                        ShapeObject shapeObject = new ShapeObject(simpleSceneObject);
+                        SolidBackground solidBg = new SolidBackground();
+                        
+                        ShapeObject solidObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rounded);
 
                         if (bg_type.FirstChild.GetType().Equals(typeof(DrawingML.RgbColorModelHex)))
                         {
                             foreach (var value in bg_type.Descendants<DrawingML.RgbColorModelHex>())
-                                customBg.BgColor = value.Val;
+                                solidBg.BgColor = value.Val;
                             foreach (var alpha in bg_type.Descendants<DrawingML.Alpha>())
-                                customBg.Alpha = alpha.Val;
+                                solidBg.Alpha = alpha.Val;
                         }
                         else
                         { //Theme color
                             foreach (var value in bg_type.Descendants<DrawingML.SchemeColor>())
-                                customBg.BgColor = getColorFromTheme(value.Val);
+                                solidBg.BgColor = getColorFromTheme(value.Val);
                             foreach (var value in bg_type.Descendants<DrawingML.Alpha>())
-                                customBg.Alpha = value.Val; 
+                                solidBg.Alpha = value.Val; 
                         }
 
-                        shapeObject.FillColor = customBg.BgColor;
-                        shapeObject.FillAlpha = customBg.Alpha;
+                        solidObject.FillColor = solidBg.BgColor;
+                        solidObject.FillAlpha = solidBg.Alpha;
+                        solidObject.GradientType = solidBg.BackgroundType;
 
-                        backgroundShapelist.Add(shapeObject);
+                        backgroundShapelist.Add(solidObject);
+
+                        //Console.WriteLine(solidBg.toString());
 
                         break;
                     case "gradFill":
-                        //Console.WriteLine("gradFill");
-                        List<KeyValuePair<int, string>> gradPosCol = new List<KeyValuePair<int, string>>();
-                        foreach (var gs in bg_type.FirstChild.Descendants<DrawingML.GradientStop>())
-                        {
 
-                            if (gs.RgbColorModelHex != null) // self-defined color
-                                gradPosCol.Add(new KeyValuePair<int, string>(gs.Position.Value, getColorFromTheme(gs.RgbColorModelHex.Val)));
-                            else //Theme color
-                                gradPosCol.Add(new KeyValuePair<int, string>(gs.Position.Value, getColorFromTheme(gs.SchemeColor.Val)));
+                        ShapeObject gradientObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rounded);
+
+                        GradientBackground gradientBg = new GradientBackground();
+
+                        bool validGradientType = false;
+
+                        IEnumerator<OpenXmlElement> gradientType = bg_type.GetEnumerator();
+
+                        while (gradientType.MoveNext() && validGradientType == false)
+                        {
+                            if (gradientType.Current.GetType() == typeof(DrawingML.PathGradientFill)){
+                                gradientBg.GradientType = "radial";
+                                validGradientType = true;
+                            }
+                            else if (gradientType.Current.GetType() == typeof(DrawingML.LinearGradientFill)){
+                                gradientBg.GradientType = "linear";
+                                var angle = gradientType.Current as DrawingML.LinearGradientFill;
+                                gradientBg.Angle = angle.Angle;
+                                validGradientType = true;
+                            }
+                            else
+                                validGradientType = false;
+                        }
+
+                        if(validGradientType)
+                        {
+                            foreach (DrawingML.GradientStop gs in bg_type.FirstChild.Descendants<DrawingML.GradientStop>())
+                            {
+                            
+                                //Create a new gradientinfo to store color, alpha and position for each gradient stop.
+                                GradientInfo gradInfo = new GradientInfo();
+
+                                //Get the position value for each gradient stop.
+                                gradInfo.Position = gs.Position.Value;
+
+                                //Get the color value for each gradient stop.
+                                if (gs.RgbColorModelHex != null)
+                                    gradInfo.Color = gs.RgbColorModelHex.Val;
+                                else 
+                                    gradInfo.Color = getColorFromTheme(gs.SchemeColor.Val);
+
+                                //List of all childrens gradientstop's first child.
+                                IEnumerator<OpenXmlElement> alpha = gs.FirstChild.GetEnumerator();
+
+                                //Get the alpha value for each gradient stop
+                                while (alpha.MoveNext() && alpha.Current.GetType() == typeof(DrawingML.Alpha))
+                                {
+                                    var alphaType = alpha.Current as DrawingML.Alpha;
+                                    gradInfo.Alpha = alphaType.Val;
+                                }
+
+                                //Add gradient information to backgroundlist
+                                gradientBg.GradientList.Add(gradInfo);    
+                            }
+
+                            gradientObject.GradientType = gradientBg.GradientType;
+                            gradientObject.FillType = gradientBg.BgType;
+
+                            gradientObject.GradientAlphas[0] = gradientBg.GradientList.First().Alpha;
+                            gradientObject.GradientAlphas[1] = gradientBg.GradientList.Last().Alpha;
+                            gradientObject.GradientFills[0] = gradientBg.GradientList.First().Color;
+                            gradientObject.GradientFills[1] = gradientBg.GradientList.Last().Color;
+
+                            gradientObject.GradientAngle = gradientBg.Angle;
+
+                            backgroundShapelist.Add(gradientObject);
 
                         }
-                        foreach (var item in gradPosCol)
+                        else
                         {
-                           // Console.WriteLine(item);
+                            Console.WriteLine("Not valid type");
                         }
+
+                        
+                        
 
                         break;
                     case "blipFill":
@@ -200,7 +278,6 @@ namespace ConsoleApplication
 
 
             }
-
 
             return backgroundShapelist;
         }

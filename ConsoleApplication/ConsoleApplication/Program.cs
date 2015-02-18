@@ -18,7 +18,7 @@ namespace ConsoleApplication
         {
             var watch = Stopwatch.StartNew();
 
-            string path = @"C:\Users\ex1\downloads\Performance_Out.pptx";
+            string path = @"C:\Users\ex1\downloads\pres.pptx";
 
             OpenXMLReader reader = new OpenXMLReader(path);
 
