@@ -8,7 +8,7 @@ namespace ConsoleApplication
 {
     class PowerPointText
     {
-        private int _fontSize, _x, _y, _cx, _cy, _rotation, _idx;
+        private int _fontSize, _x, _y, _cx, _cy, _rotation, _idx, _level;
         private string _type, _font, _alignment, _anchor, _fontColor;
         private Boolean _bold, _italic, _underline;
 
@@ -20,6 +20,7 @@ namespace ConsoleApplication
             _y = 0;
             _cx = 0;
             _cy = 0;
+            _level = 0;
             _rotation = 0;
             _fontColor = "";
             _type = "";
@@ -34,6 +35,7 @@ namespace ConsoleApplication
         public PowerPointText(PowerPointText ppt)
         {
             _idx = ppt.Idx;
+            _level = ppt.Level;
             _fontSize = ppt.FontSize;
             _x = ppt.X;
             _y = ppt.Y;
@@ -53,6 +55,7 @@ namespace ConsoleApplication
         public String toString()
         {
             return "Placeholder: (" + _type + ", " + _idx + ")\n" +
+                   "  Level:       " + _level + "\n" +
                    "  Font:        " + _font + "\n" +
                    "  Font size:   " + _fontSize + "\n" +
                    "  Font color:  " + _fontColor + "\n" +
@@ -68,6 +71,12 @@ namespace ConsoleApplication
         {
             get { return _idx; }
             set { _idx = value; }
+        }
+
+        public int Level
+        {
+            get { return _level; }
+            set { _level = value; }
         }
 
         public Boolean Underline
@@ -168,6 +177,7 @@ namespace ConsoleApplication
                 _font == "" &&
                 //_alignment == "" &&
                 //_anchor == "" &&
+                //_level == -1 &&
                 _bold == false &&
                 _italic == false &&
                 _underline == false
