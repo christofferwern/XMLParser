@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,129 +10,143 @@ namespace ConsoleApplication
 {
     public class ShapeObject : SceneObjectDecorator
     {
-        private float _alpha, _fillAlpha, _gradientAngle, _rotation, _rotationX, _rotationY, _rotationZ;
+        private float _alpha, _cornerRadius, _fillAlpha, _fillAlpha1, _fillAlpha2, _gradientAngle, _rotation, _rotationX, _rotationY, _rotationZ, _scaleZ;
+
+
         private int _lineAlpha, _lineSize, _x, _y, _z;
 
         private Boolean _cacheAsBitmap, _fillEnable, _lineEnable, _visible;
-        private string _fillType, _gradientType, _fillColor, _lineColor;
+        private string _fillType, _gradientType, _fillColor, _lineColor, _fillColor1, _fillColor2;
 
-        private float[] gradientAphas;
-        private int[] gradientFills;
+        private float[] _gradientAlphas;
+        private string[] _gradientFills;
 
+        private string[] _shapeObjectAccessorChild = new string[22]{   "alpha", "cacheAsBitmap", "cornerRadius", "gradientAngle", "gradientType", "fillAlpha", "fillColor",
+                                                                                 "fillEnable", "fillType", "lineAlpha", "lineColor", "lineEnable", "lineSize",
+                                                                                "rotation", "rotationX", "rotationY", "rotationZ", "scaleZ", "visible", "x",
+                                                                                "y", "z"};
         private List<XmlElement> _accessorChildList;
+        private Properties _properties;
 
-        public ShapeObject(SceneObject sceneobject) : base(sceneobject) 
+        public enum shape_type{
+            Rounded,
+            Circle,
+            Polygon
+        }
+
+        public ShapeObject(SceneObject sceneobject, shape_type shapeType) : base(sceneobject) 
         {
-            string objectType = "com.yooba.shapes.X";
+            string objectType = "";
+
+            switch (shapeType)
+            {
+                case shape_type.Rounded:
+                    objectType = "com.yooba.shapes.RoundedRectangleShape";
+                break;
+                case shape_type.Circle:
+                    objectType = "com.yooba.shapes.CircleShape";
+                break;
+                case shape_type.Polygon:
+                    objectType = "com.yooba.shapes.PolygonShape";
+                break;
+
+            }
+
             sceneobject.setObjectType(objectType);
             _accessorChildList = new List<XmlElement>();
 
-            _alpha = 0;
+            _alpha = 1;
             _cacheAsBitmap = false;
+            _cornerRadius = 0;
             _gradientAngle = 90;
             _gradientType = "linear";
-            _fillAlpha = 0;
-            _fillColor = "ffffff";
-            _fillEnable = false;
+            _fillAlpha = 1;
+            _fillColor = "16743690";
+            _fillEnable = true;
             _fillType = "solid";
             _lineAlpha = 1;
-            _lineColor = "000000";
-            _lineEnable = true;
-            _lineSize = 4;
+            _lineColor = "6426397";
+            _lineEnable = false;
+            _lineSize = 1;
             _rotation = 0;
             _rotationX = 0;
             _rotationY = 0;
             _rotationZ = 0;
+            _scaleZ = 1;
             _visible = true;
             _x = 0;
             _y = 0;
             _z = 0;
-        }
+            _gradientAlphas = new float[2];
+            _gradientFills = new string[2];
 
-        private void generateAccessorChilds()
-        {
+            _fillColor1 = _fillColor;
+            _fillColor2 = "10834182";
+            _fillAlpha1 = 1;
+            _fillAlpha2 = 1;
 
-            XmlElement alpha = getXMLDocumentRoot().CreateElement("alpha");
-            alpha.InnerXml = _alpha.ToString();
-            XmlElement cacheAsBitmap = getXMLDocumentRoot().CreateElement("cacheAsBitmap");
-            cacheAsBitmap.InnerXml = _cacheAsBitmap.ToString();
-            XmlElement gradientAngle = getXMLDocumentRoot().CreateElement("gradientAngle");
-            gradientAngle.InnerXml = _gradientAngle.ToString();
-            XmlElement gradientType = getXMLDocumentRoot().CreateElement("gradientType");
-            gradientType.InnerXml = _gradientType.ToString();
-            XmlElement fillAlpha = getXMLDocumentRoot().CreateElement("fillAlpha");
-            fillAlpha.InnerXml = _fillAlpha.ToString();
-            XmlElement fillColor = getXMLDocumentRoot().CreateElement("fillColor");
-            fillColor.InnerXml = _fillColor.ToString();
-            XmlElement fillType = getXMLDocumentRoot().CreateElement("fillType");
-            fillType.InnerXml = _fillType.ToString();
-            XmlElement fillEnable = getXMLDocumentRoot().CreateElement("fillEnable");
-            fillEnable.InnerXml = _fillEnable.ToString();
-            XmlElement lineAlpha = getXMLDocumentRoot().CreateElement("lineAlpha");
-            lineAlpha.InnerXml = _lineAlpha.ToString();
-            XmlElement lineColor = getXMLDocumentRoot().CreateElement("lineColor");
-            lineColor.InnerXml = _lineColor.ToString();
-            XmlElement lineEnable = getXMLDocumentRoot().CreateElement("lineEnable");
-            lineEnable.InnerXml = _lineEnable.ToString();
-            XmlElement lineSize = getXMLDocumentRoot().CreateElement("lineSize");
-            lineSize.InnerXml = _lineSize.ToString();
-            XmlElement rotation = getXMLDocumentRoot().CreateElement("rotation");
-            rotation.InnerXml = _rotation.ToString();
-            XmlElement rotationX = getXMLDocumentRoot().CreateElement("rotationX");
-            rotationX.InnerXml = _rotationX.ToString();
-            XmlElement rotationY = getXMLDocumentRoot().CreateElement("rotationY");
-            rotationY.InnerXml = _rotationY.ToString();
-            XmlElement rotationZ = getXMLDocumentRoot().CreateElement("rotationZ");
-            rotationZ.InnerXml = _rotationZ.ToString();
-            XmlElement visible = getXMLDocumentRoot().CreateElement("visible");
-            visible.InnerXml = _visible.ToString();
-            XmlElement x = getXMLDocumentRoot().CreateElement("x");
-            x.InnerXml = _x.ToString();
-            XmlElement y = getXMLDocumentRoot().CreateElement("y");
-            y.InnerXml = _y.ToString();
-            XmlElement z = getXMLDocumentRoot().CreateElement("z");
-            z.InnerXml = _z.ToString();
-
-            _accessorChildList.Add(alpha);
-            _accessorChildList.Add(cacheAsBitmap);
-            _accessorChildList.Add(gradientAngle);
-            _accessorChildList.Add(gradientType);
-            _accessorChildList.Add(fillAlpha);
-            _accessorChildList.Add(fillColor);
-            _accessorChildList.Add(fillType);
-            _accessorChildList.Add(fillEnable);
-            _accessorChildList.Add(lineAlpha);
-            _accessorChildList.Add(lineColor);
-            _accessorChildList.Add(lineEnable);
-            _accessorChildList.Add(lineSize);
-            _accessorChildList.Add(rotation);
-            _accessorChildList.Add(rotationX);
-            _accessorChildList.Add(rotationY);
-            _accessorChildList.Add(rotationZ);
-            _accessorChildList.Add(visible);
-            _accessorChildList.Add(x);
-            _accessorChildList.Add(y);
-            _accessorChildList.Add(z);
-
+            _properties = new Properties(true,false,true,true,true,true,true,true,false,true,true,false,true,true,true);
         }
 
         public override XmlElement getXMLTree()
         {
 
-            generateAccessorChilds();
-
             XmlElement parent = base.getXMLTree();
+
+            parent.AppendChild(Properties.getNode(getXMLDocumentRoot()));
+
             XmlElement acce = getXMLDocumentRoot().CreateElement("accessors");
-            foreach (XmlElement child in _accessorChildList)
+
+            foreach (string s in _shapeObjectAccessorChild)
             {
-                acce.AppendChild(child);
+                XmlElement xmlChild = getXMLDocumentRoot().CreateElement(s);
+
+                FieldInfo fieldInfo = GetType().GetField("_" + s, BindingFlags.NonPublic | BindingFlags.Instance);
+                if (fieldInfo != null)
+                    xmlChild.InnerText = fieldInfo.GetValue(this).ToString().Replace(",",".").ToLower();
+
+                acce.AppendChild(xmlChild);
             }
+
+            XmlElement gradientColor = getXMLDocumentRoot().CreateElement("gradientFills");
+            gradientColor.InnerText = _fillColor1.ToString() + ", " + _fillColor2.ToString();
+            XmlElement gradientAlpha = getXMLDocumentRoot().CreateElement("gradientAlphas");
+            gradientAlpha.InnerText = _fillAlpha1.ToString().Replace(",", ".") + ", " + _fillAlpha2.ToString().Replace(",", ".");
+
+            acce.AppendChild(gradientColor);
+            acce.AppendChild(gradientAlpha);
 
             parent.AppendChild(acce);
 
             return parent;
             
         }
+
+        public override void ConvertToYoobaUnits()
+        {
+            base.ConvertToYoobaUnits();
+            if (_fillType.Equals("solid"))
+            {
+                _fillColor = getColorAsInteger(_fillColor).ToString();
+                _fillAlpha = ((_fillAlpha / 1000) / 100);
+            }
+
+            if (_fillType.Equals("gradient"))
+            {
+                Console.WriteLine("gradient");
+                _fillColor = getColorAsInteger(_gradientFills[0]).ToString();
+
+                _fillAlpha1 = 1 - ((_gradientAlphas[0] / 1000) / 100);
+
+                _fillAlpha2 = ((_gradientAlphas[1] / 1000) / 100);
+
+                _fillColor1 = _fillColor;
+                _fillColor2 = getColorAsInteger(_gradientFills[1]).ToString();
+
+                _gradientAngle /= 60000; 
+            }
+        }
+
         public override XmlDocument getXMLDocumentRoot()
         {
             return base.getXMLDocumentRoot();
@@ -150,6 +165,35 @@ namespace ConsoleApplication
         public override void setProperties(Properties properties)
         {
             base.setProperties(properties);
+        }
+
+        public int getColorAsInteger(string color)
+        {
+            return int.Parse(color, System.Globalization.NumberStyles.HexNumber);
+        }
+
+        public float CornerRadius
+        {
+            get { return _cornerRadius; }
+            set { _cornerRadius = value; }
+        }
+
+        public float ScaleZ
+        {
+            get { return _scaleZ; }
+            set { _scaleZ = value; }
+        }
+
+        public string FillColor2
+        {
+            get { return _fillColor2; }
+            set { _fillColor2 = value; }
+        }
+
+        public string FillColor1
+        {
+            get { return _fillColor1; }
+            set { _fillColor1 = value; }
         }
 
         public float RotationZ
@@ -190,6 +234,12 @@ namespace ConsoleApplication
         {
             get { return _alpha; }
             set { _alpha = value; }
+        }
+
+        public float[] GradientAlphas
+        {
+            get { return _gradientAlphas; }
+            set { _gradientAlphas = value; }
         }
 
         public int Z
@@ -269,6 +319,16 @@ namespace ConsoleApplication
             get { return _fillType; }
             set { _fillType = value; }
         }
-        
+
+        public string[] GradientFills
+        {
+            get { return _gradientFills; }
+            set { _gradientFills = value; }
+        }
+        public Properties Properties
+        {
+            get { return _properties; }
+            set { _properties = value; }
+        }
     }
 }
