@@ -133,12 +133,12 @@ namespace ConsoleApplication
 
             if (_fillType.Equals("gradient"))
             {
-                Console.WriteLine("gradient");
                 _fillColor = getColorAsInteger(_gradientFills[0]).ToString();
 
-                _fillAlpha1 = 1 - ((_gradientAlphas[0] / 1000) / 100);
-
-                _fillAlpha2 = ((_gradientAlphas[1] / 1000) / 100);
+                if (_gradientAlphas[0] != 1)
+                    _fillAlpha1 = ((_gradientAlphas[0] / 1000) / 100);
+                if (_gradientAlphas[1] != 1)
+                    _fillAlpha2 = ((_gradientAlphas[1] / 1000) / 100);
 
                 _fillColor1 = _fillColor;
                 _fillColor2 = getColorAsInteger(_gradientFills[1]).ToString();
