@@ -15,6 +15,6 @@ namespace ConsoleApplication
         void setXMLDocumentRoot(ref XmlDocument xmldocument);
         XmlDocument getXMLDocumentRoot();
         void setObjectType(string objectType);
-        void ConvertToYoobaUnits();
+        void ConvertToYoobaUnits(int width, int height);
     }
 }
