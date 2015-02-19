@@ -122,9 +122,9 @@ namespace ConsoleApplication
             
         }
 
-        public override void ConvertToYoobaUnits()
+        public override void ConvertToYoobaUnits(int width, int height)
         {
-            base.ConvertToYoobaUnits();
+            base.ConvertToYoobaUnits(width, height);
             if (_fillType.Equals("solid"))
             {
                 _fillColor = getColorAsInteger(_fillColor).ToString();

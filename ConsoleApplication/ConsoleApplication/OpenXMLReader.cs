@@ -109,7 +109,7 @@ namespace ConsoleApplication
                         sceneCounter++;
                     }
 
-                    _presentationObject.ConvertToYoobaUnits();
+                    _presentationObject.ConvertToYoobaUnits(_presentationSizeX, _presentationSizeY);
                 }
             //}
             //catch
@@ -1335,6 +1335,18 @@ namespace ConsoleApplication
  
             return powerPointText;
         }
-    
+
+        public int PresentationSizeY
+        {
+            get { return _presentationSizeY; }
+            set { _presentationSizeY = value; }
+        }
+
+        public int PresentationSizeX
+        {
+            get { return _presentationSizeX; }
+            set { _presentationSizeX = value; }
+        }
+
     }
 }
