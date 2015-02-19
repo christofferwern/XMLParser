@@ -232,9 +232,6 @@ namespace ConsoleApplication
                 }
                 else
                 {
-                    if (!textFragment.NewParagraph)
-                        HTML += " ";
-
                     for (int i = 0; i < textFragment.Level; i++)
                         HTML += "\t";
 
