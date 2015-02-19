@@ -232,9 +232,6 @@ namespace ConsoleApplication
                 }
                 else
                 {
-                    if (!textFragment.NewParagraph)
-                        HTML += " ";
-
                     for (int i = 0; i < textFragment.Level; i++)
                         HTML += "\t";
 
@@ -436,9 +433,9 @@ namespace ConsoleApplication
             base.setProperties(properties);
         }
 
-        public override void ConvertToYoobaUnits()
+        public override void ConvertToYoobaUnits(int width, int height)
         {
-            base.ConvertToYoobaUnits();
+            base.ConvertToYoobaUnits(width, height);
 
             //FONT, SIZE, COLOR, ALIGNMENT
 

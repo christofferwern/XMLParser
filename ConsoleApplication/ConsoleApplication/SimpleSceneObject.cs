@@ -38,10 +38,10 @@ namespace ConsoleApplication
             _optimizedClip = new OptimizedClip();
         }
 
-        public void ConvertToYoobaUnits()
+        public void ConvertToYoobaUnits(int width, int height)
         {
             //_boundsX, _boundsY, _clipHeight, _clipWidth,
-            int pptWidth = 9144000, pptHeight = 6858000, yoobaWidth = 1024, yoobaHeight = 768;
+            int pptWidth = width, pptHeight = height, yoobaWidth = 1024, yoobaHeight = 768;
 
             float scaleWidth = (float)yoobaWidth / (float)pptWidth, scaleHeight = (float)yoobaHeight / (float)pptHeight;
 

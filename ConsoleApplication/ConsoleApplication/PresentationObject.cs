@@ -154,13 +154,13 @@ namespace ConsoleApplication
             set { _backgroundColor = value; }
         }
 
-        public void ConvertToYoobaUnits()
+        public void ConvertToYoobaUnits(int width, int height)
         {
             foreach(Scene scene in this.sceneList)
             {
                 foreach (SceneObject sceneObject in scene.SceneObjectList)
                 {
-                    sceneObject.ConvertToYoobaUnits();  
+                    sceneObject.ConvertToYoobaUnits(width, height);  
                 }
             }
         }

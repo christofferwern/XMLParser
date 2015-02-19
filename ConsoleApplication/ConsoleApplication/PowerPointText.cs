@@ -14,19 +14,21 @@ namespace ConsoleApplication
 
         public PowerPointText()
         {
-            _idx = -1;
             _fontSize = 0;
             _x = 0;
             _y = 0;
             _cx = 0;
             _cy = 0;
-            _level = 0;
             _rotation = 0;
-            _fontColor = "";
+            _idx = -1;
+            _level = 0;
+
             _type = "";
             _font = "";
-            _alignment = "";
+            _fontColor = "";
             _anchor = "";
+            _alignment = "";
+            
             _bold = false;
             _italic = false;
             _underline = false;
@@ -34,22 +36,24 @@ namespace ConsoleApplication
 
         public PowerPointText(PowerPointText ppt)
         {
-            _idx = ppt.Idx;
-            _level = ppt.Level;
             _fontSize = ppt.FontSize;
             _x = ppt.X;
             _y = ppt.Y;
             _cx = ppt.Cx;
             _cy = ppt.Cy;
             _rotation = ppt.Rotation;
-            _fontColor = ppt.FontColor;
+            _idx = ppt.Idx;
+            _level = ppt.Level;
+
             _type = ppt.Type;
             _font = ppt.Font;
-            _alignment = ppt.Alignment;
+            _fontColor = ppt.FontColor;
             _anchor = ppt.Anchor;
+            _alignment = ppt.Alignment;
+
             _bold = ppt.Bold;
             _italic = ppt.Italic;
-            _underline = ppt.Underline; 
+            _underline = ppt.Underline;
         }
 
         public String toString()
@@ -185,6 +189,23 @@ namespace ConsoleApplication
                 return true;
             else
                 return false;
+        }
+
+        public void setVisualAttribues(PowerPointText temp)
+        {
+            this.Anchor = temp.Anchor;
+            this.Alignment = temp.Alignment;
+            this.Bold = temp.Bold;
+            this.Cx = temp.Cx;
+            this.Cy = temp.Cy;
+            this.Font = temp.Font;
+            this.FontColor = temp.FontColor;
+            this.FontSize = temp.FontSize;
+            this.Italic = temp.Italic;
+            this.Rotation = temp.Rotation;
+            this.Underline = temp.Underline;
+            this.X = temp.X;
+            this.Y = temp.Y;
         }
     }
 }
