@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Drawing;
 
 namespace ConsoleApplication
 {
@@ -12,7 +13,6 @@ namespace ConsoleApplication
         private List<GradientInfo> _gradientList;
         private string _bgType, _gradientType;
 
-
         private int _angle;
         public GradientBackground()
         {
@@ -21,6 +21,7 @@ namespace ConsoleApplication
             _angle = 0;
             _bgType = "gradient";
             _gradientType = "";
+            Color c = Color.FromArgb(23, 11, 220);
         }
 
         public float getAlpha1()
