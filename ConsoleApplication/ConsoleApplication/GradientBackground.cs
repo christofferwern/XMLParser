@@ -21,7 +21,6 @@ namespace ConsoleApplication
             _angle = 0;
             _bgType = "gradient";
             _gradientType = "";
-            Color c = Color.FromArgb(23, 11, 220);
         }
 
         public float getAlpha1()
