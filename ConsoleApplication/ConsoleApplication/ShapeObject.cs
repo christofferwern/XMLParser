@@ -46,18 +46,15 @@ namespace ConsoleApplication
                 case shape_type.Rectangle:
                     objectType = "com.yooba.shapes.RoundedRectangleShape";
                     _shapeObjectAccessorChild.Remove("radius");
-                    //Console.WriteLine("Rect");
                 break;
                 case shape_type.Circle:
                     objectType = "com.yooba.shapes.CircleShape";
                     _shapeObjectAccessorChild.Remove("cornerRadius");
-                    //Console.WriteLine("Rect");
                 break;
                 case shape_type.Polygon:
                     objectType = "com.yooba.shapes.PolygonShape";
                     _shapeObjectAccessorChild.Remove("radius");
                     _shapeObjectAccessorChild.Remove("cornerRadius");
-                    //Console.WriteLine("Rect");
                 break;
 
             }
@@ -117,8 +114,6 @@ namespace ConsoleApplication
                 if (fieldInfo != null)
                     xmlChild.InnerText = fieldInfo.GetValue(this).ToString().Replace(",",".").ToLower();
 
-                Console.WriteLine(xmlChild.InnerText);
-
                 acce.AppendChild(xmlChild);
             }
 
@@ -141,11 +136,8 @@ namespace ConsoleApplication
             base.ConvertToYoobaUnits(width, height);
             if (_fillType.Equals("solid"))
             {
-                Console.WriteLine("S: " + _fillAlpha);
                 _fillColor = getColorAsInteger(_fillColor).ToString();
-                Console.WriteLine("I: " + _fillAlpha);
                 _fillAlpha = 1 - (_fillAlpha/10000);
-                Console.WriteLine("A: " + _fillAlpha);
             }
 
             if (_fillType.Equals("gradient"))
