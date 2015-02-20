@@ -187,7 +187,7 @@ namespace ConsoleApplication
 
                 case "solidFill":
                     SolidBackground solidBg = new SolidBackground();
-                    shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rounded);
+                    shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
 
                     if (bg_type.FirstChild.GetType().Equals(typeof(DrawingML.RgbColorModelHex)))
                         foreach (var value in bg_type.Descendants<DrawingML.RgbColorModelHex>())
@@ -238,7 +238,7 @@ namespace ConsoleApplication
                     break;
                 case "gradFill":
 
-                    shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rounded);
+                    shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
 
                     GradientBackground gradientBg = new GradientBackground();
 
@@ -398,32 +398,44 @@ namespace ConsoleApplication
 
                 powerPointText = GetPowerPointObject(slideLayoutPowerPointShapes, powerPointText);
 
-                SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
-                simpleSceneObject.BoundsX = powerPointText.X;
-                simpleSceneObject.BoundsY = powerPointText.Y;
-                simpleSceneObject.ClipWidth = powerPointText.Cx;
-                simpleSceneObject.ClipHeight = powerPointText.Cy;
+                SimpleSceneObject simpleSceneObjectText = new SimpleSceneObject();
+                simpleSceneObjectText.BoundsX = powerPointText.X;
+                simpleSceneObjectText.BoundsY = powerPointText.Y;
+                simpleSceneObjectText.ClipWidth = powerPointText.Cx;
+                simpleSceneObjectText.ClipHeight = powerPointText.Cy;
+
+                SimpleSceneObject simpleSceneObjectShape = new SimpleSceneObject();
+                simpleSceneObjectShape.BoundsX = powerPointText.X;
+                simpleSceneObjectShape.BoundsY = powerPointText.Y;
+                simpleSceneObjectShape.ClipWidth = powerPointText.Cx;
+                simpleSceneObjectShape.ClipHeight = powerPointText.Cy;
 
                 //Get info about SimpleSceneObject
 
                 //Get the rotation of scene object
                 foreach (var xfrm in sp.Descendants<DrawingML.Transform2D>())
                 {
-                    simpleSceneObject.Rotation = (xfrm.Rotation != null) ? xfrm.Rotation : simpleSceneObject.Rotation;
+                    simpleSceneObjectText.Rotation = (xfrm.Rotation != null) ? xfrm.Rotation : simpleSceneObjectText.Rotation;
+                    simpleSceneObjectShape.Rotation = (xfrm.Rotation != null) ? xfrm.Rotation : simpleSceneObjectText.Rotation;
                 }
 
                 //Get the positions of the scene object
                 foreach (var off in sp.Descendants<DrawingML.Offset>())
                 {
-                    simpleSceneObject.BoundsX = (off.X != null) ? (int)off.X : simpleSceneObject.BoundsX;
-                    simpleSceneObject.BoundsY = (off.Y != null) ? (int)off.Y : simpleSceneObject.BoundsY;
+                    simpleSceneObjectText.BoundsX = (off.X != null) ? (int)off.X : simpleSceneObjectText.BoundsX;
+                    simpleSceneObjectText.BoundsY = (off.Y != null) ? (int)off.Y : simpleSceneObjectText.BoundsY;
+                    simpleSceneObjectShape.BoundsX = (off.X != null) ? (int)off.X : simpleSceneObjectText.BoundsX;
+                    simpleSceneObjectShape.BoundsY = (off.Y != null) ? (int)off.Y : simpleSceneObjectText.BoundsY;
+                
                 }
 
                 //Get the size of the shape object
                 foreach (var ext in sp.Descendants<DrawingML.Extents>())
                 {
-                    simpleSceneObject.ClipWidth = (ext.Cx != null) ? (int)ext.Cx : simpleSceneObject.ClipWidth;
-                    simpleSceneObject.ClipHeight = (ext.Cy != null) ? (int)ext.Cy : simpleSceneObject.ClipHeight;
+                    simpleSceneObjectText.ClipWidth = (ext.Cx != null) ? (int)ext.Cx : simpleSceneObjectText.ClipWidth;
+                    simpleSceneObjectText.ClipHeight = (ext.Cy != null) ? (int)ext.Cy : simpleSceneObjectText.ClipHeight;
+                    simpleSceneObjectShape.ClipWidth = (ext.Cx != null) ? (int)ext.Cx : simpleSceneObjectText.ClipWidth;
+                    simpleSceneObjectShape.ClipHeight = (ext.Cy != null) ? (int)ext.Cy : simpleSceneObjectText.ClipHeight;
                 }
 
                 //Get the alignment of the shape object
@@ -469,10 +481,60 @@ namespace ConsoleApplication
                     }
                 }
 
+                //Check if shape has background and line properties.
+                if (sp.ShapeProperties != null)
+                {
+                    if(sp.ShapeProperties.HasChildren)
+                    {
+                        bool writeShape = false;
+                        ShapeObject shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Rectangle);
+                        foreach(DrawingML.PresetGeometry pre in sp.ShapeProperties.Descendants<DrawingML.PresetGeometry>())
+                        {
+                            if(pre.Preset == "rect")
+                                shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Rectangle);
+
+                            if (pre.Preset == "ellipse")
+                                shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Circle);
+
+                            if (pre.Preset == "triangle")
+                            {
+                                shapeObject.Points = 3;
+                                shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Polygon);
+                            }
+                                
+                        }
+
+                        foreach (var child in sp.ShapeProperties)
+                        {
+                            if (child.LocalName == "solidFill")
+                            {
+                                DrawingML.SolidFill solidFill = (DrawingML.SolidFill)child;
+
+                                if (solidFill.RgbColorModelHex != null)
+                                {
+                                    writeShape = true;
+                                    shapeObject.FillColor = solidFill.RgbColorModelHex.Val.ToString();
+                                }
+
+                                if (solidFill.SchemeColor != null)
+                                {
+                                    writeShape = true;
+                                    shapeObject.FillColor = getColorFromTheme(solidFill.SchemeColor.Val);
+                                }
+                            }
+                        }
+
+                        if (writeShape)
+                        {
+                            sceneObjectList.Add(shapeObject);
+                        }
+
+                    }
+                }
+
 
                 //Add text info to scene object
-                TextObject sceneObject = new TextObject(simpleSceneObject);
-
+                TextObject textObject = new TextObject(simpleSceneObjectText);
 
                 int paragraphIndex = 0;
                 foreach (DrawingML.Paragraph p in sp.TextBody.Descendants<DrawingML.Paragraph>())
@@ -597,27 +659,27 @@ namespace ConsoleApplication
                         }
 
                         //Add textStyle to StyleList of the sceneObject
-                        sceneObject.addToStyleList(textStyle);
+                        textObject.addToStyleList(textStyle);
 
                         //Iteratates through StyleList of sceneObject for items that is equal to textstyle and returns the index of that style
-                        if (sceneObject.StyleList.IndexOf(textStyle) == -1)
+                        if (textObject.StyleList.IndexOf(textStyle) == -1)
                         {
-                            foreach (TextStyle item in sceneObject.StyleList)
+                            foreach (TextStyle item in textObject.StyleList)
                                 if (textStyle.isEqual(item))
-                                    textFragment.StyleId = sceneObject.StyleList.IndexOf(item);
+                                    textFragment.StyleId = textObject.StyleList.IndexOf(item);
                         }
                         else
-                            textFragment.StyleId = sceneObject.StyleList.IndexOf(textStyle);
+                            textFragment.StyleId = textObject.StyleList.IndexOf(textStyle);
 
                         //Calculate the internal text fragments position (inside the scene object)
                         var xy = CalculateInternalTextFragmentPositions(textFragment,
                                                                         textStyle,
-                                                                        simpleSceneObject.ClipWidth,
-                                                                        simpleSceneObject.ClipHeight);
+                                                                        simpleSceneObjectText.ClipWidth,
+                                                                        simpleSceneObjectText.ClipHeight);
                         textFragment.X = xy.Item1;
                         textFragment.Y = xy.Item2;
 
-                        sceneObject.FragmentsList.Add(textFragment);
+                        textObject.FragmentsList.Add(textFragment);
 
                         runIndex++;
                     }
@@ -626,8 +688,8 @@ namespace ConsoleApplication
                     //If paragraph has no run means it has no text, but it still will correspong to a new line 
                     if (!HasRun)
                     {
-                        if (sceneObject.FragmentsList.Count>0)
-                            sceneObject.FragmentsList.Last().Breaks++;
+                        if (textObject.FragmentsList.Count>0)
+                            textObject.FragmentsList.Last().Breaks++;
                     }
 
 
@@ -637,24 +699,24 @@ namespace ConsoleApplication
                 }
 
                 //Put the text object properties to the first style in style list
-                if (sceneObject.StyleList.Count > 0)
+                if (textObject.StyleList.Count > 0)
                 {
-                    sceneObject.Bold = sceneObject.StyleList[0].Bold;
-                    sceneObject.Italic = sceneObject.StyleList[0].Italic;
-                    sceneObject.Underline = sceneObject.StyleList[0].Underline;
-                    sceneObject.Size = sceneObject.StyleList[0].FontSize;
-                    sceneObject.Color = sceneObject.StyleList[0].FontColor;
-                    sceneObject.Align = powerPointText.Alignment;
+                    textObject.Bold = textObject.StyleList[0].Bold;
+                    textObject.Italic = textObject.StyleList[0].Italic;
+                    textObject.Underline = textObject.StyleList[0].Underline;
+                    textObject.Size = textObject.StyleList[0].FontSize;
+                    textObject.Color = textObject.StyleList[0].FontColor;
+                    textObject.Align = powerPointText.Alignment;
                 }
 
                 //If alignment is empty, set it to left
-                if (sceneObject.Align == "")
-                    sceneObject.Align = "left";
+                if (textObject.Align == "")
+                    textObject.Align = "left";
 
-                if (sceneObject.FragmentsList.Count < 1)
+                if (textObject.FragmentsList.Count < 1)
                     continue;
 
-                sceneObjectList.Add(sceneObject);
+                sceneObjectList.Add(textObject);
             }
 
             return sceneObjectList;
