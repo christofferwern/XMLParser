@@ -12,8 +12,7 @@ namespace ConsoleApplication
     {
         private float _alpha, _cornerRadius, _fillAlpha, _fillAlpha1, _fillAlpha2, _gradientAngle, _rotation, _rotationX, _rotationY, _rotationZ, _scaleZ;
 
-
-        private int _lineAlpha, _lineSize, _x, _y, _z;
+        private int _lineAlpha, _lineSize, _x, _y, _z, _points, _radius;
 
         private Boolean _cacheAsBitmap, _fillEnable, _lineEnable, _visible;
         private string _fillType, _gradientType, _fillColor, _lineColor, _fillColor1, _fillColor2;
@@ -21,33 +20,44 @@ namespace ConsoleApplication
         private float[] _gradientAlphas;
         private string[] _gradientFills;
 
-        private string[] _shapeObjectAccessorChild = new string[22]{   "alpha", "cacheAsBitmap", "cornerRadius", "gradientAngle", "gradientType", "fillAlpha", "fillColor",
-                                                                                 "fillEnable", "fillType", "lineAlpha", "lineColor", "lineEnable", "lineSize",
-                                                                                "rotation", "rotationX", "rotationY", "rotationZ", "scaleZ", "visible", "x",
-                                                                                "y", "z"};
+        private string[] _attributes = new string[24]{   "alpha", "cacheAsBitmap", "cornerRadius", "gradientAngle", "gradientType", "fillAlpha", "fillColor",
+                                                         "fillEnable", "fillType", "lineAlpha", "lineColor", "lineEnable", "lineSize", "points", "radius",
+                                                         "rotation", "rotationX", "rotationY", "rotationZ", "scaleZ", "visible", "x",
+                                                         "y", "z"};
+
+        private List<String> _shapeObjectAccessorChild = new List<string>();
         private List<XmlElement> _accessorChildList;
         private Properties _properties;
 
         public enum shape_type{
-            Rounded,
+            Rectangle,
             Circle,
             Polygon
         }
 
         public ShapeObject(SceneObject sceneobject, shape_type shapeType) : base(sceneobject) 
         {
+            _shapeObjectAccessorChild.AddRange(_attributes);
+            
             string objectType = "";
 
             switch (shapeType)
             {
-                case shape_type.Rounded:
+                case shape_type.Rectangle:
                     objectType = "com.yooba.shapes.RoundedRectangleShape";
+                    _shapeObjectAccessorChild.Remove("radius");
+                    //Console.WriteLine("Rect");
                 break;
                 case shape_type.Circle:
                     objectType = "com.yooba.shapes.CircleShape";
+                    _shapeObjectAccessorChild.Remove("cornerRadius");
+                    //Console.WriteLine("Rect");
                 break;
                 case shape_type.Polygon:
                     objectType = "com.yooba.shapes.PolygonShape";
+                    _shapeObjectAccessorChild.Remove("radius");
+                    _shapeObjectAccessorChild.Remove("cornerRadius");
+                    //Console.WriteLine("Rect");
                 break;
 
             }
@@ -60,7 +70,7 @@ namespace ConsoleApplication
             _cornerRadius = 0;
             _gradientAngle = 90;
             _gradientType = "linear";
-            _fillAlpha = 1;
+            _fillAlpha = 0;
             _fillColor = "16743690";
             _fillEnable = true;
             _fillType = "solid";
@@ -68,6 +78,8 @@ namespace ConsoleApplication
             _lineColor = "6426397";
             _lineEnable = false;
             _lineSize = 1;
+            _points = 3;
+            _radius = 0;
             _rotation = 0;
             _rotationX = 0;
             _rotationY = 0;
@@ -105,6 +117,8 @@ namespace ConsoleApplication
                 if (fieldInfo != null)
                     xmlChild.InnerText = fieldInfo.GetValue(this).ToString().Replace(",",".").ToLower();
 
+                Console.WriteLine(xmlChild.InnerText);
+
                 acce.AppendChild(xmlChild);
             }
 
@@ -127,8 +141,11 @@ namespace ConsoleApplication
             base.ConvertToYoobaUnits(width, height);
             if (_fillType.Equals("solid"))
             {
+                Console.WriteLine("S: " + _fillAlpha);
                 _fillColor = getColorAsInteger(_fillColor).ToString();
-                _fillAlpha = ((_fillAlpha / 1000) / 100);
+                Console.WriteLine("I: " + _fillAlpha);
+                _fillAlpha = 1 - (_fillAlpha/10000);
+                Console.WriteLine("A: " + _fillAlpha);
             }
 
             if (_fillType.Equals("gradient"))
@@ -325,6 +342,19 @@ namespace ConsoleApplication
             get { return _gradientFills; }
             set { _gradientFills = value; }
         }
+
+        public int Radius
+        {
+            get { return _radius; }
+            set { _radius = value; }
+        }
+
+        public int Points
+        {
+            get { return _points; }
+            set { _points = value; }
+        }
+
         public Properties Properties
         {
             get { return _properties; }

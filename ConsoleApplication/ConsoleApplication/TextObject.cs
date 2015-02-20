@@ -152,7 +152,7 @@ namespace ConsoleApplication
                     for (int i = 0; i < textFragment.Level; i++)
                         HTML += "\t";
 
-                    HTML += textFragment.Text.Replace("<", "(").Replace(">", ")");
+                    HTML += textFragment.Text.Replace("<", "&#60;").Replace(">", "&#62;");
 
                     oldStyle = newStyle;
                     continue;
@@ -204,7 +204,7 @@ namespace ConsoleApplication
                         for (int i = 0; i < textFragment.Level; i++)
                             HTML += "\t";
 
-                        HTML += textFragment.Text.Replace("<", "(").Replace(">", ")");
+                        HTML += textFragment.Text.Replace("<", "&#60;").Replace(">", "&#62;");
                     }
                     else
                     {
@@ -227,7 +227,7 @@ namespace ConsoleApplication
                         for (int i = 0; i < textFragment.Level; i++)
                             HTML += "\t";
 
-                        HTML += textFragment.Text.Replace("<", "(").Replace(">", ")");
+                        HTML += textFragment.Text.Replace("<", "&#60;").Replace(">", "&#62;");
                     }
                 }
                 else
@@ -235,7 +235,7 @@ namespace ConsoleApplication
                     for (int i = 0; i < textFragment.Level; i++)
                         HTML += "\t";
 
-                    HTML += textFragment.Text.Replace("<", "(").Replace(">", ")");
+                    HTML += textFragment.Text.Replace("<", "&#60;").Replace(">", "&#62;");
                 }
 
                 for (int i = 0; i < textFragment.Breaks; i++)
