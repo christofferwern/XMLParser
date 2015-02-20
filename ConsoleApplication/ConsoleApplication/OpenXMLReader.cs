@@ -66,19 +66,39 @@ namespace ConsoleApplication
                     //Read all colors from theme
                     readColorFromTheme();
 
+
                     //Retrive the presentation part
                     var presentation = _presentationDocument.PresentationPart.Presentation;
+
+                    //Get the size of presentation
+                    PresentationML.SlideSize slideInfo = presentation.SlideSize;
+                    _presentationSizeX = slideInfo.Cx.Value;
+                    _presentationSizeY = slideInfo.Cy.Value;
+
+                    foreach (PresentationML.SlideMasterId masterId in presentation.SlideMasterIdList)
+                    {
+                        SlideMasterPart masterPart = _presentationDocument.PresentationPart.GetPartById(masterId.RelationshipId) as SlideMasterPart;
+                        PresentationML.SlideMaster slideMaster = masterPart.SlideMaster;
+                        if (slideMaster.CommonSlideData.FirstChild.GetType() == typeof(PresentationML.Background))
+                        {
+                            foreach(PresentationML.BackgroundProperties bgP in slideMaster.Descendants<PresentationML.BackgroundProperties>())
+                            {
+
+                                ShapeObject shapeObject;
+                                getBackgroundShape(bgP, out shapeObject);
+
+                                if (shapeObject != null)
+                                    _presentationObject.BackgroundSceneObjectList.Add(shapeObject);
+
+                            }
+                        }
+                    }
 
                     //Get all styles stored in the slide master, <PowerPoint Type, TextStyle>
                     _slideMasterPowerPointShapes = GetSlideMasterPowerPointShapes(_presentationDocument);
 
                     //Counter of scene
                     int sceneCounter = 1;
-
-                    //Get the size of presentation
-                    PresentationML.SlideSize slideInfo = presentation.SlideSize;
-                    _presentationSizeX = slideInfo.Cx.Value;
-                    _presentationSizeY = slideInfo.Cy.Value;
 
                     //Go through all Slides in the PowerPoint presentation
                     foreach (PresentationML.SlideId slideID in presentation.SlideIdList)
@@ -134,212 +154,208 @@ namespace ConsoleApplication
             PresentationML.Slide slide = slidePart.Slide;
 
             //Check for each backgroundproperty in each slide
-            foreach (var bg in slide.Descendants<PresentationML.BackgroundProperties>())
+            foreach (PresentationML.BackgroundProperties bgP in slide.Descendants<PresentationML.BackgroundProperties>())
             {
                 //If no background tag, go to next iteration
-                if (bg == null)
+                if (bgP == null)
                     continue;
+                ShapeObject shapeObject;
+                getBackgroundShape(bgP, out shapeObject);
 
-                SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
-                simpleSceneObject.ClipHeight = _presentationSizeY;
-                simpleSceneObject.ClipWidth = _presentationSizeX;
+                if (shapeObject != null)
+                    backgroundShapelist.Add(shapeObject);
 
-                string slide_name = splitUriToImageName(slidePart.Uri); //Get the slide for this background
-
-                var bg_type = bg.FirstChild;
-
-                //Check if first child in background tag is a solidFill, gradFill or blipFill
-                switch (bg_type.XmlQualifiedName.Name)
-                {
-
-                    case "solidFill":
-                        SolidBackground solidBg = new SolidBackground();
-                        
-                        ShapeObject solidObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rounded);
-
-                        
-
-                        if (bg_type.FirstChild.GetType().Equals(typeof(DrawingML.RgbColorModelHex)))
-                        {
-                            foreach (var value in bg_type.Descendants<DrawingML.RgbColorModelHex>())
-                                solidBg.BgColor = value.Val;
-                            foreach (var alpha in bg_type.Descendants<DrawingML.Alpha>())
-                                solidBg.Alpha = alpha.Val;
-                        }
-                        else
-                        { //Theme color
-                            foreach (var value in bg_type.Descendants<DrawingML.SchemeColor>())
-                                solidBg.BgColor = getColorFromTheme(value.Val);
-                            foreach (var value in bg_type.Descendants<DrawingML.Alpha>())
-                                solidBg.Alpha = value.Val; 
-                        }
-
-                        IEnumerator<OpenXmlElement> colorInfo = bg_type.FirstChild.GetEnumerator();
-
-                        //Get the alpha value for each gradient stop
-                        while (colorInfo.MoveNext())
-                        {
-                            ColorConverter conv = new ColorConverter();
-
-                            var type = colorInfo.Current;
-
-                            if (type.GetType() == typeof(DrawingML.Alpha))
-                            {
-                                var Alpha = type as DrawingML.Alpha;
-                            }
-                            if (type.GetType() == typeof(DrawingML.SaturationModulation))
-                            {
-                                var SaturationModulation = type as DrawingML.SaturationModulation;
-                            }
-                            if (type.GetType() == typeof(DrawingML.Shade))
-                            {
-                                var Shade = type as DrawingML.Shade;
-                            }
-                            if (type.GetType() == typeof(DrawingML.Tint))
-                            {
-                                var Tint = type as DrawingML.Tint;
-                                solidBg.Tint = Tint.Val;
-                            }
-                            if (type.GetType() == typeof(DrawingML.LuminanceModulation))
-                            {
-                                var LuminanceModulation = type as DrawingML.LuminanceModulation;
-                                solidBg.BgColor = conv.SetBrightness(solidBg.Color, LuminanceModulation.Val);
-                            }
-
-                        }
-
-                        solidObject.FillColor = solidBg.BgColor;
-                        solidObject.FillAlpha = solidBg.Alpha;
-                        solidObject.GradientType = solidBg.BackgroundType;
-
-                        backgroundShapelist.Add(solidObject);
-
-                        break;
-                    case "gradFill":
-
-                        ShapeObject gradientObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rounded);
-
-                        GradientBackground gradientBg = new GradientBackground();
-
-                        bool validGradientType = false;
-
-                        IEnumerator<OpenXmlElement> gradientType = bg_type.GetEnumerator();
-
-                        while (gradientType.MoveNext() && validGradientType == false)
-                        {
-                            if (gradientType.Current.GetType() == typeof(DrawingML.PathGradientFill)){
-                                gradientBg.GradientType = "radial";
-                                validGradientType = true;
-                            }
-                            else if (gradientType.Current.GetType() == typeof(DrawingML.LinearGradientFill)){
-                                gradientBg.GradientType = "linear";
-                                var angle = gradientType.Current as DrawingML.LinearGradientFill;
-                                gradientBg.Angle = angle.Angle;
-                                validGradientType = true;
-                            }
-                            else
-                                validGradientType = false;
-                        }
-
-                        if(validGradientType)
-                        {
-                            foreach (DrawingML.GradientStop gs in bg_type.FirstChild.Descendants<DrawingML.GradientStop>())
-                            {
-                            
-                                //Create a new gradientinfo to store color, alpha and position for each gradient stop.
-                                GradientInfo gradInfo = new GradientInfo();
-
-                                //Get the position value for each gradient stop.
-                                gradInfo.Position = gs.Position.Value;
-
-                                //Get the color value for each gradient stop.
-                                if (gs.RgbColorModelHex != null)
-                                    gradInfo.GradColor = gs.RgbColorModelHex.Val;
-                                else 
-                                    gradInfo.GradColor = getColorFromTheme(gs.SchemeColor.Val);
-
-                                //List of all childrens gradientstop's first child.
-                                IEnumerator<OpenXmlElement> alpha = gs.FirstChild.GetEnumerator();
-
-                                //Get the alpha value for each gradient stop
-                                while (alpha.MoveNext())
-                                {
-                                    ColorConverter conv = new ColorConverter();
-
-                                    var colorType = alpha.Current;
-
-                                    if (colorType.GetType() == typeof(DrawingML.Alpha))
-                                    {
-                                        var Alpha = colorType as DrawingML.Alpha;
-                                        gradInfo.Alpha = Alpha.Val;
-                                    }
-                                    if (colorType.GetType() == typeof(DrawingML.SaturationModulation))
-                                    {
-                                        var SaturationModulation = colorType as DrawingML.SaturationModulation;
-                                        gradInfo.SaturationMod = SaturationModulation.Val;
-                                    }
-                                    if (colorType.GetType() == typeof(DrawingML.Shade))
-                                    {
-                                        var Shade = colorType as DrawingML.Shade;
-                                        gradInfo.SaturationMod = Shade.Val;
-                                    }
-                                    if (colorType.GetType() == typeof(DrawingML.Tint))
-                                    {
-                                        var Tint = colorType as DrawingML.Tint;
-                                        gradInfo.SaturationMod = Tint.Val;
-                                    }
-                                    if (colorType.GetType() == typeof(DrawingML.LuminanceModulation))
-                                    {
-                                        var LuminanceModulation = colorType as DrawingML.LuminanceModulation;
-                                        gradInfo.GradColor = conv.SetBrightness(gradInfo.Color, LuminanceModulation.Val);
-                                    }
-
-                                }
-                                //gradInfo.convert();
-                                //Console.WriteLine(gradInfo.toString());
-                                //Add gradient information to backgroundlist
-                                gradientBg.GradientList.Add(gradInfo);    
-                            }
-
-                            gradientObject.GradientType = gradientBg.GradientType;
-                            gradientObject.FillType = gradientBg.BgType;
-
-                            gradientObject.GradientAlphas[0] = gradientBg.GradientList.First().Alpha;
-                            gradientObject.GradientAlphas[1] = gradientBg.GradientList.Last().Alpha;
-                            gradientObject.GradientFills[0] = gradientBg.GradientList.First().GradColor;
-                            gradientObject.GradientFills[1] = gradientBg.GradientList.Last().GradColor;
-
-                            gradientObject.GradientAngle = gradientBg.Angle;
-
-                            backgroundShapelist.Add(gradientObject);
-
-                        }
-                        else
-                        {
-                            Console.WriteLine("Not valid type");
-                        }
-
-                        
-                        
-
-                        break;
-                    case "blipFill":
-                        Console.WriteLine("blipFill");
-                        foreach (var blip in bg_type.Descendants<DrawingML.Blip>())
-                        {
-                            string embeded_id = blip.Embed.Value;
-                            ImagePart image_part = (ImagePart)slide.SlidePart.GetPartById(embeded_id);
-                            //Console.WriteLine(image_part.Uri.OriginalString);
-
-                        }
-
-                        break;
-                }
-
-
+                Console.WriteLine("BGList: " + backgroundShapelist.Count);
             }
 
             return backgroundShapelist;
+        }
+
+        private void getBackgroundShape(PresentationML.BackgroundProperties bg, out ShapeObject shapeObject)
+        {
+            SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
+            simpleSceneObject.ClipHeight = _presentationSizeY;
+            simpleSceneObject.ClipWidth = _presentationSizeX;
+
+            //string slide_name = splitUriToImageName(slidePart.Uri); //Get the slide for this background
+
+            OpenXmlElement bg_type = bg.FirstChild;
+            shapeObject = null;
+            //Check if first child in background tag is a solidFill, gradFill or blipFill
+            switch (bg_type.XmlQualifiedName.Name)
+            {
+
+                case "solidFill":
+                    SolidBackground solidBg = new SolidBackground();
+                    shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rounded);
+
+                    if (bg_type.FirstChild.GetType().Equals(typeof(DrawingML.RgbColorModelHex)))
+                        foreach (var value in bg_type.Descendants<DrawingML.RgbColorModelHex>())
+                            solidBg.BgColor = value.Val;
+                    else
+                        foreach (var value in bg_type.Descendants<DrawingML.SchemeColor>())
+                            solidBg.BgColor = getColorFromTheme(value.Val);
+
+                    IEnumerator<OpenXmlElement> colorInfo = bg_type.FirstChild.GetEnumerator();
+
+                    //Get the alpha value for each gradient stop
+                    while (colorInfo.MoveNext())
+                    {
+                        ColorConverter conv = new ColorConverter();
+
+                        var type = colorInfo.Current;
+
+                        if (type.GetType() == typeof(DrawingML.Alpha))
+                        {
+                            var Alpha = type as DrawingML.Alpha;
+                            solidBg.Alpha = Alpha.Val;
+                        }
+                        if (type.GetType() == typeof(DrawingML.SaturationModulation))
+                        {
+                            var SaturationModulation = type as DrawingML.SaturationModulation;
+                        }
+                        if (type.GetType() == typeof(DrawingML.Shade))
+                        {
+                            var Shade = type as DrawingML.Shade;
+                        }
+                        if (type.GetType() == typeof(DrawingML.Tint))
+                        {
+                            var Tint = type as DrawingML.Tint;
+                            solidBg.Tint = Tint.Val;
+                        }
+                        if (type.GetType() == typeof(DrawingML.LuminanceModulation))
+                        {
+                            var LuminanceModulation = type as DrawingML.LuminanceModulation;
+                            solidBg.BgColor = conv.SetBrightness(solidBg.Color, LuminanceModulation.Val);
+                        }
+
+                    }
+
+                    shapeObject.FillColor = solidBg.BgColor;
+                    shapeObject.FillAlpha = solidBg.Alpha;
+                    shapeObject.GradientType = solidBg.BackgroundType;
+
+                    break;
+                case "gradFill":
+
+                    shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rounded);
+
+                    GradientBackground gradientBg = new GradientBackground();
+
+                    bool validGradientType = false;
+
+                    IEnumerator<OpenXmlElement> gradientType = bg_type.GetEnumerator();
+
+                    while (gradientType.MoveNext() && validGradientType == false)
+                    {
+                        if (gradientType.Current.GetType() == typeof(DrawingML.PathGradientFill))
+                        {
+                            gradientBg.GradientType = "radial";
+                            validGradientType = true;
+                        }
+                        else if (gradientType.Current.GetType() == typeof(DrawingML.LinearGradientFill))
+                        {
+                            gradientBg.GradientType = "linear";
+                            var angle = gradientType.Current as DrawingML.LinearGradientFill;
+                            gradientBg.Angle = angle.Angle;
+                            validGradientType = true;
+                        }
+                        else
+                            validGradientType = false;
+                    }
+
+                    if (validGradientType)
+                    {
+                        foreach (DrawingML.GradientStop gs in bg_type.FirstChild.Descendants<DrawingML.GradientStop>())
+                        {
+
+                            //Create a new gradientinfo to store color, alpha and position for each gradient stop.
+                            GradientInfo gradInfo = new GradientInfo();
+
+                            //Get the position value for each gradient stop.
+                            gradInfo.Position = gs.Position.Value;
+
+                            //Get the color value for each gradient stop.
+                            if (gs.RgbColorModelHex != null)
+                                gradInfo.GradColor = gs.RgbColorModelHex.Val;
+                            else
+                                gradInfo.GradColor = getColorFromTheme(gs.SchemeColor.Val);
+
+                            //List of all childrens gradientstop's first child.
+                            IEnumerator<OpenXmlElement> alpha = gs.FirstChild.GetEnumerator();
+
+                            //Get the alpha value for each gradient stop
+                            while (alpha.MoveNext())
+                            {
+                                ColorConverter conv = new ColorConverter();
+
+                                var colorType = alpha.Current;
+
+                                if (colorType.GetType() == typeof(DrawingML.Alpha))
+                                {
+                                    var Alpha = colorType as DrawingML.Alpha;
+                                    gradInfo.Alpha = Alpha.Val;
+                                }
+                                if (colorType.GetType() == typeof(DrawingML.SaturationModulation))
+                                {
+                                    var SaturationModulation = colorType as DrawingML.SaturationModulation;
+                                    gradInfo.SaturationMod = SaturationModulation.Val;
+                                }
+                                if (colorType.GetType() == typeof(DrawingML.Shade))
+                                {
+                                    var Shade = colorType as DrawingML.Shade;
+                                    gradInfo.SaturationMod = Shade.Val;
+                                }
+                                if (colorType.GetType() == typeof(DrawingML.Tint))
+                                {
+                                    var Tint = colorType as DrawingML.Tint;
+                                    gradInfo.SaturationMod = Tint.Val;
+                                }
+                                if (colorType.GetType() == typeof(DrawingML.LuminanceModulation))
+                                {
+                                    var LuminanceModulation = colorType as DrawingML.LuminanceModulation;
+                                    gradInfo.GradColor = conv.SetBrightness(gradInfo.Color, LuminanceModulation.Val);
+                                }
+
+                            }
+                            //gradInfo.convert();
+                            //Console.WriteLine(gradInfo.toString());
+                            //Add gradient information to backgroundlist
+                            gradientBg.GradientList.Add(gradInfo);
+                        }
+
+                        shapeObject.GradientType = gradientBg.GradientType;
+                        shapeObject.FillType = gradientBg.BgType;
+
+                        shapeObject.GradientAlphas[0] = gradientBg.GradientList.First().Alpha;
+                        shapeObject.GradientAlphas[1] = gradientBg.GradientList.Last().Alpha;
+                        shapeObject.GradientFills[0] = gradientBg.GradientList.First().GradColor;
+                        shapeObject.GradientFills[1] = gradientBg.GradientList.Last().GradColor;
+
+                        shapeObject.GradientAngle = gradientBg.Angle;
+
+                    }
+                    else
+                    {
+                        Console.WriteLine("Not valid type");
+                        shapeObject = null;
+                    }
+
+                    break;
+                case "blipFill":
+                    Console.WriteLine("blipFill");
+                    /*foreach (var blip in bg_type.Descendants<DrawingML.Blip>())
+                    {
+                        string embeded_id = blip.Embed.Value;
+                        ImagePart image_part = (ImagePart)slide.SlidePart.GetPartById(embeded_id);
+                        //Console.WriteLine(image_part.Uri.OriginalString);
+
+                    }
+                    */
+                    shapeObject = null;
+                    break;
+            }
+
         }
 
         private List<SceneObject> GetImageShapesFromSlidePart(SlidePart slidePart)
@@ -1217,6 +1233,9 @@ namespace ConsoleApplication
 
             return Tuple.Create(x, y);
         }
+
+
+        
 
         //get font from theme, ( inte snyggt alls =/ )
         private string getFontFromTheme(string font)

@@ -83,10 +83,10 @@ namespace ConsoleApplication
 
             _rootElement.AppendChild(_properties.getNode(_doc));
 
-            foreach (SceneObject scenObject in _sceneObjectList)
+            foreach (SceneObject sceneObject in _sceneObjectList)
             {
-                scenObject.setXMLDocumentRoot(ref _doc);
-                _rootElement.AppendChild(scenObject.getXMLTree());
+                sceneObject.setXMLDocumentRoot(ref _doc);
+                _rootElement.AppendChild(sceneObject.getXMLTree());
 
             }
 

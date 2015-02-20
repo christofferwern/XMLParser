@@ -14,7 +14,11 @@ namespace ConsoleApplication
         private string _id;
         private List<Scene> sceneList;
         private XmlDocument _xmlDoc;
-        List<SceneObject> backgroundSceneObjectList;
+        List<SceneObject> _backgroundSceneObjectList;
+
+
+
+
 
         public PresentationObject()
         {
@@ -23,9 +27,11 @@ namespace ConsoleApplication
 
             _id = Guid.NewGuid().ToString();
             _backgroundColor = Color.Red.ToArgb();
+            _backgroundSceneObjectList = new List<SceneObject>();
             sceneList = new List<Scene>();
-
-            createXMLTree();
+            _xmlDoc = new XmlDocument();
+            Console.WriteLine("PresentationObject created");
+            
         }
 
         public void addScene(Scene scene)
@@ -45,15 +51,8 @@ namespace ConsoleApplication
 
         public void createXMLTree()
         {
-            _xmlDoc = new XmlDocument();
-            XmlDeclaration xmlDeclaration = _xmlDoc.CreateXmlDeclaration("1.0", "utf-8", null);
-            XmlElement root = _xmlDoc.CreateElement("yoobaProject");
-            _xmlDoc.InsertBefore(xmlDeclaration, _xmlDoc.DocumentElement);
-            _xmlDoc.AppendChild(root);
-
-            root.AppendChild(getSceneTransitionNode());
-            root.AppendChild(getBackgroundSceneNode());
-            root.AppendChild(getForegroundSceneNode());
+            
+            
 
         }
 
@@ -69,6 +68,17 @@ namespace ConsoleApplication
             background.Attributes.Append(bgMode);
             background.AppendChild(properties);
             background.AppendChild(backgroundColor);
+
+            
+
+            foreach (SceneObject item in _backgroundSceneObjectList)
+            {
+
+                item.setXMLDocumentRoot(ref _xmlDoc);
+                background.AppendChild(item.getXMLTree());
+            }
+
+            Console.WriteLine("backgroundScene");
 
             return background;
         }
@@ -123,11 +133,29 @@ namespace ConsoleApplication
 
         public XmlDocument getXMLTree()
         {
+            
+            Console.WriteLine("presentationXML");
+
+            XmlDeclaration xmlDeclaration = _xmlDoc.CreateXmlDeclaration("1.0", "utf-8", null);
+            XmlElement root = _xmlDoc.CreateElement("yoobaProject");
+            _xmlDoc.InsertBefore(xmlDeclaration, _xmlDoc.DocumentElement);
+            _xmlDoc.AppendChild(root);
+
+            root.AppendChild(getSceneTransitionNode());
+            root.AppendChild(getBackgroundSceneNode());
+            root.AppendChild(getForegroundSceneNode());
+
             foreach(Scene scene in sceneList){
                 scene.setXMLDocumentRoot(ref _xmlDoc);
                 _xmlDoc.DocumentElement.AppendChild(scene.getXMLTree());
             }
             return _xmlDoc;
+        }
+
+        public List<SceneObject> BackgroundSceneObjectList
+        {
+            get { return _backgroundSceneObjectList; }
+            set { _backgroundSceneObjectList = value; }
         }
 
         public int ProjectHeight
@@ -162,6 +190,12 @@ namespace ConsoleApplication
                 {
                     sceneObject.ConvertToYoobaUnits(width, height);  
                 }
+
+                
+            }
+            foreach (SceneObject sceneObject in BackgroundSceneObjectList)
+            {
+                sceneObject.ConvertToYoobaUnits(width, height);
             }
         }
     }
