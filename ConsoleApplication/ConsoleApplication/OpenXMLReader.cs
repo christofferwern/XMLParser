@@ -165,7 +165,6 @@ namespace ConsoleApplication
                 if (shapeObject != null)
                     backgroundShapelist.Add(shapeObject);
 
-                Console.WriteLine("BGList: " + backgroundShapelist.Count);
             }
 
             return backgroundShapelist;
@@ -202,7 +201,7 @@ namespace ConsoleApplication
                     while (colorInfo.MoveNext())
                     {
                         ColorConverter conv = new ColorConverter();
-
+                        
                         var type = colorInfo.Current;
 
                         if (type.GetType() == typeof(DrawingML.Alpha))
@@ -213,15 +212,17 @@ namespace ConsoleApplication
                         if (type.GetType() == typeof(DrawingML.SaturationModulation))
                         {
                             var SaturationModulation = type as DrawingML.SaturationModulation;
+                            solidBg.BgColor = conv.SetSaturation(solidBg.Color, SaturationModulation.Val);
                         }
                         if (type.GetType() == typeof(DrawingML.Shade))
                         {
                             var Shade = type as DrawingML.Shade;
+                            solidBg.BgColor = conv.SetTint(solidBg.Color, Shade.Val);
                         }
                         if (type.GetType() == typeof(DrawingML.Tint))
                         {
                             var Tint = type as DrawingML.Tint;
-                            solidBg.Tint = Tint.Val;
+                            solidBg.BgColor = conv.SetShade(solidBg.Color, Tint.Val);
                         }
                         if (type.GetType() == typeof(DrawingML.LuminanceModulation))
                         {
@@ -283,7 +284,7 @@ namespace ConsoleApplication
 
                             //List of all childrens gradientstop's first child.
                             IEnumerator<OpenXmlElement> alpha = gs.FirstChild.GetEnumerator();
-
+                            Console.WriteLine(gradInfo.Color);
                             //Get the alpha value for each gradient stop
                             while (alpha.MoveNext())
                             {
@@ -299,17 +300,20 @@ namespace ConsoleApplication
                                 if (colorType.GetType() == typeof(DrawingML.SaturationModulation))
                                 {
                                     var SaturationModulation = colorType as DrawingML.SaturationModulation;
-                                    gradInfo.SaturationMod = SaturationModulation.Val;
+                                    gradInfo.GradColor = conv.SetSaturation(gradInfo.Color, SaturationModulation.Val);
+                                    Console.WriteLine(gradInfo.GradColor);
                                 }
                                 if (colorType.GetType() == typeof(DrawingML.Shade))
                                 {
                                     var Shade = colorType as DrawingML.Shade;
-                                    gradInfo.SaturationMod = Shade.Val;
+                                    gradInfo.GradColor = conv.SetTint(gradInfo.Color, Shade.Val);
+                                    Console.WriteLine(gradInfo.GradColor);
                                 }
                                 if (colorType.GetType() == typeof(DrawingML.Tint))
                                 {
                                     var Tint = colorType as DrawingML.Tint;
-                                    gradInfo.SaturationMod = Tint.Val;
+                                    gradInfo.GradColor = conv.SetShade(gradInfo.Color, Tint.Val);
+                                    Console.WriteLine(gradInfo.GradColor);
                                 }
                                 if (colorType.GetType() == typeof(DrawingML.LuminanceModulation))
                                 {

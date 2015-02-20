@@ -12,6 +12,50 @@ namespace ConsoleApplication
         public ColorConverter(){}
 
 
+        public string SetTint(Color c, double tint)
+        {
+            Color temp = new Color();
+
+            double convTint = tint / 1000;
+            double r = 0, g = 0, b = 0;
+
+            r = ((1 - (60*0.01)) * (255 - c.R)) + c.R;
+            g = ((1 - (60*0.01)) * (255 - c.G)) + c.G;
+            b = ((1 - (60*0.01)) * (255 - c.B)) + c.B;
+
+            temp = Color.FromArgb((int)(r), (int)(g), (int)(b));
+
+            return temp.R.ToString("X2") + temp.G.ToString("X2") + temp.B.ToString("X2");
+        }
+
+        public string SetShade(Color c, double tint)
+        {
+            Color temp = new Color();
+
+            double convTint = tint / 1000;
+            double r = 0, g = 0, b = 0;
+
+            r = (1 - (60*0.01)) * c.R;
+            g = (1 - (60*0.01)) * c.G;
+            b = (1 - (60*0.01)) * c.B;
+
+            temp = Color.FromArgb((int)(r),(int)(g), (int)(b));
+            return temp.R.ToString("X2") + temp.G.ToString("X2") + temp.B.ToString("X2");
+        }
+
+        public string SetSaturation(Color c, double saturation)
+        {
+
+            double convSaturation = saturation / 100000;
+
+            HSLColor hsl = RGB_to_HSL(c);
+
+            hsl.Saturation = convSaturation;
+            c = HSL_to_RGB(hsl);
+
+            return c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
+        }
+
         public string SetBrightness(Color c, double brightness)
         {
             
