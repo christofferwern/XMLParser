@@ -160,7 +160,8 @@ namespace ConsoleApplication
             _lineColor = getColorAsInteger(_lineColor).ToString();
 
             _cornerRadius = (float) Math.Round((_cornerRadius / 100000) * 128 * 4);
-            Console.WriteLine(_cornerRadius);
+
+            _rotation /= 60000;
         }
 
         public override XmlDocument getXMLDocumentRoot()
@@ -306,7 +307,7 @@ namespace ConsoleApplication
             set { _visible = value; }
         }
 
-        public Boolean LineEnable
+        public Boolean LineEnabled
         {
             get { return _lineEnabled; }
             set { _lineEnabled = value; }

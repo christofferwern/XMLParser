@@ -21,6 +21,7 @@ namespace ConsoleApplication
         private const int _nrOfThemeColors = 16;
         private int _presentationSizeX, _presentationSizeY;
         private string[,] _themeColors;
+        private List<DrawingML.Outline> _themeLines;
         private List<PowerPointText> _slideMasterPowerPointShapes;
         private PresentationDocument _presentationDocument;
 
@@ -39,13 +40,13 @@ namespace ConsoleApplication
             _presentationObject = new PresentationObject();
 
             _themeColors = new string[_nrOfThemeColors, 2];
+            _themeLines = new List<DrawingML.Outline>();
             _slideMasterPowerPointShapes = new List<PowerPointText>();
 
             _presentationObject.getXmlDocument(out _rootXmlDoc);
 
             _presentationSizeX = 0;
             _presentationSizeY = 0;
-
 
         }
 
@@ -64,7 +65,7 @@ namespace ConsoleApplication
                 using (_presentationDocument = PresentationDocument.Open(_path, false))
                 {
                     //Read all colors from theme
-                    readColorFromTheme();
+                    readTheme();
 
 
                     //Retrive the presentation part
@@ -374,7 +375,7 @@ namespace ConsoleApplication
             //Get all the slide layout power point shapes
             List<PowerPointText> slideLayoutPowerPointShapes = GetSlideLayoutPowerPointShapes(slidePart);
 
-            List<SceneObject> sceneObjectList = new List<SceneObject>();
+            List<SceneObject> sceneObjectList = GetAllLayoutShapes(slidePart);
 
             //Get the shape tree, <p:spTree>, which contains all shapes in the slide
             var spTree = slidePart.Slide.CommonSlideData.ShapeTree;
@@ -458,6 +459,24 @@ namespace ConsoleApplication
                     }
                 }
 
+                //Handle style
+                TextStyle style = new TextStyle();
+                if (sp.ShapeStyle != null)
+                {
+                    if (sp.ShapeStyle.FontReference != null)
+                    {
+                        if (sp.ShapeStyle.FontReference.SchemeColor != null)
+                        {
+                            style.FontColor = getColorFromTheme(sp.ShapeStyle.FontReference.SchemeColor.Val);
+                        }
+
+                        if (sp.ShapeStyle.FontReference.RgbColorModelHex != null)
+                        {
+                            style.FontColor = sp.ShapeStyle.FontReference.RgbColorModelHex.Val;
+                        }
+                    }
+                }
+
                 //If textbody contains listinfo
                 List<PowerPointText> listStyleList = new List<PowerPointText>();
                 if (sp.TextBody.ListStyle != null)
@@ -485,112 +504,9 @@ namespace ConsoleApplication
                     }
                 }
 
-                //Check if shape has background and line properties, if so add a shape
-                if (sp.ShapeProperties != null)
-                {
-                    if(sp.ShapeProperties.HasChildren)
-                    {
-                        bool writeShape = false;
-                        ShapeObject shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Rectangle);
-                        foreach(DrawingML.PresetGeometry pre in sp.ShapeProperties.Descendants<DrawingML.PresetGeometry>())
-                        {
-                            if(pre.Preset == "rect")
-                                shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Rectangle);
-
-                            if (pre.Preset == "ellipse")
-                                shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Circle);
-
-                            if (pre.Preset == "triangle" || pre.Preset == "diamond" || pre.Preset == "pentagon")
-                            {
-                                shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Polygon);
-                                shapeObject.Points = (pre.Preset == "triangle") ? 3 : (pre.Preset == "diamond") ? 4 : 5;
-                            }
-
-                            if (pre.Preset == "roundRect")
-                            {
-                                shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Rectangle);
-
-                                if (pre.AdjustValueList != null)
-                                {
-                                    if (pre.AdjustValueList.HasChildren)
-                                    {
-                                        foreach (var child in pre.AdjustValueList)
-                                        {
-                                            if (child.LocalName == "gd")
-                                            {
-                                                DrawingML.ShapeGuide gd = (DrawingML.ShapeGuide)child;
-                                                shapeObject.CornerRadius = float.Parse(gd.Formula.Value.ToString().Remove(0, 4));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                                
-                                
-                        }
-
-                        foreach (var child in sp.ShapeProperties)
-                        {
-                            //Fix with gradients too
-                            //Solid fill, one color backrgound
-                            if (child.LocalName == "solidFill")
-                            {
-                                DrawingML.SolidFill solidFill = (DrawingML.SolidFill)child;
-
-                                if (solidFill.RgbColorModelHex != null)
-                                {
-                                    writeShape = true;
-                                    shapeObject.FillColor = solidFill.RgbColorModelHex.Val.ToString();
-                                }
-
-                                if (solidFill.SchemeColor != null)
-                                {
-                                    writeShape = true;
-                                    shapeObject.FillColor = getColorFromTheme(solidFill.SchemeColor.Val);
-                                }
-                            }
-
-                            //Line values
-                            if (child.LocalName == "ln")
-                            {
-                                DrawingML.Outline ln = (DrawingML.Outline)child;
-
-                                if (ln.Width != null)
-                                {
-                                    shapeObject.LineSize = ln.Width.Value;
-                                    shapeObject.LineEnable = true;
-                                }
-
-                                if (ln.HasChildren)
-                                {
-                                    foreach (var lnChild in ln)
-                                    {
-                                        if (lnChild.LocalName == "solidFill")
-                                        {
-                                            DrawingML.SolidFill solidFill = (DrawingML.SolidFill)lnChild;
-
-                                            if (solidFill.RgbColorModelHex != null)
-                                            {
-                                                shapeObject.LineColor = solidFill.RgbColorModelHex.Val.ToString();
-                                            }
-
-                                            if (solidFill.SchemeColor != null)
-                                            {
-                                                shapeObject.LineColor = getColorFromTheme(solidFill.SchemeColor.Val);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        if (writeShape)
-                        {
-                            sceneObjectList.Add(shapeObject);
-                        }
-
-                    }
-                }
+                //Get the shape from the sp tag, and add it if it's not null.
+                ShapeObject shapeObject = getShapeObject(sp, simpleSceneObjectShape);
+                if (shapeObject != null) sceneObjectList.Add(shapeObject);
 
 
                 //Add text info to scene object
@@ -656,6 +572,12 @@ namespace ConsoleApplication
                         textStyle.Font = temp.Font;
                         textStyle.FontColor = temp.FontColor;
                         textStyle.FontSize = temp.FontSize;
+
+                        //Get values from font reference style
+                        if (style.FontColor != "")
+                        {
+                            textStyle.FontColor = style.FontColor;
+                        }
 
                         //Get font
                         foreach (var latinFont in run.Descendants<DrawingML.LatinFont>())
@@ -782,6 +704,280 @@ namespace ConsoleApplication
             return sceneObjectList;
         }
 
+        private List<SceneObject> GetAllLayoutShapes(SlidePart slidePart)
+        {
+            List<SceneObject> sceneObjectList = new List<SceneObject>();
+
+            PresentationML.ShapeTree shapeTree = slidePart.SlideLayoutPart.SlideLayout.CommonSlideData.ShapeTree;
+            foreach (PresentationML.Shape sp in shapeTree.Descendants<PresentationML.Shape>())
+            {
+                SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
+
+                //Get info about SimpleSceneObject
+
+                //Get the rotation of shape object
+                foreach (var xfrm in sp.Descendants<DrawingML.Transform2D>())
+                {
+                    simpleSceneObject.Rotation = (xfrm.Rotation != null) ? xfrm.Rotation : simpleSceneObject.Rotation;
+                }
+
+                //Get the positions of the shape object
+                foreach (var off in sp.Descendants<DrawingML.Offset>())
+                {
+                    simpleSceneObject.BoundsX = (off.X != null) ? (int)off.X : simpleSceneObject.BoundsX;
+                    simpleSceneObject.BoundsY = (off.Y != null) ? (int)off.Y : simpleSceneObject.BoundsY;
+                }
+
+                //Get the size of the shape object
+                foreach (var ext in sp.Descendants<DrawingML.Extents>())
+                {
+                    simpleSceneObject.ClipWidth = (ext.Cx != null) ? (int)ext.Cx : simpleSceneObject.ClipWidth;
+                    simpleSceneObject.ClipHeight = (ext.Cy != null) ? (int)ext.Cy : simpleSceneObject.ClipHeight;
+                }
+
+                ShapeObject shapeObject = getShapeObject(sp, simpleSceneObject);
+
+                if (shapeObject != null)
+                {
+                    sceneObjectList.Add(shapeObject);
+                }
+            }
+
+
+            return sceneObjectList;
+        }
+
+        //Returns the ShapeObject inside the sp.
+        //Returns null if shape should not be added.
+        private ShapeObject getShapeObject(PresentationML.Shape sp, SimpleSceneObject simpleSceneObjectShape)
+        {
+            ShapeObject shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Rectangle);
+            bool HasFigureAttr = false, IsValidGeometry = false;
+
+            //Check if shape has background and line properties, if so add a shape
+            if (sp.ShapeProperties != null)
+            {
+                if (sp.ShapeProperties.HasChildren)
+                {
+                    //Handle the shape geometry
+                    foreach (DrawingML.PresetGeometry pre in sp.ShapeProperties.Descendants<DrawingML.PresetGeometry>())
+                    {
+                        if (pre.Preset == "rect"          || pre.Preset == "snip1Rect"      || pre.Preset == "snip2DiagRect"  ||
+                            pre.Preset == "round1Rect"    || pre.Preset == "round2DiagRect" || pre.Preset == "round2SameRect" ||
+                            pre.Preset == "snip2SameRect" || pre.Preset == "snipRoundRect"  || pre.Preset == "round1Rect" ||
+                            pre.Preset == "flowChartProcess")
+                        {
+                            IsValidGeometry = true;
+                            shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Rectangle);
+                        }
+
+                        if (pre.Preset == "ellipse" || pre.Preset == "flowChartConnector")
+                        {
+                            shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Circle);
+                            IsValidGeometry = true;
+                        }
+
+                        if (pre.Preset == "triangle" || pre.Preset == "diamond" || pre.Preset == "flowChartDecision" || pre.Preset == "flowChartExtract" || 
+                            pre.Preset == "pentagon" || pre.Preset == "hexagon" || pre.Preset == "heptagon" || pre.Preset == "flowChartPreparation" ||
+                            pre.Preset == "octagon" || pre.Preset == "decagon"  || pre.Preset == "dodecagon" || pre.Preset == "flowChartMerge")
+                        {
+                            IsValidGeometry = true;
+
+                            if (pre.Preset == "flowChartMerge")
+                            {
+                                simpleSceneObjectShape.Rotation = 180 * 60000;
+                                shapeObject.Rotation += 180 * 60000;
+                            }
+
+                            shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Polygon);
+                            shapeObject.Points = (pre.Preset == "triangle" || pre.Preset == "flowChartExtract" || pre.Preset == "flowChartMerge") ? 3 :
+                                                 (pre.Preset == "diamond" || pre.Preset == "flowChartDecision") ? 4 :
+                                                 (pre.Preset == "pentagon") ? 5 :
+                                                 (pre.Preset == "hexagon" || pre.Preset == "flowChartPreparation") ? 6 :
+                                                 (pre.Preset == "heptagon") ? 7 :
+                                                 (pre.Preset == "octagon") ? 8 :
+                                                 (pre.Preset == "decagon") ? 10 : 
+                                                 12; 
+                        }
+
+                        if (pre.Preset == "roundRect" || pre.Preset =="flowChartAlternateProcess" || pre.Preset == "flowChartTerminator")
+                        {
+                            IsValidGeometry = true;
+                            shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Rectangle);
+                            shapeObject.CornerRadius = 3906;
+
+                            if (pre.AdjustValueList != null)
+                            {
+                                if (pre.AdjustValueList.HasChildren)
+                                {
+                                    foreach (var child in pre.AdjustValueList)
+                                    {
+                                        if (child.LocalName == "gd")
+                                        {
+                                            DrawingML.ShapeGuide gd = (DrawingML.ShapeGuide)child;
+
+                                            
+
+                                            shapeObject.CornerRadius = float.Parse(gd.Formula.Value.ToString().Remove(0, 4));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+
+                    }
+
+                    //Handle the general shape style
+                    if (sp.ShapeStyle != null)
+                    {
+                        if (sp.HasChildren)
+                        {
+                            if (sp.ShapeStyle.LineReference != null)
+                            {
+                                shapeObject.LineEnabled = true;
+
+                                //Get the line reference index and get the color and width from theme
+                                if (sp.ShapeStyle.LineReference.Index != null)
+                                {
+                                    if((int)sp.ShapeStyle.LineReference.Index.Value!=0)
+                                    {
+                                        DrawingML.Outline ln = _themeLines[(int)sp.ShapeStyle.LineReference.Index.Value - 1];
+
+                                        if (ln.Width != null)
+                                        {
+                                       
+                                            shapeObject.LineSize = ln.Width.Value;
+                                            HasFigureAttr = true;
+                                        }
+
+                                        foreach (var child in ln)
+                                        {
+                                            if (child.LocalName == "solidFill")
+                                            {
+                                                DrawingML.SolidFill solidFill = (DrawingML.SolidFill)child;
+
+                                                if (solidFill.RgbColorModelHex != null)
+                                                {
+                                                    HasFigureAttr = true;
+                                                    shapeObject.FillColor = solidFill.RgbColorModelHex.Val.ToString();
+                                                }
+
+                                                if (solidFill.SchemeColor != null)
+                                                {
+                                                    HasFigureAttr = true;
+                                                    shapeObject.FillColor = getColorFromTheme(solidFill.SchemeColor.Val);
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                }
+
+                                if (sp.ShapeStyle.LineReference.RgbColorModelHex != null)
+                                {
+                                    HasFigureAttr = true;
+                                    shapeObject.LineColor = sp.ShapeStyle.LineReference.RgbColorModelHex.Val.ToString();
+                                    shapeObject.LineEnabled = true;
+                                }
+
+                                if (sp.ShapeStyle.LineReference.SchemeColor != null)
+                                {
+                                    HasFigureAttr = true;
+                                    shapeObject.LineColor = getColorFromTheme(sp.ShapeStyle.LineReference.SchemeColor.Val.ToString());
+                                    shapeObject.LineEnabled = true;
+                                }
+                            }
+
+                            if (sp.ShapeStyle.FillReference != null)
+                            {
+                                //TODO (when colors are working totally)
+                                //Get the fill reference index and get the color and width from theme
+                                if (sp.ShapeStyle.FillReference.Index != null)
+                                {
+
+                                }
+
+                                if (sp.ShapeStyle.FillReference.RgbColorModelHex != null)
+                                {
+                                    HasFigureAttr = true;
+                                    shapeObject.FillColor = sp.ShapeStyle.FillReference.RgbColorModelHex.Val.ToString();
+                                }
+
+                                if (sp.ShapeStyle.FillReference.SchemeColor != null)
+                                {
+                                    HasFigureAttr = true;
+                                    shapeObject.FillColor = getColorFromTheme(sp.ShapeStyle.FillReference.SchemeColor.Val.ToString());
+                                }
+                            }
+
+                        }
+                    }
+
+                    //Handle the specific shape properties
+                    foreach (var child in sp.ShapeProperties)
+                    {
+                        //Fix with gradients too
+                        //Solid fill, one color backrgound
+                        if (child.LocalName == "solidFill")
+                        {
+                            DrawingML.SolidFill solidFill = (DrawingML.SolidFill)child;
+
+                            if (solidFill.RgbColorModelHex != null)
+                            {
+                                HasFigureAttr = true;
+                                shapeObject.FillColor = solidFill.RgbColorModelHex.Val.ToString();
+                            }
+
+                            if (solidFill.SchemeColor != null)
+                            {
+                                HasFigureAttr = true;
+                                shapeObject.FillColor = getColorFromTheme(solidFill.SchemeColor.Val);
+                            }
+                        }
+
+                        //Line values
+                        if (child.LocalName == "ln")
+                        {
+                            DrawingML.Outline ln = (DrawingML.Outline)child;
+
+                            if (ln.Width != null)
+                            {
+                                shapeObject.LineSize = ln.Width.Value;
+                                shapeObject.LineEnabled = true;
+                            }
+
+                            if (ln.HasChildren)
+                            {
+                                foreach (var lnChild in ln)
+                                {
+                                    if (lnChild.LocalName == "solidFill")
+                                    {
+                                        DrawingML.SolidFill solidFill = (DrawingML.SolidFill)lnChild;
+
+                                        if (solidFill.RgbColorModelHex != null)
+                                        {
+                                            shapeObject.LineColor = solidFill.RgbColorModelHex.Val.ToString();
+                                        }
+
+                                        if (solidFill.SchemeColor != null)
+                                        {
+                                            shapeObject.LineColor = getColorFromTheme(solidFill.SchemeColor.Val);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+
+            if (HasFigureAttr && IsValidGeometry)
+                return shapeObject;
+            else
+                return null;
+        }
 
         //Returns a list of all the template shapes in the slide master
         private List<PowerPointText> GetSlideMasterPowerPointShapes(PresentationDocument presentationDocument)
@@ -1295,6 +1491,8 @@ namespace ConsoleApplication
                 }
             }
 
+
+
             return slideLayoutPowerPointShapes;
         }
 
@@ -1380,10 +1578,11 @@ namespace ConsoleApplication
         }
 
         //Read all the colors in the theme
-        private void readColorFromTheme()
+        private void readTheme()
         {
             var slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster;
 
+            //Handle the colors
             var colorScheme = slideMaster.SlideMasterPart.ThemePart.Theme.ThemeElements.ColorScheme;
             var colorMap = slideMaster.ColorMap;
 
@@ -1436,6 +1635,18 @@ namespace ConsoleApplication
                 _themeColors[index, 0] = colorRefNames[index];
                 _themeColors[index, 1] = getColorFromTheme(colorMap.Background2.InnerText);
             }
+        
+            //Handle the line attr
+            var formatScheme = slideMaster.SlideMasterPart.ThemePart.Theme.ThemeElements.FormatScheme;
+
+            if (formatScheme.LineStyleList.HasChildren)
+            {
+                foreach (DrawingML.Outline ln in formatScheme.LineStyleList)
+                {
+                    _themeLines.Add(ln);
+                }
+            }
+
         }
 
         //Check if color exists in theme
