@@ -485,7 +485,7 @@ namespace ConsoleApplication
                     }
                 }
 
-                //Check if shape has background and line properties.
+                //Check if shape has background and line properties, if so add a shape
                 if (sp.ShapeProperties != null)
                 {
                     if(sp.ShapeProperties.HasChildren)
@@ -500,16 +500,39 @@ namespace ConsoleApplication
                             if (pre.Preset == "ellipse")
                                 shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Circle);
 
-                            if (pre.Preset == "triangle")
+                            if (pre.Preset == "triangle" || pre.Preset == "diamond" || pre.Preset == "pentagon")
                             {
-                                shapeObject.Points = 3;
                                 shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Polygon);
+                                shapeObject.Points = (pre.Preset == "triangle") ? 3 : (pre.Preset == "diamond") ? 4 : 5;
                             }
+
+                            if (pre.Preset == "roundRect")
+                            {
+                                shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Rectangle);
+
+                                if (pre.AdjustValueList != null)
+                                {
+                                    if (pre.AdjustValueList.HasChildren)
+                                    {
+                                        foreach (var child in pre.AdjustValueList)
+                                        {
+                                            if (child.LocalName == "gd")
+                                            {
+                                                DrawingML.ShapeGuide gd = (DrawingML.ShapeGuide)child;
+                                                shapeObject.CornerRadius = float.Parse(gd.Formula.Value.ToString().Remove(0, 4));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                                
                                 
                         }
 
                         foreach (var child in sp.ShapeProperties)
                         {
+                            //Fix with gradients too
+                            //Solid fill, one color backrgound
                             if (child.LocalName == "solidFill")
                             {
                                 DrawingML.SolidFill solidFill = (DrawingML.SolidFill)child;
@@ -524,6 +547,39 @@ namespace ConsoleApplication
                                 {
                                     writeShape = true;
                                     shapeObject.FillColor = getColorFromTheme(solidFill.SchemeColor.Val);
+                                }
+                            }
+
+                            //Line values
+                            if (child.LocalName == "ln")
+                            {
+                                DrawingML.Outline ln = (DrawingML.Outline)child;
+
+                                if (ln.Width != null)
+                                {
+                                    shapeObject.LineSize = ln.Width.Value;
+                                    shapeObject.LineEnable = true;
+                                }
+
+                                if (ln.HasChildren)
+                                {
+                                    foreach (var lnChild in ln)
+                                    {
+                                        if (lnChild.LocalName == "solidFill")
+                                        {
+                                            DrawingML.SolidFill solidFill = (DrawingML.SolidFill)lnChild;
+
+                                            if (solidFill.RgbColorModelHex != null)
+                                            {
+                                                shapeObject.LineColor = solidFill.RgbColorModelHex.Val.ToString();
+                                            }
+
+                                            if (solidFill.SchemeColor != null)
+                                            {
+                                                shapeObject.LineColor = getColorFromTheme(solidFill.SchemeColor.Val);
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -717,7 +773,7 @@ namespace ConsoleApplication
                 if (textObject.Align == "")
                     textObject.Align = "left";
 
-                if (textObject.FragmentsList.Count < 1)
+                if (sp.InnerText.Equals(""))
                     continue;
 
                 sceneObjectList.Add(textObject);
@@ -1119,109 +1175,116 @@ namespace ConsoleApplication
                     }
                 }
 
-                //Get anchor point
-                if (sp.TextBody.BodyProperties.Anchor != null)
+                if (sp.TextBody != null)
                 {
-                    foreach (PowerPointText p in powerPointTextList)
-                    {
-                        p.Anchor = sp.TextBody.BodyProperties.Anchor;
-                    }
-                }
 
-                //Get alignment
-                foreach (var pPr in sp.TextBody.Descendants<DrawingML.ParagraphProperties>())
-                {
-                    if (pPr.Alignment != null)
+                    if (sp.TextBody.BodyProperties != null)
                     {
-                        foreach (PowerPointText p in powerPointTextList)
+                        //Get anchor point
+                        if (sp.TextBody.BodyProperties.Anchor != null)
                         {
-                            p.Alignment = pPr.Alignment;
+                            foreach (PowerPointText p in powerPointTextList)
+                            {
+                                p.Anchor = sp.TextBody.BodyProperties.Anchor;
+                            }
                         }
                     }
-                } 
 
-                //Override the attributes with the sp list values
-                if (sp.TextBody.ListStyle.HasChildren)
-                {
-                    List<PowerPointText> tempList = new List<PowerPointText>();
-                    PowerPointText p1 = GetLevelProperties<DrawingML.Level1ParagraphProperties>(sp.TextBody.ListStyle.Level1ParagraphProperties); p1.Level = 1;
-                    PowerPointText p2 = GetLevelProperties<DrawingML.Level2ParagraphProperties>(sp.TextBody.ListStyle.Level2ParagraphProperties); p2.Level = 2;
-                    PowerPointText p3 = GetLevelProperties<DrawingML.Level3ParagraphProperties>(sp.TextBody.ListStyle.Level3ParagraphProperties); p3.Level = 3;
-                    PowerPointText p4 = GetLevelProperties<DrawingML.Level4ParagraphProperties>(sp.TextBody.ListStyle.Level4ParagraphProperties); p4.Level = 4;
-                    PowerPointText p5 = GetLevelProperties<DrawingML.Level5ParagraphProperties>(sp.TextBody.ListStyle.Level5ParagraphProperties); p5.Level = 5;
-                    PowerPointText p6 = GetLevelProperties<DrawingML.Level6ParagraphProperties>(sp.TextBody.ListStyle.Level6ParagraphProperties); p6.Level = 6;
-                    PowerPointText p7 = GetLevelProperties<DrawingML.Level7ParagraphProperties>(sp.TextBody.ListStyle.Level7ParagraphProperties); p7.Level = 7;
-                    PowerPointText p8 = GetLevelProperties<DrawingML.Level8ParagraphProperties>(sp.TextBody.ListStyle.Level8ParagraphProperties); p8.Level = 8;
-                    PowerPointText p9 = GetLevelProperties<DrawingML.Level9ParagraphProperties>(sp.TextBody.ListStyle.Level9ParagraphProperties); p9.Level = 9;
-                    tempList.Add(p1);
-                    tempList.Add(p2);
-                    tempList.Add(p3);
-                    tempList.Add(p4);
-                    tempList.Add(p5);
-                    tempList.Add(p6);
-                    tempList.Add(p7);
-                    tempList.Add(p8);
-                    tempList.Add(p9);
-
-                    for (int i = 0; i < powerPointTextList.Count; i++)
+                    //Get alignment
+                    foreach (var pPr in sp.TextBody.Descendants<DrawingML.ParagraphProperties>())
                     {
-                        powerPointTextList[i].Alignment = (tempList[i].Alignment != "") ? tempList[i].Alignment : powerPointTextList[i].Alignment;
-                        powerPointTextList[i].Anchor = (tempList[i].Anchor != "") ? tempList[i].Anchor : powerPointTextList[i].Anchor;
-                        powerPointTextList[i].Bold = tempList[i].Bold;
-                        powerPointTextList[i].Font = (tempList[i].Font != "") ? tempList[i].Font : powerPointTextList[i].Font;
-                        powerPointTextList[i].Cx = (tempList[i].Cx != 0) ? tempList[i].Cx : powerPointTextList[i].Cx;
-                        powerPointTextList[i].Cy = (tempList[i].Cy != 0) ? tempList[i].Cy : powerPointTextList[i].Cy;
-                        powerPointTextList[i].X = (tempList[i].Cx != 0) ? tempList[i].X : powerPointTextList[i].X;
-                        powerPointTextList[i].Y = (tempList[i].Cy != 0) ? tempList[i].Y : powerPointTextList[i].Y;
-                        powerPointTextList[i].FontColor = (tempList[i].FontColor != "") ? tempList[i].FontColor : powerPointTextList[i].FontColor;
-                        powerPointTextList[i].FontSize = (tempList[i].FontSize != 0) ? tempList[i].FontSize : powerPointTextList[i].FontSize;
-                        powerPointTextList[i].FontColor = (tempList[i].FontColor != "") ? tempList[i].FontColor : powerPointTextList[i].FontColor;
-                        powerPointTextList[i].Italic = tempList[i].Italic;
-                        //powerPointTextList[i].Underline = (tempList[i].Underline != "") ? tempList[i].Underline : powerPointTextList[i].Underline;
+                        if (pPr.Alignment != null)
+                        {
+                            foreach (PowerPointText p in powerPointTextList)
+                            {
+                                p.Alignment = pPr.Alignment;
+                            }
+                        }
                     }
 
-                }
-
-                //Override attributes with the layout paragrapgh values
-                foreach (DrawingML.Paragraph p in sp.TextBody.Descendants<DrawingML.Paragraph>())
-                {
-                    foreach (DrawingML.Run run in p.Descendants<DrawingML.Run>())
+                    //Override the attributes with the sp list values
+                    if (sp.TextBody.ListStyle.HasChildren)
                     {
-                        if (run.RunProperties != null)
+                        List<PowerPointText> tempList = new List<PowerPointText>();
+                        PowerPointText p1 = GetLevelProperties<DrawingML.Level1ParagraphProperties>(sp.TextBody.ListStyle.Level1ParagraphProperties); p1.Level = 1;
+                        PowerPointText p2 = GetLevelProperties<DrawingML.Level2ParagraphProperties>(sp.TextBody.ListStyle.Level2ParagraphProperties); p2.Level = 2;
+                        PowerPointText p3 = GetLevelProperties<DrawingML.Level3ParagraphProperties>(sp.TextBody.ListStyle.Level3ParagraphProperties); p3.Level = 3;
+                        PowerPointText p4 = GetLevelProperties<DrawingML.Level4ParagraphProperties>(sp.TextBody.ListStyle.Level4ParagraphProperties); p4.Level = 4;
+                        PowerPointText p5 = GetLevelProperties<DrawingML.Level5ParagraphProperties>(sp.TextBody.ListStyle.Level5ParagraphProperties); p5.Level = 5;
+                        PowerPointText p6 = GetLevelProperties<DrawingML.Level6ParagraphProperties>(sp.TextBody.ListStyle.Level6ParagraphProperties); p6.Level = 6;
+                        PowerPointText p7 = GetLevelProperties<DrawingML.Level7ParagraphProperties>(sp.TextBody.ListStyle.Level7ParagraphProperties); p7.Level = 7;
+                        PowerPointText p8 = GetLevelProperties<DrawingML.Level8ParagraphProperties>(sp.TextBody.ListStyle.Level8ParagraphProperties); p8.Level = 8;
+                        PowerPointText p9 = GetLevelProperties<DrawingML.Level9ParagraphProperties>(sp.TextBody.ListStyle.Level9ParagraphProperties); p9.Level = 9;
+                        tempList.Add(p1);
+                        tempList.Add(p2);
+                        tempList.Add(p3);
+                        tempList.Add(p4);
+                        tempList.Add(p5);
+                        tempList.Add(p6);
+                        tempList.Add(p7);
+                        tempList.Add(p8);
+                        tempList.Add(p9);
+
+                        for (int i = 0; i < powerPointTextList.Count; i++)
                         {
+                            powerPointTextList[i].Alignment = (tempList[i].Alignment != "") ? tempList[i].Alignment : powerPointTextList[i].Alignment;
+                            powerPointTextList[i].Anchor = (tempList[i].Anchor != "") ? tempList[i].Anchor : powerPointTextList[i].Anchor;
+                            powerPointTextList[i].Bold = tempList[i].Bold;
+                            powerPointTextList[i].Font = (tempList[i].Font != "") ? tempList[i].Font : powerPointTextList[i].Font;
+                            powerPointTextList[i].Cx = (tempList[i].Cx != 0) ? tempList[i].Cx : powerPointTextList[i].Cx;
+                            powerPointTextList[i].Cy = (tempList[i].Cy != 0) ? tempList[i].Cy : powerPointTextList[i].Cy;
+                            powerPointTextList[i].X = (tempList[i].Cx != 0) ? tempList[i].X : powerPointTextList[i].X;
+                            powerPointTextList[i].Y = (tempList[i].Cy != 0) ? tempList[i].Y : powerPointTextList[i].Y;
+                            powerPointTextList[i].FontColor = (tempList[i].FontColor != "") ? tempList[i].FontColor : powerPointTextList[i].FontColor;
+                            powerPointTextList[i].FontSize = (tempList[i].FontSize != 0) ? tempList[i].FontSize : powerPointTextList[i].FontSize;
+                            powerPointTextList[i].FontColor = (tempList[i].FontColor != "") ? tempList[i].FontColor : powerPointTextList[i].FontColor;
+                            powerPointTextList[i].Italic = tempList[i].Italic;
+                            //powerPointTextList[i].Underline = (tempList[i].Underline != "") ? tempList[i].Underline : powerPointTextList[i].Underline;
+                        }
 
-                            if (run.RunProperties.Bold != null)
-                                foreach (PowerPointText ppt in powerPointTextList)
-                                    ppt.Bold = run.RunProperties.Bold;
+                    }
 
-
-                            if (run.RunProperties.HasChildren)
+                    //Override attributes with the layout paragrapgh values
+                    foreach (DrawingML.Paragraph p in sp.TextBody.Descendants<DrawingML.Paragraph>())
+                    {
+                        foreach (DrawingML.Run run in p.Descendants<DrawingML.Run>())
+                        {
+                            if (run.RunProperties != null)
                             {
-                                foreach (var child in run.RunProperties.ChildElements)
+
+                                if (run.RunProperties.Bold != null)
+                                    foreach (PowerPointText ppt in powerPointTextList)
+                                        ppt.Bold = run.RunProperties.Bold;
+
+
+                                if (run.RunProperties.HasChildren)
                                 {
-                                    if (child.LocalName == "solidFill")
+                                    foreach (var child in run.RunProperties.ChildElements)
                                     {
-                                        DrawingML.SolidFill soldiFill = (DrawingML.SolidFill)child;
+                                        if (child.LocalName == "solidFill")
+                                        {
+                                            DrawingML.SolidFill soldiFill = (DrawingML.SolidFill)child;
 
-                                        foreach (DrawingML.RgbColorModelHex color in soldiFill.Descendants<DrawingML.RgbColorModelHex>())
-                                            foreach (PowerPointText ppt in powerPointTextList)
-                                                ppt.FontColor = color.Val;
-     
-                                        foreach (DrawingML.SchemeColor color in soldiFill.Descendants<DrawingML.SchemeColor>())
-                                            foreach (PowerPointText ppt in powerPointTextList)
-                                                ppt.FontColor = getColorFromTheme(color.Val);
+                                            foreach (DrawingML.RgbColorModelHex color in soldiFill.Descendants<DrawingML.RgbColorModelHex>())
+                                                foreach (PowerPointText ppt in powerPointTextList)
+                                                    ppt.FontColor = color.Val;
 
+                                            foreach (DrawingML.SchemeColor color in soldiFill.Descendants<DrawingML.SchemeColor>())
+                                                foreach (PowerPointText ppt in powerPointTextList)
+                                                    ppt.FontColor = getColorFromTheme(color.Val);
+
+                                        }
                                     }
                                 }
+
+
+
+
                             }
-
-
-                                    
-
                         }
                     }
-                }
 
+                }
                 //Add to list
                 foreach (PowerPointText p in powerPointTextList)
                 {

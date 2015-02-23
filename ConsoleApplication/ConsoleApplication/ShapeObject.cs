@@ -14,14 +14,14 @@ namespace ConsoleApplication
 
         private int _lineAlpha, _lineSize, _x, _y, _z, _points, _radius;
 
-        private Boolean _cacheAsBitmap, _fillEnable, _lineEnable, _visible;
+        private Boolean _cacheAsBitmap, _fillEnable, _lineEnabled, _visible;
         private string _fillType, _gradientType, _fillColor, _lineColor, _fillColor1, _fillColor2;
 
         private float[] _gradientAlphas;
         private string[] _gradientFills;
 
         private string[] _attributes = new string[24]{   "alpha", "cacheAsBitmap", "cornerRadius", "gradientAngle", "gradientType", "fillAlpha", "fillColor",
-                                                         "fillEnable", "fillType", "lineAlpha", "lineColor", "lineEnable", "lineSize", "points", "radius",
+                                                         "fillEnable", "fillType", "lineAlpha", "lineColor", "lineEnabled", "lineSize", "points", "radius",
                                                          "rotation", "rotationX", "rotationY", "rotationZ", "scaleZ", "visible", "x",
                                                          "y", "z"};
 
@@ -73,7 +73,7 @@ namespace ConsoleApplication
             _fillType = "solid";
             _lineAlpha = 1;
             _lineColor = "6426397";
-            _lineEnable = false;
+            _lineEnabled = false;
             _lineSize = 1;
             _points = 3;
             _radius = 0;
@@ -154,6 +154,13 @@ namespace ConsoleApplication
 
                 _gradientAngle /= 60000; 
             }
+
+            _lineSize = (int) Math.Round((double)_lineSize / 10000);
+
+            _lineColor = getColorAsInteger(_lineColor).ToString();
+
+            _cornerRadius = (float) Math.Round((_cornerRadius / 100000) * 128 * 4);
+            Console.WriteLine(_cornerRadius);
         }
 
         public override XmlDocument getXMLDocumentRoot()
@@ -301,8 +308,8 @@ namespace ConsoleApplication
 
         public Boolean LineEnable
         {
-            get { return _lineEnable; }
-            set { _lineEnable = value; }
+            get { return _lineEnabled; }
+            set { _lineEnabled = value; }
         }
 
         public Boolean FillEnable
