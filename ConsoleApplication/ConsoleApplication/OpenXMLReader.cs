@@ -285,15 +285,16 @@ namespace ConsoleApplication
 
                             //List of all childrens gradientstop's first child.
                             IEnumerator<OpenXmlElement> alpha = gs.FirstChild.GetEnumerator();
-                            Console.WriteLine("Color before: #" + gradInfo.GradColor);
+                            
+                            /*Console.WriteLine("Color before: #" + gradInfo.GradColor);
                             Console.WriteLine("Color before: #" + gradInfo.Color);
-                            Console.WriteLine("Pos: " + gradInfo.Position);
+                            Console.WriteLine("Pos: " + gradInfo.Position);*/
                             //Get the alpha value for each gradient stop
                             while (alpha.MoveNext())
                             {
-                                Console.WriteLine("\nNext: " + alpha.Current.GetType());
+                                //Console.WriteLine("\nNext: " + alpha.Current.GetType());
                                 ColorConverter conv = new ColorConverter();
-
+                                Console.WriteLine("Color before " + alpha.Current.GetType().Name + ": #" + gradInfo.GradColor);
                                 var colorType = alpha.Current;
 
                                 if (colorType.GetType() == typeof(DrawingML.Alpha))
@@ -304,13 +305,16 @@ namespace ConsoleApplication
                                 if (colorType.GetType() == typeof(DrawingML.SaturationModulation))
                                 {
                                     var SaturationModulation = colorType as DrawingML.SaturationModulation;
+                                    //Console.WriteLine(alpha.Current.GetType().ToString() + ": #" + gradInfo.GradColor);
                                     gradInfo.GradColor = conv.SetSaturation(gradInfo.Color, SaturationModulation.Val);
+                                    //Console.WriteLine(alpha.Current.GetType().ToString() + ": #" + gradInfo.GradColor);
                                 }
                                 if (colorType.GetType() == typeof(DrawingML.Shade))
                                 {
                                     var Shade = colorType as DrawingML.Shade;
-                                    Console.WriteLine("#" + gradInfo.GradColor);
+                                    //Console.WriteLine(alpha.Current.GetType().ToString() + ": #" + gradInfo.GradColor);
                                     gradInfo.GradColor = conv.SetShade(gradInfo.Color, Shade.Val);
+                                    //Console.WriteLine(alpha.Current.GetType().ToString() + ": #" + gradInfo.GradColor);
                                 }
                                 if (colorType.GetType() == typeof(DrawingML.Tint))
                                 {
@@ -325,11 +329,11 @@ namespace ConsoleApplication
                                 
 
                             }
-                            Console.WriteLine("Color after: #" + gradInfo.GradColor);
-                            Console.WriteLine("Color after: " + gradInfo.Color + "\n");
+                            Console.WriteLine("Result Color: #" + gradInfo.GradColor + "\n");
+                            //Console.WriteLine("Color after: " + gradInfo.Color + "\n");
                             //gradInfo.convert();
                             //Console.WriteLine(gradInfo.toString());
-                            //Add gradient information to backgroundlist
+                            //Add gradient information to backgroundlist*/
                             gradientBg.GradientList.Add(gradInfo);
                         }
 
