@@ -22,6 +22,7 @@ namespace ConsoleApplication
 
         private string[] _attributes = new string[14]{  "type", "clipID","z", "boundsX", "boundsY", "clipWidth", "clipHeight",
                                                         "width","height", "rotation", "alpha","name", "hidden", "flip"};
+        private SimpleSceneObject simpleSceneObjectShape;
 
         public SimpleSceneObject()
         {
@@ -33,6 +34,21 @@ namespace ConsoleApplication
             _width = 0;
             _height = 0;
             _z = 0;
+            _flip = 0;
+            _properties = new Properties();
+            _optimizedClip = new OptimizedClip();
+        }
+
+        public SimpleSceneObject(SimpleSceneObject s)
+        {
+            _clipID = s.ClipID;
+            _name = s.Name;
+            _doc = new XmlDocument();
+            _alpha = s.Alpha;
+            _hidden = s.Hidden;
+            _width = s.Width;
+            _height = s.Height;
+            _z = s.Z;
             _flip = 0;
             _properties = new Properties();
             _optimizedClip = new OptimizedClip();

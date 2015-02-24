@@ -449,6 +449,7 @@ namespace ConsoleApplication
             {
                 //Font size convertion
                 style.FontSize /= 100;
+                style.FontSize = (int) Math.Round(style.FontSize*1.5);
 
                 //Fake font and color
                 style.Font = "Arial";

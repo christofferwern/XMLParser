@@ -21,8 +21,8 @@ namespace ConsoleApplication
             _underline = false;
             _italic = false;
             _fontSize = 0;
-            _fontColor = "000000";
-            _font = "Default";
+            _fontColor = "";
+            _font = "";
         }
 
         public string attrubiteValue()
