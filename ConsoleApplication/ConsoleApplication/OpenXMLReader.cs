@@ -217,7 +217,7 @@ namespace ConsoleApplication
                         if (type.GetType() == typeof(DrawingML.Shade))
                         {
                             var Shade = type as DrawingML.Shade;
-                            solidBg.BgColor = conv.SetTint(solidBg.Color, Shade.Val);
+                            solidBg.BgColor = conv.SetShade(solidBg.Color, Shade.Val);
                         }
                         if (type.GetType() == typeof(DrawingML.Tint))
                         {
@@ -284,10 +284,13 @@ namespace ConsoleApplication
 
                             //List of all childrens gradientstop's first child.
                             IEnumerator<OpenXmlElement> alpha = gs.FirstChild.GetEnumerator();
-                            Console.WriteLine(gradInfo.Color);
+                            Console.WriteLine("Color before: #" + gradInfo.GradColor);
+                            Console.WriteLine("Color before: #" + gradInfo.Color);
+                            Console.WriteLine("Pos: " + gradInfo.Position);
                             //Get the alpha value for each gradient stop
                             while (alpha.MoveNext())
                             {
+                                Console.WriteLine("\nNext: " + alpha.Current.GetType());
                                 ColorConverter conv = new ColorConverter();
 
                                 var colorType = alpha.Current;
@@ -301,27 +304,28 @@ namespace ConsoleApplication
                                 {
                                     var SaturationModulation = colorType as DrawingML.SaturationModulation;
                                     gradInfo.GradColor = conv.SetSaturation(gradInfo.Color, SaturationModulation.Val);
-                                    Console.WriteLine(gradInfo.GradColor);
                                 }
                                 if (colorType.GetType() == typeof(DrawingML.Shade))
                                 {
                                     var Shade = colorType as DrawingML.Shade;
-                                    gradInfo.GradColor = conv.SetTint(gradInfo.Color, Shade.Val);
-                                    Console.WriteLine(gradInfo.GradColor);
+                                    Console.WriteLine("#" + gradInfo.GradColor);
+                                    gradInfo.GradColor = conv.SetShade(gradInfo.Color, Shade.Val);
                                 }
                                 if (colorType.GetType() == typeof(DrawingML.Tint))
                                 {
                                     var Tint = colorType as DrawingML.Tint;
-                                    gradInfo.GradColor = conv.SetShade(gradInfo.Color, Tint.Val);
-                                    Console.WriteLine(gradInfo.GradColor);
+                                    gradInfo.GradColor = conv.SetTint(gradInfo.Color, Tint.Val);
                                 }
                                 if (colorType.GetType() == typeof(DrawingML.LuminanceModulation))
                                 {
                                     var LuminanceModulation = colorType as DrawingML.LuminanceModulation;
                                     gradInfo.GradColor = conv.SetBrightness(gradInfo.Color, LuminanceModulation.Val);
                                 }
+                                
 
                             }
+                            Console.WriteLine("Color after: #" + gradInfo.GradColor);
+                            Console.WriteLine("Color after: " + gradInfo.Color + "\n");
                             //gradInfo.convert();
                             //Console.WriteLine(gradInfo.toString());
                             //Add gradient information to backgroundlist
@@ -347,7 +351,7 @@ namespace ConsoleApplication
 
                     break;
                 case "blipFill":
-                    Console.WriteLine("blipFill");
+                    //Console.WriteLine("blipFill");
                     /*foreach (var blip in bg_type.Descendants<DrawingML.Blip>())
                     {
                         string embeded_id = blip.Embed.Value;
