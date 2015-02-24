@@ -68,6 +68,8 @@ namespace ConsoleApplication
             _gradientAngle = 90;
             _gradientType = "linear";
             _fillAlpha = 0;
+            _fillAlpha1 = 0;
+            _fillAlpha2 = 0;
             _fillColor = "16743690";
             _fillEnable = true;
             _fillType = "solid";
@@ -87,6 +89,8 @@ namespace ConsoleApplication
             _y = 0;
             _z = 0;
             _gradientAlphas = new float[2];
+            _gradientAlphas[0] = 100000;
+            _gradientAlphas[1] = 100000;
             _gradientFills = new string[2];
 
             _fillColor1 = _fillColor;
@@ -353,6 +357,18 @@ namespace ConsoleApplication
         {
             get { return _points; }
             set { _points = value; }
+        }
+
+        public float FillAlpha2
+        {
+            get { return _fillAlpha2; }
+            set { _fillAlpha2 = value; }
+        }
+
+        public float FillAlpha1
+        {
+            get { return _fillAlpha1; }
+            set { _fillAlpha1 = value; }
         }
 
         public Properties Properties

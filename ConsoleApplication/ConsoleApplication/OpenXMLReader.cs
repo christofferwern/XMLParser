@@ -95,6 +95,13 @@ namespace ConsoleApplication
                         }
                     }
 
+                    //Get background object in slidemaster
+
+                    ShapeObject s = getBackgroundShapeFromSlideMaster();
+
+                    if(s!=null)
+                        _presentationObject.BackgroundSceneObjectList.Add(s);
+
                     //Get all styles stored in the slide master, <PowerPoint Type, TextStyle>
                     _slideMasterPowerPointShapes = GetSlideMasterPowerPointShapes(_presentationDocument);
 
@@ -140,6 +147,102 @@ namespace ConsoleApplication
             //}
         }
 
+        private ShapeObject getBackgroundShapeFromSlideMaster()
+        {
+            SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
+            simpleSceneObject.ClipHeight = _presentationSizeY;
+            simpleSceneObject.ClipWidth = _presentationSizeX;
+
+            ShapeObject shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle); 
+
+            bool hasRef = false;
+            var bg = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster.CommonSlideData.Background;
+
+            if (bg.BackgroundStyleReference != null)
+            {
+                if (bg.BackgroundStyleReference.Index != null)
+                {
+                    hasRef = true;
+
+                    if (bg.BackgroundStyleReference.RgbColorModelHex != null)
+                    {
+                        shapeObject.FillColor = bg.BackgroundStyleReference.RgbColorModelHex.Val.ToString();
+                    }
+
+                    if (bg.BackgroundStyleReference.SchemeColor != null)
+                    {
+                        shapeObject.FillColor = getColorFromTheme(bg.BackgroundStyleReference.SchemeColor.Val.ToString());
+                    }
+
+                    List<PowerPointColor> fillColors;
+
+                    //Get the fill reference index and get the colors and attributes from theme
+                    if (bg.BackgroundStyleReference.Index != null)
+                    {
+                        int angle = 0;
+
+                        //Get the format scheme from the theme
+                        var slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster;
+                        var backgroundFillStyleList = slideMaster.SlideMasterPart.ThemePart.Theme.ThemeElements.FormatScheme.BackgroundFillStyleList;
+
+                        fillColors = getThemeFillColors((int)bg.BackgroundStyleReference.Index.Value - 1000, out angle, backgroundFillStyleList);
+
+                        foreach (PowerPointColor pptColor in fillColors)
+                        {
+                            //if (pptColor.Color == "phClr")
+                            pptColor.Color = shapeObject.FillColor;
+                        }
+
+                        ColorConverter colorConverter = new ColorConverter();
+
+                        //SolidFill, only one color
+                        if (fillColors.Count == 1)
+                        {
+                            //shapeObject.FillColor = colorConverter.SetShade(shapeObject.FillColor, fillColors[0].Shade);
+                            //shapeObject.FillColor = colorConverter.SetTint(shapeObject.FillColor, fillColors[0].Tint);
+                            //shapeObject.FillColor = colorConverter.SetBrightness(shapeObject.FillColor, fillColors[0].Luminance);
+                            //shapeObject.FillColor = colorConverter.SetSaturation(shapeObject.FillColor, fillColors[0].Saturation);
+                            //shapeObject.FillAlpha = fillColors[0].Alpha;
+                        }
+
+                        //GradienFill, more than one color
+                        if (fillColors.Count > 1)
+                        {
+                            int lastIndex = fillColors.Count - 1;
+
+                            shapeObject.GradientAngle = angle;
+                            shapeObject.FillType = "gradient";
+                            shapeObject.GradientFills[0] = fillColors[0].Color;
+                            shapeObject.GradientFills[1] = fillColors[lastIndex].Color;
+
+                            Console.WriteLine(fillColors[0]);
+
+                            Console.WriteLine(fillColors[lastIndex]);
+
+
+                            //shapeObject.GradientFills[0] = colorConverter.SetShade(shapeObject.GradientFills[0], fillColors[0].Shade);
+                            //shapeObject.GradientFills[0] = colorConverter.SetTint(shapeObject.GradientFills[0], fillColors[0].Tint);
+                            shapeObject.GradientFills[0] = colorConverter.SetBrightness(shapeObject.GradientFills[0], fillColors[0].Luminance);
+                            shapeObject.GradientFills[0] = colorConverter.SetSaturation(shapeObject.GradientFills[0], fillColors[0].Saturation);
+                            shapeObject.GradientAlphas[0] = fillColors[0].Alpha;
+
+                            //shapeObject.GradientFills[1] = colorConverter.SetShade(shapeObject.GradientFills[1], fillColors[lastIndex].Shade);
+                            //shapeObject.GradientFills[1] = colorConverter.SetTint(shapeObject.GradientFills[1], fillColors[lastIndex].Tint);
+                            shapeObject.GradientFills[1] = colorConverter.SetBrightness(shapeObject.GradientFills[1], fillColors[lastIndex].Luminance);
+                            shapeObject.GradientFills[1] = colorConverter.SetSaturation(shapeObject.GradientFills[1], fillColors[lastIndex].Saturation);
+                            shapeObject.GradientAlphas[1] = fillColors[lastIndex].Alpha;
+                        }
+
+                    }
+                }
+            }
+
+            if (hasRef)
+                return shapeObject;
+            else
+                return null;
+        }
+
         private List<SceneObject> GetShapesFromSlidePart(SlidePart slidePart)
         {
             List<SceneObject> shapelist = new List<SceneObject>();
@@ -160,13 +263,15 @@ namespace ConsoleApplication
                 //If no background tag, go to next iteration
                 if (bgP == null)
                     continue;
+
                 ShapeObject shapeObject;
                 getBackgroundShape(bgP, out shapeObject);
 
                 if (shapeObject != null)
                     backgroundShapelist.Add(shapeObject);
-
             }
+
+
 
             return backgroundShapelist;
         }
@@ -762,9 +867,9 @@ namespace ConsoleApplication
                     //Handle the shape geometry
                     foreach (DrawingML.PresetGeometry pre in sp.ShapeProperties.Descendants<DrawingML.PresetGeometry>())
                     {
-                        if (pre.Preset == "rect"          || pre.Preset == "snip1Rect"      || pre.Preset == "snip2DiagRect"  ||
-                            pre.Preset == "round1Rect"    || pre.Preset == "round2DiagRect" || pre.Preset == "round2SameRect" ||
-                            pre.Preset == "snip2SameRect" || pre.Preset == "snipRoundRect"  || pre.Preset == "round1Rect" ||
+                        if (pre.Preset == "rect" || pre.Preset == "snip1Rect" || pre.Preset == "snip2DiagRect" ||
+                            pre.Preset == "round1Rect" || pre.Preset == "round2DiagRect" || pre.Preset == "round2SameRect" ||
+                            pre.Preset == "snip2SameRect" || pre.Preset == "snipRoundRect" || pre.Preset == "round1Rect" ||
                             pre.Preset == "flowChartProcess")
                         {
                             IsValidGeometry = true;
@@ -777,9 +882,9 @@ namespace ConsoleApplication
                             IsValidGeometry = true;
                         }
 
-                        if (pre.Preset == "triangle" || pre.Preset == "diamond" || pre.Preset == "flowChartDecision" || pre.Preset == "flowChartExtract" || 
+                        if (pre.Preset == "triangle" || pre.Preset == "diamond" || pre.Preset == "flowChartDecision" || pre.Preset == "flowChartExtract" ||
                             pre.Preset == "pentagon" || pre.Preset == "hexagon" || pre.Preset == "heptagon" || pre.Preset == "flowChartPreparation" ||
-                            pre.Preset == "octagon" || pre.Preset == "decagon"  || pre.Preset == "dodecagon" || pre.Preset == "flowChartMerge")
+                            pre.Preset == "octagon" || pre.Preset == "decagon" || pre.Preset == "dodecagon" || pre.Preset == "flowChartMerge")
                         {
                             IsValidGeometry = true;
 
@@ -796,11 +901,11 @@ namespace ConsoleApplication
                                                  (pre.Preset == "hexagon" || pre.Preset == "flowChartPreparation") ? 6 :
                                                  (pre.Preset == "heptagon") ? 7 :
                                                  (pre.Preset == "octagon") ? 8 :
-                                                 (pre.Preset == "decagon") ? 10 : 
-                                                 12; 
+                                                 (pre.Preset == "decagon") ? 10 :
+                                                 12;
                         }
 
-                        if (pre.Preset == "roundRect" || pre.Preset =="flowChartAlternateProcess" || pre.Preset == "flowChartTerminator")
+                        if (pre.Preset == "roundRect" || pre.Preset == "flowChartAlternateProcess" || pre.Preset == "flowChartTerminator")
                         {
                             IsValidGeometry = true;
                             shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Rectangle);
@@ -816,7 +921,7 @@ namespace ConsoleApplication
                                         {
                                             DrawingML.ShapeGuide gd = (DrawingML.ShapeGuide)child;
 
-                                            
+
 
                                             shapeObject.CornerRadius = float.Parse(gd.Formula.Value.ToString().Remove(0, 4));
                                         }
@@ -840,13 +945,12 @@ namespace ConsoleApplication
                                 //Get the line reference index and get the color and width from theme
                                 if (sp.ShapeStyle.LineReference.Index != null)
                                 {
-                                    if((int)sp.ShapeStyle.LineReference.Index.Value!=0)
+                                    if ((int)sp.ShapeStyle.LineReference.Index.Value != 0)
                                     {
                                         DrawingML.Outline ln = _themeLines[(int)sp.ShapeStyle.LineReference.Index.Value - 1];
 
                                         if (ln.Width != null)
                                         {
-                                       
                                             shapeObject.LineSize = ln.Width.Value;
                                             HasFigureAttr = true;
                                         }
@@ -891,13 +995,6 @@ namespace ConsoleApplication
 
                             if (sp.ShapeStyle.FillReference != null)
                             {
-                                //TODO (when colors are working totally)
-                                //Get the fill reference index and get the color and width from theme
-                                if (sp.ShapeStyle.FillReference.Index != null)
-                                {
-
-                                }
-
                                 if (sp.ShapeStyle.FillReference.RgbColorModelHex != null)
                                 {
                                     HasFigureAttr = true;
@@ -908,6 +1005,62 @@ namespace ConsoleApplication
                                 {
                                     HasFigureAttr = true;
                                     shapeObject.FillColor = getColorFromTheme(sp.ShapeStyle.FillReference.SchemeColor.Val.ToString());
+                                }
+
+                                List<PowerPointColor> fillColors;
+
+                                //Get the fill reference index and get the colors and attributes from theme
+                                if (sp.ShapeStyle.FillReference.Index != null)
+                                {
+                                    int angle = 0;
+
+                                    //Get the format scheme from the theme
+                                    var slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster;
+                                    var fillStyleList = slideMaster.SlideMasterPart.ThemePart.Theme.ThemeElements.FormatScheme.FillStyleList;
+
+                                    fillColors = getThemeFillColors((int)sp.ShapeStyle.FillReference.Index.Value, out angle, fillStyleList);
+
+                                    foreach (PowerPointColor pptColor in fillColors)
+                                    {
+                                        //if (pptColor.Color == "phClr")
+                                            pptColor.Color = shapeObject.FillColor;
+                                    }
+
+                                    ColorConverter colorConverter = new ColorConverter();
+
+                                    //SolidFill, only one color
+                                    if (fillColors.Count == 1)
+                                    {
+                                        //shapeObject.FillColor = colorConverter.SetShade(shapeObject.FillColor, fillColors[0].Shade);
+                                        //shapeObject.FillColor = colorConverter.SetTint(shapeObject.FillColor, fillColors[0].Tint);
+                                        //shapeObject.FillColor = colorConverter.SetBrightness(shapeObject.FillColor, fillColors[0].Luminance);
+                                        //shapeObject.FillColor = colorConverter.SetSaturation(shapeObject.FillColor, fillColors[0].Saturation);
+                                        //shapeObject.FillAlpha = fillColors[0].Alpha;
+                                    }
+
+                                    //GradienFill, more than one color
+                                    if (fillColors.Count > 1)
+                                    {
+                                        int lastIndex = fillColors.Count - 1;
+
+                                        shapeObject.GradientAngle = angle;
+                                        shapeObject.FillType = "gradient";
+                                        shapeObject.GradientFills[0] = fillColors[0].Color;
+                                        shapeObject.GradientFills[1] = fillColors[lastIndex].Color;
+
+                                        shapeObject.GradientFills[0] = colorConverter.SetShade(shapeObject.GradientFills[0], fillColors[0].Shade);
+                                        shapeObject.GradientFills[0] = colorConverter.SetTint(shapeObject.GradientFills[0], fillColors[0].Tint);
+                                        //shapeObject.GradientFills[0] = colorConverter.SetBrightness(shapeObject.GradientFills[0], fillColors[0].Luminance);
+                                        //shapeObject.GradientFills[0] = colorConverter.SetSaturation(shapeObject.GradientFills[0], fillColors[0].Saturation);
+                                        shapeObject.GradientAlphas[0] = fillColors[0].Alpha;
+
+                                        shapeObject.GradientFills[1] = colorConverter.SetShade(shapeObject.GradientFills[1], fillColors[lastIndex].Shade);
+                                        shapeObject.GradientFills[1] = colorConverter.SetTint(shapeObject.GradientFills[1], fillColors[lastIndex].Tint);
+                                        //shapeObject.GradientFills[1] = colorConverter.SetBrightness(shapeObject.GradientFills[1], fillColors[lastIndex].Luminance);
+                                        //shapeObject.GradientFills[1] = colorConverter.SetSaturation(shapeObject.GradientFills[1], fillColors[lastIndex].Saturation);
+                                        shapeObject.GradientAlphas[1] = fillColors[lastIndex].Alpha;
+                                    }
+
                                 }
                             }
 
@@ -977,6 +1130,213 @@ namespace ConsoleApplication
                 return shapeObject;
             else
                 return null;
+        }
+
+        private List<PowerPointColor> getThemeFillColors<T>(int fillRefereceIndex, out int angle, T styleList)
+        {
+            List<PowerPointColor> fillColors = new List<PowerPointColor>();
+
+            angle = 0;
+
+            bool hasChildren = (bool)styleList.GetType().GetMethod("get_HasChildren").Invoke(styleList, null);
+
+            if (hasChildren)
+            {
+                OpenXmlElementList childElements = (OpenXmlElementList)styleList.GetType().GetMethod("get_ChildElements").Invoke(styleList, null);
+
+
+                int fillIndex = 1;
+                foreach (var fill in childElements)
+                {
+                    if (fillIndex == fillRefereceIndex)
+                    {
+
+                        if (fill.LocalName == "solidFill")
+                        {
+                            PowerPointColor pptColor = new PowerPointColor();
+
+                            DrawingML.SolidFill solidFill = (DrawingML.SolidFill)fill;
+
+                            if (solidFill.SchemeColor != null)
+                            {
+                                pptColor.Color = getColorFromTheme(solidFill.SchemeColor.Val);
+
+                                foreach (var colorAttr in solidFill.SchemeColor)
+                                {
+                                    if (colorAttr.LocalName == "tint")
+                                    {
+                                        DrawingML.Tint tint = (DrawingML.Tint)colorAttr;
+                                        pptColor.Tint = tint.Val;
+                                    }
+                                    if (colorAttr.LocalName == "lumMod")
+                                    {
+                                        DrawingML.LuminanceModulation lumMod = (DrawingML.LuminanceModulation)colorAttr;
+                                        pptColor.Luminance = lumMod.Val;
+                                    }
+                                    if (colorAttr.LocalName == "satMod")
+                                    {
+                                        DrawingML.SaturationModulation satMod = (DrawingML.SaturationModulation)colorAttr;
+                                        pptColor.Saturation = satMod.Val;
+                                    }
+                                    if (colorAttr.LocalName == "alpha")
+                                    {
+                                        DrawingML.Alpha alpha = (DrawingML.Alpha)colorAttr;
+                                        pptColor.Alpha = alpha.Val;
+                                    }
+                                    if (colorAttr.LocalName == "shade")
+                                    {
+                                        DrawingML.Shade shade = (DrawingML.Shade)colorAttr;
+                                        pptColor.Shade = shade.Val;
+                                    }
+                                }
+
+                            }
+
+                            if (solidFill.RgbColorModelHex != null)
+                            {
+                                pptColor.Color = solidFill.RgbColorModelHex.Val;
+
+                                foreach (var colorAttr in solidFill.RgbColorModelHex)
+                                {
+                                    if (colorAttr.LocalName == "tint")
+                                    {
+                                        DrawingML.Tint tint = (DrawingML.Tint)colorAttr;
+                                        pptColor.Tint = tint.Val;
+                                    }
+                                    if (colorAttr.LocalName == "lumMod")
+                                    {
+                                        DrawingML.LuminanceModulation lumMod = (DrawingML.LuminanceModulation)colorAttr;
+                                        pptColor.Luminance = lumMod.Val;
+                                    }
+                                    if (colorAttr.LocalName == "satMod")
+                                    {
+                                        DrawingML.SaturationModulation satMod = (DrawingML.SaturationModulation)colorAttr;
+                                        pptColor.Saturation = satMod.Val;
+                                    }
+                                    if (colorAttr.LocalName == "alpha")
+                                    {
+                                        DrawingML.Alpha alpha = (DrawingML.Alpha)colorAttr;
+                                        pptColor.Alpha = alpha.Val;
+                                    }
+                                    if (colorAttr.LocalName == "shade")
+                                    {
+                                        DrawingML.Shade shade = (DrawingML.Shade)colorAttr;
+                                        pptColor.Shade = shade.Val;
+                                    }
+                                }
+
+                            }
+
+                            fillColors.Add(pptColor);
+                        }
+
+                        if (fill.LocalName == "gradFill")
+                        {
+                            DrawingML.GradientFill gradFill = (DrawingML.GradientFill)fill;
+
+                            if (gradFill.HasChildren)
+                            {
+                                foreach (var child in gradFill.ChildElements)
+                                {
+                                    if (child.LocalName == "lin")
+                                    {
+                                        DrawingML.LinearGradientFill lin = (DrawingML.LinearGradientFill)child;
+                                        
+                                        if(lin.Angle!=null)
+                                            angle = lin.Angle;
+                                    }
+                                }
+                            }
+
+                            foreach (DrawingML.GradientStop gs in gradFill.GradientStopList)
+                            {
+                                PowerPointColor pptColor = new PowerPointColor();
+
+                                if (gs.SchemeColor != null)
+                                {
+                                    pptColor.Color = getColorFromTheme(gs.SchemeColor.Val);
+
+                                    foreach (var colorAttr in gs.SchemeColor)
+                                    {
+                                        if (colorAttr.LocalName == "tint")
+                                        {
+                                            DrawingML.Tint tint = (DrawingML.Tint)colorAttr;
+                                            pptColor.Tint = tint.Val;
+                                        }
+                                        if (colorAttr.LocalName == "lumMod")
+                                        {
+                                            DrawingML.LuminanceModulation lumMod = (DrawingML.LuminanceModulation)colorAttr;
+                                            pptColor.Luminance = lumMod.Val;
+                                        }
+                                        if (colorAttr.LocalName == "satMod")
+                                        {
+                                            DrawingML.SaturationModulation satMod = (DrawingML.SaturationModulation)colorAttr;
+                                            pptColor.Saturation = satMod.Val;
+                                        }
+                                        if (colorAttr.LocalName == "alpha")
+                                        {
+                                            DrawingML.Alpha alpha = (DrawingML.Alpha)colorAttr;
+                                            pptColor.Alpha = alpha.Val;
+                                        }
+                                        if (colorAttr.LocalName == "shade")
+                                        {
+                                            DrawingML.Shade shade = (DrawingML.Shade)colorAttr;
+                                            pptColor.Shade = shade.Val;
+                                        }
+                                    }
+
+                                    fillColors.Add(pptColor);
+
+                                }
+
+                                if (gs.RgbColorModelHex != null)
+                                {
+                                    pptColor.Color = gs.RgbColorModelHex.Val;
+
+                                    foreach (var colorAttr in gs.RgbColorModelHex)
+                                    {
+                                        if (colorAttr.LocalName == "tint")
+                                        {
+                                            DrawingML.Tint tint = (DrawingML.Tint)colorAttr;
+                                            pptColor.Tint = tint.Val;
+                                        }
+                                        if (colorAttr.LocalName == "lumMod")
+                                        {
+                                            DrawingML.LuminanceModulation lumMod = (DrawingML.LuminanceModulation)colorAttr;
+                                            pptColor.Luminance = lumMod.Val;
+                                        }
+                                        if (colorAttr.LocalName == "satMod")
+                                        {
+                                            DrawingML.SaturationModulation satMod = (DrawingML.SaturationModulation)colorAttr;
+                                            pptColor.Saturation = satMod.Val;
+                                        }
+                                        if (colorAttr.LocalName == "alpha")
+                                        {
+                                            DrawingML.Alpha alpha = (DrawingML.Alpha)colorAttr;
+                                            pptColor.Alpha = alpha.Val;
+                                        }
+                                        if (colorAttr.LocalName == "shade")
+                                        {
+                                            DrawingML.Shade shade = (DrawingML.Shade)colorAttr;
+                                            pptColor.Shade = shade.Val;
+                                        }
+                                    }
+
+                                    fillColors.Add(pptColor);
+                                }
+                            }
+
+                        }
+
+                    }
+
+                    fillIndex++;
+                }
+            }
+
+            
+
+            return fillColors;
         }
 
         //Returns a list of all the template shapes in the slide master
@@ -1646,6 +2006,7 @@ namespace ConsoleApplication
                     _themeLines.Add(ln);
                 }
             }
+
 
         }
 

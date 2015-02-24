@@ -56,6 +56,7 @@
     <Compile Include="ImageObject.cs" />
     <Compile Include="OpenXMLReader.cs" />
     <Compile Include="OptimizedClip.cs" />
+    <Compile Include="PowerPointColor.cs" />
     <Compile Include="PowerPointText.cs" />
     <Compile Include="PresentationObject.cs" />
     <Compile Include="Program.cs" />

@@ -16,7 +16,6 @@ namespace ConsoleApplication
         private int _angle;
         public GradientBackground()
         {
-
             _gradientList = new List<GradientInfo>();
             _angle = 0;
             _bgType = "gradient";

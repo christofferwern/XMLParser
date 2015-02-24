@@ -12,6 +12,34 @@ namespace ConsoleApplication
         public ColorConverter(){}
 
 
+        public string SetTint(string s, double tint)
+        {
+            Color c = ColorTranslator.FromHtml("#" + s);
+
+            return SetTint(c,tint);
+        }
+
+        public string SetShade(string s, double shade)
+        {
+            Color c = ColorTranslator.FromHtml("#" + s);
+
+            return SetShade(c, shade);
+        }
+
+        public string SetSaturation(string s, double saturation)
+        {
+            Color c = ColorTranslator.FromHtml("#" + s);
+
+            return SetSaturation(c, saturation);
+        }
+
+        public string SetBrightness(string s, double luminance)
+        {
+            Color c = ColorTranslator.FromHtml("#" + s);
+
+            return SetBrightness(c, luminance);
+        }
+
         public string SetTint(Color c, double tint)
         {
             Color temp = new Color();
@@ -19,9 +47,9 @@ namespace ConsoleApplication
             double convTint = tint / 1000;
             double r = 0, g = 0, b = 0;
 
-            r = ((1 - (60*0.01)) * (255 - c.R)) + c.R;
-            g = ((1 - (60*0.01)) * (255 - c.G)) + c.G;
-            b = ((1 - (60*0.01)) * (255 - c.B)) + c.B;
+            r = ((1 - (convTint * 0.01)) * (255 - c.R)) + c.R;
+            g = ((1 - (convTint * 0.01)) * (255 - c.G)) + c.G;
+            b = ((1 - (convTint * 0.01)) * (255 - c.B)) + c.B;
 
             temp = Color.FromArgb((int)(r), (int)(g), (int)(b));
 
@@ -35,9 +63,9 @@ namespace ConsoleApplication
             double convTint = tint / 1000;
             double r = 0, g = 0, b = 0;
 
-            r = (1 - (60*0.01)) * c.R;
-            g = (1 - (60*0.01)) * c.G;
-            b = (1 - (60*0.01)) * c.B;
+            r = (1 - (convTint * 0.01)) * c.R;
+            g = (1 - (convTint * 0.01)) * c.G;
+            b = (1 - (convTint * 0.01)) * c.B;
 
             temp = Color.FromArgb((int)(r),(int)(g), (int)(b));
             return temp.R.ToString("X2") + temp.G.ToString("X2") + temp.B.ToString("X2");
