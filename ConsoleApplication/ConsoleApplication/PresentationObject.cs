@@ -30,7 +30,6 @@ namespace ConsoleApplication
             _backgroundSceneObjectList = new List<SceneObject>();
             sceneList = new List<Scene>();
             _xmlDoc = new XmlDocument();
-            Console.WriteLine("PresentationObject created");
             
         }
 
