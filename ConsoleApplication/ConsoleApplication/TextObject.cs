@@ -441,6 +441,7 @@ namespace ConsoleApplication
 
             //Font size convertion
             _size /= 100;
+            _size = (int)Math.Round(_size * 1.5);
 
             //Font color
             _color = getFontColorAsInteger(_color).ToString();

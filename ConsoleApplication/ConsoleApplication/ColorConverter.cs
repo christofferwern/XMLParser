@@ -12,6 +12,42 @@ namespace ConsoleApplication
     public class ColorConverter
     {
         public ColorConverter(){}
+
+        public string SetTint(string s, double tint)
+        {
+            Color c = ColorTranslator.FromHtml("#" + s);
+
+            return SetTint(c,tint);
+        }
+
+        public string SetShade(string s, double shade)
+        {
+            Color c = ColorTranslator.FromHtml("#" + s);
+
+            return SetShade(c, shade);
+        }
+
+        public string SetSaturation(string s, double saturation)
+        {
+            Color c = ColorTranslator.FromHtml("#" + s);
+
+            return SetSaturation(c, saturation);
+        }
+
+        public string SetBrightness(string s, double luminance)
+        {
+            Color c = ColorTranslator.FromHtml("#" + s);
+
+            return SetBrightness(c, luminance);
+        }
+
+        public string SetHueMod(string s, double hueMod)
+        {
+            Color c = ColorTranslator.FromHtml("#" + s);
+
+            return SetHueMod(c, hueMod);
+        }
+
         private double RGB_to_linearRGB(double val){
 
             if (val < 0.0)
@@ -223,6 +259,7 @@ namespace ConsoleApplication
 
             return c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
         }
+
         public string SetBrightness(Color c, double brightness)
         {
             
@@ -230,7 +267,7 @@ namespace ConsoleApplication
 
             HSLColor hsl = RGB_to_HSL(c);
 
-            hsl.Luminance = convBrightness;
+            hsl.Luminance *= convBrightness;
             c = HSL_to_RGB(hsl);
 
             return c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
@@ -267,6 +304,7 @@ namespace ConsoleApplication
             return outColor.R.ToString("X2") + outColor.G.ToString("X2") + outColor.B.ToString("X2");
 
         }
+
         private HSLColor RGB_to_HSL(Color c)
         {
             HSLColor hsl = new HSLColor();

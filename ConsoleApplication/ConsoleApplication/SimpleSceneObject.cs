@@ -61,15 +61,13 @@ namespace ConsoleApplication
 
             float scaleWidth = (float)yoobaWidth / (float)pptWidth, scaleHeight = (float)yoobaHeight / (float)pptHeight;
 
-            _boundsX = (int) (_boundsX * scaleWidth);
-            _boundsY = (int) (_boundsY * scaleHeight);
-            _clipWidth = (int)(_clipWidth * scaleWidth);
-            _clipHeight = (int)(_clipHeight * scaleHeight);
+            _boundsX = (int) Math.Round(_boundsX * scaleWidth);
+            _boundsY = (int) Math.Round(_boundsY * scaleHeight);
+            _clipWidth = (int) Math.Round(_clipWidth * scaleWidth);
+            _clipHeight = (int) Math.Round(_clipHeight * scaleHeight);
 
             //rotation
             _rotation /= 60000;
-
-            
         }
 
         public Properties getProperties()
