@@ -302,6 +302,11 @@ namespace ConsoleApplication
                                     var Alpha = colorType as DrawingML.Alpha;
                                     gradInfo.Alpha = Alpha.Val;
                                 }
+                                if (colorType.GetType() == typeof(DrawingML.HueModulation))
+                                {
+                                    var HueModulation = colorType as DrawingML.HueModulation;
+                                    gradInfo.GradColor = conv.SetHueMod(gradInfo.Color, HueModulation.Val);
+                                }
                                 if (colorType.GetType() == typeof(DrawingML.SaturationModulation))
                                 {
                                     var SaturationModulation = colorType as DrawingML.SaturationModulation;
@@ -313,7 +318,7 @@ namespace ConsoleApplication
                                 {
                                     var Shade = colorType as DrawingML.Shade;
                                     //Console.WriteLine(alpha.Current.GetType().ToString() + ": #" + gradInfo.GradColor);
-                                    gradInfo.GradColor = conv.SetShade(gradInfo.Color, Shade.Val);
+                                    //gradInfo.GradColor = conv.SetShade(gradInfo.Color, Shade.Val);
                                     //Console.WriteLine(alpha.Current.GetType().ToString() + ": #" + gradInfo.GradColor);
                                 }
                                 if (colorType.GetType() == typeof(DrawingML.Tint))
@@ -324,7 +329,7 @@ namespace ConsoleApplication
                                 if (colorType.GetType() == typeof(DrawingML.LuminanceModulation))
                                 {
                                     var LuminanceModulation = colorType as DrawingML.LuminanceModulation;
-                                    gradInfo.GradColor = conv.SetBrightness(gradInfo.Color, LuminanceModulation.Val);
+                                    gradInfo.GradColor = conv.SetLuminance(gradInfo.Color, LuminanceModulation.Val);
                                 }
                                 
 
