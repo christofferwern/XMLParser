@@ -294,7 +294,7 @@ namespace ConsoleApplication
                             {
                                 //Console.WriteLine("\nNext: " + alpha.Current.GetType());
                                 ColorConverter conv = new ColorConverter();
-                                Console.WriteLine("Color before " + alpha.Current.GetType().Name + ": #" + gradInfo.GradColor);
+                                //Console.WriteLine("Color before " + alpha.Current.GetType().Name + ": #" + gradInfo.GradColor);
                                 var colorType = alpha.Current;
 
                                 if (colorType.GetType() == typeof(DrawingML.Alpha))
@@ -318,7 +318,7 @@ namespace ConsoleApplication
                                 {
                                     var Shade = colorType as DrawingML.Shade;
                                     //Console.WriteLine(alpha.Current.GetType().ToString() + ": #" + gradInfo.GradColor);
-                                    //gradInfo.GradColor = conv.SetShade(gradInfo.Color, Shade.Val);
+                                    gradInfo.GradColor = conv.SetShade(gradInfo.Color, Shade.Val);
                                     //Console.WriteLine(alpha.Current.GetType().ToString() + ": #" + gradInfo.GradColor);
                                 }
                                 if (colorType.GetType() == typeof(DrawingML.Tint))
@@ -329,12 +329,17 @@ namespace ConsoleApplication
                                 if (colorType.GetType() == typeof(DrawingML.LuminanceModulation))
                                 {
                                     var LuminanceModulation = colorType as DrawingML.LuminanceModulation;
-                                    gradInfo.GradColor = conv.SetLuminance(gradInfo.Color, LuminanceModulation.Val);
+                                    gradInfo.GradColor = conv.SetLuminanceMod(gradInfo.Color, LuminanceModulation.Val);
                                 }
-                                
+                                if (colorType.GetType() == typeof(DrawingML.LuminanceOffset))
+                                {
+                                    var LuminanceOffset = colorType as DrawingML.LuminanceOffset;
+                                    gradInfo.GradColor = conv.SetLuminanceOff(gradInfo.Color, LuminanceOffset.Val);
+                                }
 
+                               // Console.WriteLine("");
                             }
-                            Console.WriteLine("Result Color: #" + gradInfo.GradColor + "\n");
+                            //Console.WriteLine("Result Color: #" + gradInfo.GradColor + "\n");
                             //Console.WriteLine("Color after: " + gradInfo.Color + "\n");
                             //gradInfo.convert();
                             //Console.WriteLine(gradInfo.toString());

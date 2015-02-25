@@ -77,8 +77,6 @@ namespace ConsoleApplication
                 background.AppendChild(item.getXMLTree());
             }
 
-            Console.WriteLine("backgroundScene");
-
             return background;
         }
 
@@ -132,8 +130,6 @@ namespace ConsoleApplication
 
         public XmlDocument getXMLTree()
         {
-            
-            Console.WriteLine("presentationXML");
 
             XmlDeclaration xmlDeclaration = _xmlDoc.CreateXmlDeclaration("1.0", "utf-8", null);
             XmlElement root = _xmlDoc.CreateElement("yoobaProject");
