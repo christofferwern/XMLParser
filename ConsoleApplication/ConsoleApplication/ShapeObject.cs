@@ -160,9 +160,7 @@ namespace ConsoleApplication
             }
 
             _lineSize = (int) Math.Round((double)_lineSize / 10000);
-
             _lineColor = getColorAsInteger(_lineColor).ToString();
-
             _cornerRadius = (float) Math.Round((_cornerRadius / 100000) * 128 * 4);
 
             _rotation /= 60000;
@@ -190,7 +188,10 @@ namespace ConsoleApplication
 
         public int getColorAsInteger(string color)
         {
-            return int.Parse(color, System.Globalization.NumberStyles.HexNumber);
+            if (color != "")
+                return int.Parse(color, System.Globalization.NumberStyles.HexNumber);
+            else
+                return 0;
         }
 
         public float CornerRadius

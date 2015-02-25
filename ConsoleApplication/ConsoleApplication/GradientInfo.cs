@@ -27,40 +27,6 @@ namespace ConsoleApplication
             _color = new Color();
         }
 
-        public void convert()
-        {
-            System.Drawing.Color col = System.Drawing.ColorTranslator.FromHtml("#FFFF00");
-            /*float tint = 0.5f;
-
-            Console.WriteLine(col.GetBrightness());
-            
-
-            int coll = int.Parse(col.R.ToString(), System.Globalization.NumberStyles.HexNumber);
-            int convert = (int)(col.R * tint);
-            string hex = convert.ToString("X");
-
-            int collG = int.Parse(col.G.ToString(), System.Globalization.NumberStyles.HexNumber);
-            int convertG = (int)(col.G * tint);
-            string hexG = convertG.ToString("X");
-
-            int collB = int.Parse(col.B.ToString(), System.Globalization.NumberStyles.HexNumber);
-            int convertB = (int)(col.B * tint);
-            string hexB = convertB.ToString("X");*/
-
-            /*Console.WriteLine("Color: " + col +
-                               "\n R: " + col.R + ", conR:" + convert +
-                                "\n G: " + col.G + ", conG:" + convertG +
-                                "\n B: " + col.B + ", conB:" + convertB );*/
-            //Console.WriteLine("new Color: " + hex + ":" + hexG + ":"+ hexB);
-
-
-            if(_tint!=100)
-                Console.WriteLine("R: " + col.R * (_tint / 100) + ", G: " + col.G * (_tint / 100) + ", B: " + col.B * (_tint / 100));
-            //Console.WriteLine("H: " + col.GetHue() + ", S: " + col.GetSaturation() + ", B: " + col.GetBrightness());
-
-        }
-
-
         public Color Color
         {
             get { return _color; }

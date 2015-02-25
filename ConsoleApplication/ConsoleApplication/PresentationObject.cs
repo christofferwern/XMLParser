@@ -30,7 +30,6 @@ namespace ConsoleApplication
             _backgroundSceneObjectList = new List<SceneObject>();
             sceneList = new List<Scene>();
             _xmlDoc = new XmlDocument();
-            Console.WriteLine("PresentationObject created");
             
         }
 
@@ -77,8 +76,6 @@ namespace ConsoleApplication
                 item.setXMLDocumentRoot(ref _xmlDoc);
                 background.AppendChild(item.getXMLTree());
             }
-
-            Console.WriteLine("backgroundScene");
 
             return background;
         }
@@ -133,8 +130,6 @@ namespace ConsoleApplication
 
         public XmlDocument getXMLTree()
         {
-            
-            Console.WriteLine("presentationXML");
 
             XmlDeclaration xmlDeclaration = _xmlDoc.CreateXmlDeclaration("1.0", "utf-8", null);
             XmlElement root = _xmlDoc.CreateElement("yoobaProject");

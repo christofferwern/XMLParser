@@ -48,7 +48,7 @@ namespace ConsoleApplication
 
         public string toString()
         {
-            return "H: " + Hue + "\nS: " + Saturation + "\nL: " + Luminance + "\n";
+            return "\n H: " + Hue + "\n S: " + Saturation + "\n L: " + Luminance + "\n";
         }
 
     }

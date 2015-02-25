@@ -215,22 +215,34 @@ namespace ConsoleApplication
                             shapeObject.GradientFills[0] = fillColors[0].Color;
                             shapeObject.GradientFills[1] = fillColors[lastIndex].Color;
 
-                            Console.WriteLine(fillColors[0]);
+                            Console.WriteLine("Start: " + shapeObject.GradientFills[0]);
 
-                            Console.WriteLine(fillColors[lastIndex]);
+                            shapeObject.GradientFills[0] = colorConverter.SetShade(shapeObject.GradientFills[0], fillColors[0].Shade);
+                            Console.WriteLine("Shade (" + fillColors[0].Shade + "): " + shapeObject.GradientFills[0]);
 
-
-                            //shapeObject.GradientFills[0] = colorConverter.SetShade(shapeObject.GradientFills[0], fillColors[0].Shade);
                             //shapeObject.GradientFills[0] = colorConverter.SetTint(shapeObject.GradientFills[0], fillColors[0].Tint);
-                            shapeObject.GradientFills[0] = colorConverter.SetBrightness(shapeObject.GradientFills[0], fillColors[0].Luminance);
-                            shapeObject.GradientFills[0] = colorConverter.SetSaturation(shapeObject.GradientFills[0], fillColors[0].Saturation);
-                            shapeObject.GradientAlphas[0] = fillColors[0].Alpha;
+                            //Console.WriteLine("Tint (" + fillColors[0].Tint + "): " + shapeObject.GradientFills[0]);
 
-                            //shapeObject.GradientFills[1] = colorConverter.SetShade(shapeObject.GradientFills[1], fillColors[lastIndex].Shade);
-                            //shapeObject.GradientFills[1] = colorConverter.SetTint(shapeObject.GradientFills[1], fillColors[lastIndex].Tint);
-                            shapeObject.GradientFills[1] = colorConverter.SetBrightness(shapeObject.GradientFills[1], fillColors[lastIndex].Luminance);
-                            shapeObject.GradientFills[1] = colorConverter.SetSaturation(shapeObject.GradientFills[1], fillColors[lastIndex].Saturation);
+                            shapeObject.GradientFills[0] = colorConverter.SetHueMod(shapeObject.GradientFills[0], fillColors[0].HueMod);
+                            Console.WriteLine("Hue (" + fillColors[0].HueMod + "): " + shapeObject.GradientFills[0]);
+
+                            shapeObject.GradientFills[0] = colorConverter.SetBrightness(shapeObject.GradientFills[0], fillColors[0].LumMod);
+                            Console.WriteLine("Brightness (" + fillColors[0].LumMod + "): " + shapeObject.GradientFills[0]);
+
+                            shapeObject.GradientFills[0] = colorConverter.SetSaturation(shapeObject.GradientFills[0], fillColors[0].SatMod);
+                            Console.WriteLine("Saturation (" + fillColors[0].SatMod + "): " + shapeObject.GradientFills[0]);
+
+                            shapeObject.GradientAlphas[0] = fillColors[0].Alpha;
+                            Console.WriteLine("Alpha (" + fillColors[0].Alpha + "): " + shapeObject.GradientFills[0]);
+
+                            shapeObject.GradientFills[1] = colorConverter.SetShade(shapeObject.GradientFills[1], fillColors[lastIndex].Shade);
+                            shapeObject.GradientFills[1] = colorConverter.SetTint(shapeObject.GradientFills[1], fillColors[lastIndex].Tint);
+                            shapeObject.GradientFills[1] = colorConverter.SetHueMod(shapeObject.GradientFills[1], fillColors[lastIndex].HueMod);
+                            //shapeObject.GradientFills[1] = colorConverter.SetBrightness(shapeObject.GradientFills[1], fillColors[lastIndex].Luminance);
+                            //shapeObject.GradientFills[1] = colorConverter.SetSaturation(shapeObject.GradientFills[1], fillColors[lastIndex].Saturation);
                             shapeObject.GradientAlphas[1] = fillColors[lastIndex].Alpha;
+
+                            Console.WriteLine(shapeObject.GradientFills[0]);
                         }
 
                     }
@@ -323,7 +335,7 @@ namespace ConsoleApplication
                         if (type.GetType() == typeof(DrawingML.Shade))
                         {
                             var Shade = type as DrawingML.Shade;
-                            solidBg.BgColor = conv.SetTint(solidBg.Color, Shade.Val);
+                            solidBg.BgColor = conv.SetShade(solidBg.Color, Shade.Val);
                         }
                         if (type.GetType() == typeof(DrawingML.Tint))
                         {
@@ -390,12 +402,16 @@ namespace ConsoleApplication
 
                             //List of all childrens gradientstop's first child.
                             IEnumerator<OpenXmlElement> alpha = gs.FirstChild.GetEnumerator();
-                            Console.WriteLine(gradInfo.Color);
+                            
+                            /*Console.WriteLine("Color before: #" + gradInfo.GradColor);
+                            Console.WriteLine("Color before: #" + gradInfo.Color);
+                            Console.WriteLine("Pos: " + gradInfo.Position);*/
                             //Get the alpha value for each gradient stop
                             while (alpha.MoveNext())
                             {
+                                //Console.WriteLine("\nNext: " + alpha.Current.GetType());
                                 ColorConverter conv = new ColorConverter();
-
+                                Console.WriteLine("Color before " + alpha.Current.GetType().Name + ": #" + gradInfo.GradColor);
                                 var colorType = alpha.Current;
 
                                 if (colorType.GetType() == typeof(DrawingML.Alpha))
@@ -406,31 +422,35 @@ namespace ConsoleApplication
                                 if (colorType.GetType() == typeof(DrawingML.SaturationModulation))
                                 {
                                     var SaturationModulation = colorType as DrawingML.SaturationModulation;
+                                    //Console.WriteLine(alpha.Current.GetType().ToString() + ": #" + gradInfo.GradColor);
                                     gradInfo.GradColor = conv.SetSaturation(gradInfo.Color, SaturationModulation.Val);
-                                    Console.WriteLine(gradInfo.GradColor);
+                                    //Console.WriteLine(alpha.Current.GetType().ToString() + ": #" + gradInfo.GradColor);
                                 }
                                 if (colorType.GetType() == typeof(DrawingML.Shade))
                                 {
                                     var Shade = colorType as DrawingML.Shade;
-                                    gradInfo.GradColor = conv.SetTint(gradInfo.Color, Shade.Val);
-                                    Console.WriteLine(gradInfo.GradColor);
+                                    //Console.WriteLine(alpha.Current.GetType().ToString() + ": #" + gradInfo.GradColor);
+                                    gradInfo.GradColor = conv.SetShade(gradInfo.Color, Shade.Val);
+                                    //Console.WriteLine(alpha.Current.GetType().ToString() + ": #" + gradInfo.GradColor);
                                 }
                                 if (colorType.GetType() == typeof(DrawingML.Tint))
                                 {
                                     var Tint = colorType as DrawingML.Tint;
-                                    gradInfo.GradColor = conv.SetShade(gradInfo.Color, Tint.Val);
-                                    Console.WriteLine(gradInfo.GradColor);
+                                    gradInfo.GradColor = conv.SetTint(gradInfo.Color, Tint.Val);
                                 }
                                 if (colorType.GetType() == typeof(DrawingML.LuminanceModulation))
                                 {
                                     var LuminanceModulation = colorType as DrawingML.LuminanceModulation;
                                     gradInfo.GradColor = conv.SetBrightness(gradInfo.Color, LuminanceModulation.Val);
                                 }
+                                
 
                             }
+                            Console.WriteLine("Result Color: #" + gradInfo.GradColor + "\n");
+                            //Console.WriteLine("Color after: " + gradInfo.Color + "\n");
                             //gradInfo.convert();
                             //Console.WriteLine(gradInfo.toString());
-                            //Add gradient information to backgroundlist
+                            //Add gradient information to backgroundlist*/
                             gradientBg.GradientList.Add(gradInfo);
                         }
 
@@ -453,7 +473,7 @@ namespace ConsoleApplication
 
                     break;
                 case "blipFill":
-                    Console.WriteLine("blipFill");
+                    //Console.WriteLine("blipFill");
                     /*foreach (var blip in bg_type.Descendants<DrawingML.Blip>())
                     {
                         string embeded_id = blip.Embed.Value;
@@ -806,7 +826,221 @@ namespace ConsoleApplication
                 sceneObjectList.Add(textObject);
             }
 
+            //Handle Tables
+            foreach (PresentationML.GraphicFrame graphicFrame in spTree.Descendants<PresentationML.GraphicFrame>())
+            {
+                foreach (ShapeObject s in getShapeObjectsFromTable(graphicFrame))
+                {
+                    sceneObjectList.Add(s);
+                }
+            }
+
+
             return sceneObjectList;
+        }
+
+        private List<ShapeObject> getShapeObjectsFromTable(PresentationML.GraphicFrame graphicFrame)
+        {
+            List<ShapeObject> shapeObjectList = new List<ShapeObject>();
+
+            int boundsX = (int) graphicFrame.Transform.Offset.X,
+                boundsY = (int) graphicFrame.Transform.Offset.Y;
+
+            DrawingML.TableStyleList tableStyleList = _presentationDocument.PresentationPart.TableStylesPart.TableStyleList;
+
+            foreach(DrawingML.Table table in graphicFrame.Graphic.GraphicData.Descendants<DrawingML.Table>())
+            {
+                //Get the table style from the tabelStyles.xml (stored in tableStyle)
+                DrawingML.TableStyleEntry tableStyle = new DrawingML.TableStyleEntry();
+                foreach(DrawingML.TableStyleId tableStyleId in table.TableProperties.Descendants<DrawingML.TableStyleId>())
+                {
+                    string tableId = tableStyleId.InnerText;
+
+                    foreach (DrawingML.TableStyleEntry style in tableStyleList.Descendants<DrawingML.TableStyleEntry>())
+                    {
+                        if (style.StyleId == tableId)
+                        {
+                            tableStyle = style;
+                        }
+                    }
+                }
+
+                
+                //Store all the information from the table style
+                List<PowerPointColor> colorList = new List<PowerPointColor>();
+                Dictionary<string, PowerPointColor> fillColorDictionary = new Dictionary<string, PowerPointColor>();
+                Dictionary<string, PowerPointColor> lineColorDictionary = new Dictionary<string, PowerPointColor>();
+                Dictionary<string, int> lineWidthDictionary = new Dictionary<string, int>();
+
+                foreach (var tableStyleChild in tableStyle)
+                {
+                    Console.WriteLine(tableStyleChild.LocalName);
+
+                    fillColorDictionary.Add(tableStyleChild.LocalName, getFillColorFromTableStyleElement(tableStyleChild));
+
+                    int lineWidth = 0;
+                    lineColorDictionary.Add(tableStyleChild.LocalName, getLineColorFromTableStyleElement(tableStyleChild,out lineWidth));
+                    lineWidthDictionary.Add(tableStyleChild.LocalName, lineWidth);
+                }
+
+                //Store the column widths
+                List<int> gridColWidthList = new List<int>();
+                foreach (DrawingML.GridColumn gridCol in table.TableGrid)
+                {
+                    gridColWidthList.Add((int)gridCol.Width);
+                }
+
+                int width, height, colIndex, rowIndex = 0, totalHeight = 0, totalWidth = 0;
+                foreach (DrawingML.TableRow tr in table.Descendants<DrawingML.TableRow>())
+                {
+                    height = (int) tr.Height;
+                    colIndex = 0;
+
+                    foreach (DrawingML.TableCell tc in tr.Descendants<DrawingML.TableCell>())
+                    {
+                        width = gridColWidthList[colIndex];
+
+                        SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
+                        simpleSceneObject.BoundsX = boundsX + totalWidth;
+                        simpleSceneObject.BoundsY = boundsY + totalHeight;
+                        simpleSceneObject.ClipWidth = width;
+                        simpleSceneObject.ClipHeight = height;
+
+                        ShapeObject shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
+
+                        shapeObject.LineEnabled = true;
+                        shapeObject.LineSize = 10000;
+
+                        if (table.TableProperties.FirstRow && rowIndex==0)
+                        {
+                            if (lineColorDictionary["firstRow"].Color != "")
+                                shapeObject.LineColor = lineColorDictionary["firstRow"].getAdjustedColor();
+
+                            if (fillColorDictionary["firstRow"].Color != "")
+                                shapeObject.FillColor = fillColorDictionary["firstRow"].getAdjustedColor();
+                        }
+                        else if (table.TableProperties.BandRow)
+                        {
+                            if (rowIndex % 2 == 0)
+                            {
+                                if (lineColorDictionary.Keys.Contains("band1H"))
+                                {
+                                    if (lineColorDictionary["band1H"].Color != "")
+                                        shapeObject.LineColor = lineColorDictionary["band1H"].getAdjustedColor();
+
+                                    if (fillColorDictionary["band1H"].Color != "")
+                                        shapeObject.FillColor = fillColorDictionary["band1H"].getAdjustedColor();
+                                }
+                            }
+                            else
+                            {
+                                if (lineColorDictionary.Keys.Contains("band2H"))
+                                {
+                                    if (lineColorDictionary["band2H"].Color != "")
+                                        shapeObject.LineColor = lineColorDictionary["band2H"].getAdjustedColor();
+
+                                    if (fillColorDictionary["band2H"].Color != "")
+                                        shapeObject.FillColor = fillColorDictionary["band2H"].getAdjustedColor();
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (lineColorDictionary["wholeTbl"].Color != "")
+                                shapeObject.LineColor = lineColorDictionary["wholeTbl"].getAdjustedColor();
+
+                            if (fillColorDictionary["wholeTbl"].Color != "")
+                                shapeObject.FillColor = fillColorDictionary["wholeTbl"].getAdjustedColor();
+                        }
+                        
+
+                        shapeObjectList.Add(shapeObject);
+
+                        colIndex++;
+                        totalWidth += width;
+                    }
+
+                    rowIndex++;
+                    totalHeight += height;
+                    totalWidth = 0;
+                }
+            }
+
+            return shapeObjectList;
+        }
+
+        private PowerPointColor getFillColorFromTableStyleElement(OpenXmlElement tableStyleChild)
+        {
+            PowerPointColor powerPointColor = new PowerPointColor();
+
+            OpenXmlElementList childElements = (OpenXmlElementList)tableStyleChild.GetType().GetMethod("get_ChildElements").Invoke(tableStyleChild, null);
+
+            foreach(var childElement in childElements)
+            {
+                if (childElement.LocalName == "tcStyle")
+                {
+                    DrawingML.TableCellStyle tableCellStyle = (DrawingML.TableCellStyle)childElement;
+
+                    foreach (var child in tableCellStyle.ChildElements)
+                    {
+                        if (child.LocalName == "fill")
+                        {
+                            DrawingML.FillProperties fill = (DrawingML.FillProperties)child;
+
+                            if (fill.SolidFill != null)
+                            {
+                                return GetPowerPointColor(fill.SolidFill);
+                            }
+                        }
+                    }
+
+                }
+            }
+
+            return powerPointColor;
+        }
+
+        private PowerPointColor getLineColorFromTableStyleElement(OpenXmlElement tableStyleChild, out int width)
+        {
+            PowerPointColor powerPointColor = new PowerPointColor();
+
+            width=0;
+
+            OpenXmlElementList childElements = (OpenXmlElementList)tableStyleChild.GetType().GetMethod("get_ChildElements").Invoke(tableStyleChild, null);
+
+            foreach (var childElement in childElements)
+            {
+                if (childElement.LocalName == "tcStyle")
+                {
+                    DrawingML.TableCellStyle tableCellStyle = (DrawingML.TableCellStyle)childElement;
+
+                    foreach (var child in tableCellStyle.ChildElements)
+                    {
+                        if (child.LocalName == "tcBdr")
+                        {
+                            DrawingML.TableCellBorders border = (DrawingML.TableCellBorders)child;
+
+                            foreach (DrawingML.Outline ln in border.Descendants<DrawingML.Outline>())
+                            {
+                                if (ln.Width != null)
+                                    width = ln.Width.Value;
+                                foreach (var lineChild in ln)
+                                {
+                                    if (lineChild.LocalName == "solidFill")
+                                    {
+                                        DrawingML.SolidFill solidFill = (DrawingML.SolidFill)lineChild;
+
+                                        return GetPowerPointColor(solidFill);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+
+            return powerPointColor;
         }
 
         private List<SceneObject> GetAllLayoutShapes(SlidePart slidePart)
@@ -1171,12 +1405,12 @@ namespace ConsoleApplication
                                     if (colorAttr.LocalName == "lumMod")
                                     {
                                         DrawingML.LuminanceModulation lumMod = (DrawingML.LuminanceModulation)colorAttr;
-                                        pptColor.Luminance = lumMod.Val;
+                                        pptColor.LumMod = lumMod.Val;
                                     }
                                     if (colorAttr.LocalName == "satMod")
                                     {
                                         DrawingML.SaturationModulation satMod = (DrawingML.SaturationModulation)colorAttr;
-                                        pptColor.Saturation = satMod.Val;
+                                        pptColor.SatMod = satMod.Val;
                                     }
                                     if (colorAttr.LocalName == "alpha")
                                     {
@@ -1206,12 +1440,12 @@ namespace ConsoleApplication
                                     if (colorAttr.LocalName == "lumMod")
                                     {
                                         DrawingML.LuminanceModulation lumMod = (DrawingML.LuminanceModulation)colorAttr;
-                                        pptColor.Luminance = lumMod.Val;
+                                        pptColor.LumMod = lumMod.Val;
                                     }
                                     if (colorAttr.LocalName == "satMod")
                                     {
                                         DrawingML.SaturationModulation satMod = (DrawingML.SaturationModulation)colorAttr;
-                                        pptColor.Saturation = satMod.Val;
+                                        pptColor.SatMod = satMod.Val;
                                     }
                                     if (colorAttr.LocalName == "alpha")
                                     {
@@ -1266,12 +1500,12 @@ namespace ConsoleApplication
                                         if (colorAttr.LocalName == "lumMod")
                                         {
                                             DrawingML.LuminanceModulation lumMod = (DrawingML.LuminanceModulation)colorAttr;
-                                            pptColor.Luminance = lumMod.Val;
+                                            pptColor.LumMod = lumMod.Val;
                                         }
                                         if (colorAttr.LocalName == "satMod")
                                         {
                                             DrawingML.SaturationModulation satMod = (DrawingML.SaturationModulation)colorAttr;
-                                            pptColor.Saturation = satMod.Val;
+                                            pptColor.SatMod = satMod.Val;
                                         }
                                         if (colorAttr.LocalName == "alpha")
                                         {
@@ -1282,6 +1516,11 @@ namespace ConsoleApplication
                                         {
                                             DrawingML.Shade shade = (DrawingML.Shade)colorAttr;
                                             pptColor.Shade = shade.Val;
+                                        }
+                                        if (colorAttr.LocalName == "hueMod")
+                                        {
+                                            DrawingML.HueModulation hueMod = (DrawingML.HueModulation)colorAttr;
+                                            pptColor.HueMod = hueMod.Val;
                                         }
                                     }
 
@@ -1303,12 +1542,12 @@ namespace ConsoleApplication
                                         if (colorAttr.LocalName == "lumMod")
                                         {
                                             DrawingML.LuminanceModulation lumMod = (DrawingML.LuminanceModulation)colorAttr;
-                                            pptColor.Luminance = lumMod.Val;
+                                            pptColor.LumMod = lumMod.Val;
                                         }
                                         if (colorAttr.LocalName == "satMod")
                                         {
                                             DrawingML.SaturationModulation satMod = (DrawingML.SaturationModulation)colorAttr;
-                                            pptColor.Saturation = satMod.Val;
+                                            pptColor.SatMod = satMod.Val;
                                         }
                                         if (colorAttr.LocalName == "alpha")
                                         {
@@ -1921,9 +2160,6 @@ namespace ConsoleApplication
             return Tuple.Create(x, y);
         }
 
-
-        
-
         //get font from theme, ( inte snyggt alls =/ )
         private string getFontFromTheme(string font)
         {
@@ -2132,6 +2368,149 @@ namespace ConsoleApplication
             get { return _presentationSizeX; }
             set { _presentationSizeX = value; }
         }
+
+        public PowerPointColor GetPowerPointColor(DrawingML.SolidFill solidFill)
+        {
+            PowerPointColor powerPointColor = new PowerPointColor();
+
+            if (solidFill.SchemeColor != null)
+            {
+                DrawingML.SchemeColor schemeColor = solidFill.SchemeColor;
+
+                //Get the color
+                powerPointColor.Color = getColorFromTheme(schemeColor.Val);
+
+                //Get the color attribues
+                foreach (var colorAttr in schemeColor)
+                {
+                    if (colorAttr.LocalName == "tint")
+                        powerPointColor.Tint = ((DrawingML.Tint)colorAttr).Val;
+                    if (colorAttr.LocalName == "shade")
+                        powerPointColor.Shade = ((DrawingML.Shade)colorAttr).Val;
+                    //if (colorAttr.LocalName == "comp")
+                    //    powerPointColor.Comp = ((DrawingML.Complement)colorAttr).Val;
+                    //if (colorAttr.LocalName == "inv")
+                    //    powerPointColor.Inv = ((DrawingML.Inverse)colorAttr).Val;
+                    //if (colorAttr.LocalName == "gray")
+                    //    powerPointColor.Gray = ((DrawingML.Gray)colorAttr).Val;
+                    if (colorAttr.LocalName == "alpha")
+                        powerPointColor.Alpha = ((DrawingML.Alpha)colorAttr).Val;
+                    if (colorAttr.LocalName == "alphaOff")
+                        powerPointColor.AlphaOff = ((DrawingML.AlphaOffset)colorAttr).Val;
+                    if (colorAttr.LocalName == "alphaMod")
+                        powerPointColor.AlphaMod = ((DrawingML.AlphaModulation)colorAttr).Val;
+                    if (colorAttr.LocalName == "hueMod")
+                        powerPointColor.HueMod = ((DrawingML.HueModulation)colorAttr).Val;
+                    if (colorAttr.LocalName == "hueOff")
+                        powerPointColor.HueOff = ((DrawingML.HueOffset)colorAttr).Val;
+                    if (colorAttr.LocalName == "sat")
+                        powerPointColor.Sat = ((DrawingML.Saturation)colorAttr).Val;
+                    if (colorAttr.LocalName == "satOff")
+                        powerPointColor.SatOff = ((DrawingML.SaturationOffset)colorAttr).Val;
+                    if (colorAttr.LocalName == "satMod")
+                        powerPointColor.SatMod = ((DrawingML.SaturationModulation)colorAttr).Val;
+                    if (colorAttr.LocalName == "lum")
+                        powerPointColor.Lum = ((DrawingML.Luminance)colorAttr).Val;
+                    if (colorAttr.LocalName == "lumOff")
+                        powerPointColor.LumOff = ((DrawingML.LuminanceOffset)colorAttr).Val;
+                    if (colorAttr.LocalName == "lumMod")
+                        powerPointColor.Lum = ((DrawingML.LuminanceModulation)colorAttr).Val;
+                    if (colorAttr.LocalName == "red")
+                        powerPointColor.Red = ((DrawingML.Red)colorAttr).Val;
+                    if (colorAttr.LocalName == "redOff")
+                        powerPointColor.RedOff = ((DrawingML.RedOffset)colorAttr).Val;
+                    if (colorAttr.LocalName == "redMod")
+                        powerPointColor.RedMod = ((DrawingML.RedModulation)colorAttr).Val;
+                    if (colorAttr.LocalName == "green")
+                        powerPointColor.Green = ((DrawingML.Green)colorAttr).Val;
+                    if (colorAttr.LocalName == "greenOff")
+                        powerPointColor.GreenOff = ((DrawingML.GreenOffset)colorAttr).Val;
+                    if (colorAttr.LocalName == "greenMod")
+                        powerPointColor.GreenMod = ((DrawingML.GreenModulation)colorAttr).Val;
+                    if (colorAttr.LocalName == "blue")
+                        powerPointColor.Blue = ((DrawingML.Blue)colorAttr).Val;
+                    if (colorAttr.LocalName == "blueOff")
+                        powerPointColor.BlueOff = ((DrawingML.BlueOffset)colorAttr).Val;
+                    if (colorAttr.LocalName == "blueMod")
+                        powerPointColor.BlueMod = ((DrawingML.BlueModulation)colorAttr).Val;
+                    //if (colorAttr.LocalName == "gamma")
+                    //    powerPointColor.Gamma = ((DrawingML.Gamma)colorAttr).Val;
+                    //if (colorAttr.LocalName == "invGamma")
+                    //    powerPointColor.InvGamma = ((DrawingML.InverseGamma)colorAttr).Val;
+
+                }
+
+            }
+            if (solidFill.RgbColorModelHex != null)
+            {
+                DrawingML.RgbColorModelHex rgbColorModelHex = solidFill.RgbColorModelHex;
+
+                //Get the color
+                powerPointColor.Color = rgbColorModelHex.Val;
+
+                //Get the color attribues
+                foreach (var colorAttr in rgbColorModelHex)
+                {
+                    if (colorAttr.LocalName == "tint")
+                        powerPointColor.Tint = ((DrawingML.Tint)colorAttr).Val;
+                    if (colorAttr.LocalName == "shade")
+                        powerPointColor.Shade = ((DrawingML.Shade)colorAttr).Val;
+                    //if (colorAttr.LocalName == "comp")
+                    //    powerPointColor.Comp = ((DrawingML.Complement)colorAttr).Val;
+                    //if (colorAttr.LocalName == "inv")
+                    //    powerPointColor.Inv = ((DrawingML.Inverse)colorAttr).Val;
+                    //if (colorAttr.LocalName == "gray")
+                    //    powerPointColor.Gray = ((DrawingML.Gray)colorAttr).Val;
+                    if (colorAttr.LocalName == "alpha")
+                        powerPointColor.Alpha = ((DrawingML.Alpha)colorAttr).Val;
+                    if (colorAttr.LocalName == "alphaOff")
+                        powerPointColor.AlphaOff = ((DrawingML.AlphaOffset)colorAttr).Val;
+                    if (colorAttr.LocalName == "alphaMod")
+                        powerPointColor.AlphaMod = ((DrawingML.AlphaModulation)colorAttr).Val;
+                    if (colorAttr.LocalName == "hueMod")
+                        powerPointColor.HueMod = ((DrawingML.HueModulation)colorAttr).Val;
+                    if (colorAttr.LocalName == "hueOff")
+                        powerPointColor.HueOff = ((DrawingML.HueOffset)colorAttr).Val;
+                    if (colorAttr.LocalName == "sat")
+                        powerPointColor.Sat = ((DrawingML.Saturation)colorAttr).Val;
+                    if (colorAttr.LocalName == "satOff")
+                        powerPointColor.SatOff = ((DrawingML.SaturationOffset)colorAttr).Val;
+                    if (colorAttr.LocalName == "satMod")
+                        powerPointColor.SatMod = ((DrawingML.SaturationModulation)colorAttr).Val;
+                    if (colorAttr.LocalName == "lum")
+                        powerPointColor.Lum = ((DrawingML.Luminance)colorAttr).Val;
+                    if (colorAttr.LocalName == "lumOff")
+                        powerPointColor.LumOff = ((DrawingML.LuminanceOffset)colorAttr).Val;
+                    if (colorAttr.LocalName == "lumMod")
+                        powerPointColor.Lum = ((DrawingML.LuminanceModulation)colorAttr).Val;
+                    if (colorAttr.LocalName == "red")
+                        powerPointColor.Red = ((DrawingML.Red)colorAttr).Val;
+                    if (colorAttr.LocalName == "redOff")
+                        powerPointColor.RedOff = ((DrawingML.RedOffset)colorAttr).Val;
+                    if (colorAttr.LocalName == "redMod")
+                        powerPointColor.RedMod = ((DrawingML.RedModulation)colorAttr).Val;
+                    if (colorAttr.LocalName == "green")
+                        powerPointColor.Green = ((DrawingML.Green)colorAttr).Val;
+                    if (colorAttr.LocalName == "greenOff")
+                        powerPointColor.GreenOff = ((DrawingML.GreenOffset)colorAttr).Val;
+                    if (colorAttr.LocalName == "greenMod")
+                        powerPointColor.GreenMod = ((DrawingML.GreenModulation)colorAttr).Val;
+                    if (colorAttr.LocalName == "blue")
+                        powerPointColor.Blue = ((DrawingML.Blue)colorAttr).Val;
+                    if (colorAttr.LocalName == "blueOff")
+                        powerPointColor.BlueOff = ((DrawingML.BlueOffset)colorAttr).Val;
+                    if (colorAttr.LocalName == "blueMod")
+                        powerPointColor.BlueMod = ((DrawingML.BlueModulation)colorAttr).Val;
+                    //if (colorAttr.LocalName == "gamma")
+                    //    powerPointColor.Gamma = ((DrawingML.Gamma)colorAttr).Val;
+                    //if (colorAttr.LocalName == "invGamma")
+                    //    powerPointColor.InvGamma = ((DrawingML.InverseGamma)colorAttr).Val;
+                }
+            }
+
+            return powerPointColor;
+        }
+
 
     }
 }
