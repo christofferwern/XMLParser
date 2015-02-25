@@ -18,7 +18,7 @@ namespace ConsoleApplication
         {
             var watch = Stopwatch.StartNew();
 
-            string path = @"C:\Users\ex1\desktop\tint.pptx";
+            string path = @"C:\Users\ex1\desktop\presentation.pptx";
 
             OpenXMLReader reader = new OpenXMLReader(path);
 

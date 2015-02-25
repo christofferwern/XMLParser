@@ -22,7 +22,7 @@ namespace ConsoleApplication
 
             double tintConv = (double)Convert.ToInt32(hexValue.ToString(), 16) / 255;
 
-            //Console.WriteLine("tintConv: " + tintConv);
+            Console.WriteLine("tintConv: " + tintConv);
 
             double r = (double)c.R / 255;
             double g = (double)c.G / 255;
@@ -34,6 +34,8 @@ namespace ConsoleApplication
 
             //Console.WriteLine("Linear R: " + rLin + "\nLinear G: " + gLin + "\nLinear B: " + bLin);
 
+
+            //luminance * %tint + (1-%tint)
             /**TINT**/
 
             if (tintConv > 0)
@@ -178,8 +180,6 @@ namespace ConsoleApplication
 
             double convShade = (double) Convert.ToInt32(hexValue.ToString(), 16) / 255;
 
-            //Console.WriteLine("convShade: " + convShade);
-
             double r = (double) c.R / 255;
             double g = (double) c.G / 255;
             double b = (double) c.B / 255;
@@ -190,7 +190,7 @@ namespace ConsoleApplication
 
             //Console.WriteLine("Linear R: " + rLin + "\nLinear G: " + gLin + "\nLinear B: " + bLin);
 
-            /**SHADE**/
+            //SHADE 
             if ((rLin * convShade) < 0)
                 rLin = 0;
             if ((rLin * convShade) > 1)
@@ -212,13 +212,13 @@ namespace ConsoleApplication
             else
                 bLin *= convShade;
 
-            /**SHADE**/
+            //SHADEEND
 
             r = linearRGB_to_RGB(rLin);
             g = linearRGB_to_RGB(gLin);
             b = linearRGB_to_RGB(bLin);
 
-            //Console.WriteLine("R: " + (r*255) + ", G: " + (g*255) + ", B: " + (b*255) );
+            Console.WriteLine("R: " + Math.Round(r * 255) + ", G: " + Math.Round(g * 255) + ", B: " + Math.Round(b * 255));
 
             Color outColor = Color.FromArgb((int)Math.Round(r * 255), (int)Math.Round(g * 255), (int)Math.Round(b * 255));
 
@@ -228,12 +228,17 @@ namespace ConsoleApplication
 
         public string SetSaturation(Color c, double saturation)
         {
-            double convSaturation = (saturation / 1000)*0.01;
+            double satMod = (saturation / 1000)*0.01;
+            double satOff = 0;
+
+            if (!(satMod > 1))
+                satOff = 1 - satMod;
             //Console.WriteLine("Saturation: " + convSaturation);
             HSLColor hsl = RGB_to_HSL(c); // CreateHSL(rR, gG, bB);
 
             //Console.WriteLine(hsl.toString());
-            hsl.Saturation *= convSaturation;
+            hsl.Saturation *= satMod;
+            hsl.Saturation += satOff;
             //Console.WriteLine(hsl.toString());
             c = HSL_to_RGB(hsl);
 
@@ -252,7 +257,62 @@ namespace ConsoleApplication
 
             return c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
         }
+        public string SetLuminance(Color c, double luminance)
+        {
+            double lumMod = (luminance / 1000)*0.01;
+            double lumOff = 0;
 
+            if (!(lumMod > 1))
+                lumOff = 1 - lumMod;
+            
+            Console.WriteLine("Mod: " + lumMod + "\nOff: " + lumOff);
+            Console.WriteLine(c);
+            HSLColor hsl = RGB_to_HSL(c);
+
+            Console.WriteLine(hsl.toString());
+
+            hsl.Luminance *= lumMod;
+            hsl.Luminance += lumOff;
+
+            Console.WriteLine(hsl.toString());
+
+            Color outColor = HSL_to_RGB(hsl);
+            Console.WriteLine((int)outColor.R + " " + (int)outColor.G + " " + (int)outColor.B);
+            return outColor.R.ToString("X2") + outColor.G.ToString("X2") + outColor.B.ToString("X2");
+        }
+        public string SetHueMod(Color c, double hue)
+        {
+            //double hue = (hueMod / 60000)/360;
+            double hueMod = (hue / 1000) * 0.01;
+            
+            Console.WriteLine("hueMod: " + hueMod);
+
+            HSLColor hsl = RGB_to_HSL(c);
+            hsl.Hue *= hueMod;
+
+            Color outColor = HSL_to_RGB(hsl);
+
+            Console.WriteLine((int)outColor.R + " " + (int)outColor.G + " " + (int)outColor.B);
+
+            return outColor.R.ToString("X2") + outColor.G.ToString("X2") + outColor.B.ToString("X2");
+
+            /*Select Case c
+                Case HSL.Hue
+                    Hue = Hue * val
+                    If Hue = 0.0 Then
+                        If val >= 1.0 Then
+                            Hue = val - Fix(val)
+                        End If
+                    Else
+                        Hue = Hue - Fix(Hue)
+                    End If
+                Case HSL.Saturation
+                    Saturation = Saturation * val
+                Case HSL.Luminance
+                    Luminance = Luminance * val
+            End Select
+            */
+        }
         private HSLColor RGB_to_HSL(Color c)
         {
             HSLColor hsl = new HSLColor();
