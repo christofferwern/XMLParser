@@ -196,13 +196,7 @@ namespace ConsoleApplication
 
                         //SolidFill, only one color
                         if (fillColors.Count == 1)
-                        {
-                            //shapeObject.FillColor = colorConverter.SetShade(shapeObject.FillColor, fillColors[0].Shade);
-                            //shapeObject.FillColor = colorConverter.SetTint(shapeObject.FillColor, fillColors[0].Tint);
-                            //shapeObject.FillColor = colorConverter.SetBrightness(shapeObject.FillColor, fillColors[0].Luminance);
-                            //shapeObject.FillColor = colorConverter.SetSaturation(shapeObject.FillColor, fillColors[0].Saturation);
-                            //shapeObject.FillAlpha = fillColors[0].Alpha;
-                        }
+                            shapeObject.FillColor = fillColors[0].getAdjustedColor();
 
                         //GradienFill, more than one color
                         if (fillColors.Count > 1)
@@ -211,37 +205,14 @@ namespace ConsoleApplication
 
                             shapeObject.GradientAngle = angle;
                             shapeObject.FillType = "gradient";
-                            shapeObject.GradientFills[0] = fillColors[0].Color;
-                            shapeObject.GradientFills[1] = fillColors[lastIndex].Color;
+                            shapeObject.GradientFills[0] = fillColors[0].getAdjustedColor();
+                            shapeObject.GradientFills[1] = fillColors[lastIndex].getAdjustedColor();
 
-                            Console.WriteLine("Start: " + shapeObject.GradientFills[0]);
+                            foreach (var item in fillColors)
+                            {
+                                Console.WriteLine("#" + item.getAdjustedColor());
+                            }
 
-                            shapeObject.GradientFills[0] = colorConverter.SetShade(shapeObject.GradientFills[0], fillColors[0].Shade);
-                            Console.WriteLine("Shade (" + fillColors[0].Shade + "): " + shapeObject.GradientFills[0]);
-
-                            //shapeObject.GradientFills[0] = colorConverter.SetTint(shapeObject.GradientFills[0], fillColors[0].Tint);
-                            //Console.WriteLine("Tint (" + fillColors[0].Tint + "): " + shapeObject.GradientFills[0]);
-
-                            shapeObject.GradientFills[0] = colorConverter.SetHueMod(shapeObject.GradientFills[0], fillColors[0].HueMod);
-                            Console.WriteLine("Hue (" + fillColors[0].HueMod + "): " + shapeObject.GradientFills[0]);
-
-                            shapeObject.GradientFills[0] = colorConverter.SetBrightness(shapeObject.GradientFills[0], fillColors[0].LumMod);
-                            Console.WriteLine("Brightness (" + fillColors[0].LumMod + "): " + shapeObject.GradientFills[0]);
-
-                            shapeObject.GradientFills[0] = colorConverter.SetSaturation(shapeObject.GradientFills[0], fillColors[0].SatMod);
-                            Console.WriteLine("Saturation (" + fillColors[0].SatMod + "): " + shapeObject.GradientFills[0]);
-
-                            shapeObject.GradientAlphas[0] = fillColors[0].Alpha;
-                            Console.WriteLine("Alpha (" + fillColors[0].Alpha + "): " + shapeObject.GradientFills[0]);
-
-                            shapeObject.GradientFills[1] = colorConverter.SetShade(shapeObject.GradientFills[1], fillColors[lastIndex].Shade);
-                            shapeObject.GradientFills[1] = colorConverter.SetTint(shapeObject.GradientFills[1], fillColors[lastIndex].Tint);
-                            shapeObject.GradientFills[1] = colorConverter.SetHueMod(shapeObject.GradientFills[1], fillColors[lastIndex].HueMod);
-                            //shapeObject.GradientFills[1] = colorConverter.SetBrightness(shapeObject.GradientFills[1], fillColors[lastIndex].Luminance);
-                            //shapeObject.GradientFills[1] = colorConverter.SetSaturation(shapeObject.GradientFills[1], fillColors[lastIndex].Saturation);
-                            shapeObject.GradientAlphas[1] = fillColors[lastIndex].Alpha;
-
-                            Console.WriteLine(shapeObject.GradientFills[0]);
                         }
 
                     }
@@ -329,7 +300,7 @@ namespace ConsoleApplication
                         if (type.GetType() == typeof(DrawingML.SaturationModulation))
                         {
                             var SaturationModulation = type as DrawingML.SaturationModulation;
-                            solidBg.BgColor = conv.SetSaturation(solidBg.Color, SaturationModulation.Val);
+                            solidBg.BgColor = conv.SetSaturationMod(solidBg.Color, SaturationModulation.Val);
                         }
                         if (type.GetType() == typeof(DrawingML.Shade))
                         {
@@ -427,7 +398,7 @@ namespace ConsoleApplication
                                 {
                                     var SaturationModulation = colorType as DrawingML.SaturationModulation;
                                     //Console.WriteLine(alpha.Current.GetType().ToString() + ": #" + gradInfo.GradColor);
-                                    gradInfo.GradColor = conv.SetSaturation(gradInfo.Color, SaturationModulation.Val);
+                                    gradInfo.GradColor = conv.SetSaturationMod(gradInfo.Color, SaturationModulation.Val);
                                     //Console.WriteLine(alpha.Current.GetType().ToString() + ": #" + gradInfo.GradColor);
                                 }
                                 if (colorType.GetType() == typeof(DrawingML.Shade))
@@ -883,7 +854,6 @@ namespace ConsoleApplication
 
                 foreach (var tableStyleChild in tableStyle)
                 {
-                    Console.WriteLine(tableStyleChild.LocalName);
 
                     fillColorDictionary.Add(tableStyleChild.LocalName, getFillColorFromTableStyleElement(tableStyleChild));
 
@@ -1398,81 +1368,7 @@ namespace ConsoleApplication
 
                         if (fill.LocalName == "solidFill")
                         {
-                            PowerPointColor pptColor = new PowerPointColor();
-
-                            DrawingML.SolidFill solidFill = (DrawingML.SolidFill)fill;
-
-                            if (solidFill.SchemeColor != null)
-                            {
-                                pptColor.Color = getColorFromTheme(solidFill.SchemeColor.Val);
-
-                                foreach (var colorAttr in solidFill.SchemeColor)
-                                {
-                                    if (colorAttr.LocalName == "tint")
-                                    {
-                                        DrawingML.Tint tint = (DrawingML.Tint)colorAttr;
-                                        pptColor.Tint = tint.Val;
-                                    }
-                                    if (colorAttr.LocalName == "lumMod")
-                                    {
-                                        DrawingML.LuminanceModulation lumMod = (DrawingML.LuminanceModulation)colorAttr;
-                                        pptColor.LumMod = lumMod.Val;
-                                    }
-                                    if (colorAttr.LocalName == "satMod")
-                                    {
-                                        DrawingML.SaturationModulation satMod = (DrawingML.SaturationModulation)colorAttr;
-                                        pptColor.SatMod = satMod.Val;
-                                    }
-                                    if (colorAttr.LocalName == "alpha")
-                                    {
-                                        DrawingML.Alpha alpha = (DrawingML.Alpha)colorAttr;
-                                        pptColor.Alpha = alpha.Val;
-                                    }
-                                    if (colorAttr.LocalName == "shade")
-                                    {
-                                        DrawingML.Shade shade = (DrawingML.Shade)colorAttr;
-                                        pptColor.Shade = shade.Val;
-                                    }
-                                }
-
-                            }
-
-                            if (solidFill.RgbColorModelHex != null)
-                            {
-                                pptColor.Color = solidFill.RgbColorModelHex.Val;
-
-                                foreach (var colorAttr in solidFill.RgbColorModelHex)
-                                {
-                                    if (colorAttr.LocalName == "tint")
-                                    {
-                                        DrawingML.Tint tint = (DrawingML.Tint)colorAttr;
-                                        pptColor.Tint = tint.Val;
-                                    }
-                                    if (colorAttr.LocalName == "lumMod")
-                                    {
-                                        DrawingML.LuminanceModulation lumMod = (DrawingML.LuminanceModulation)colorAttr;
-                                        pptColor.LumMod = lumMod.Val;
-                                    }
-                                    if (colorAttr.LocalName == "satMod")
-                                    {
-                                        DrawingML.SaturationModulation satMod = (DrawingML.SaturationModulation)colorAttr;
-                                        pptColor.SatMod = satMod.Val;
-                                    }
-                                    if (colorAttr.LocalName == "alpha")
-                                    {
-                                        DrawingML.Alpha alpha = (DrawingML.Alpha)colorAttr;
-                                        pptColor.Alpha = alpha.Val;
-                                    }
-                                    if (colorAttr.LocalName == "shade")
-                                    {
-                                        DrawingML.Shade shade = (DrawingML.Shade)colorAttr;
-                                        pptColor.Shade = shade.Val;
-                                    }
-                                }
-
-                            }
-
-                            fillColors.Add(pptColor);
+                            fillColors.Add(GetPowerPointColor((DrawingML.SolidFill)fill));
                         }
 
                         if (fill.LocalName == "gradFill")

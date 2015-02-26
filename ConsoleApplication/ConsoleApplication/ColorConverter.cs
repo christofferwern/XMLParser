@@ -13,41 +13,55 @@ namespace ConsoleApplication
     {
         public ColorConverter(){}
 
+        public string SetLuminanceMod(string s, double luminance)
+        {
+
+            Color c = ColorTranslator.FromHtml("#" + s);
+
+            return SetLuminanceMod(c, luminance);
+        }
+        public string SetLuminanceOff(string s, double luminance)
+        {
+            Color c = ColorTranslator.FromHtml("#" + s);
+
+            return SetLuminanceOff(c, luminance);
+        }
         public string SetTint(string s, double tint)
         {
             Color c = ColorTranslator.FromHtml("#" + s);
 
             return SetTint(c,tint);
         }
-
         public string SetShade(string s, double shade)
         {
             Color c = ColorTranslator.FromHtml("#" + s);
 
             return SetShade(c, shade);
         }
-
-        public string SetSaturation(string s, double saturation)
+        public string SetSaturationMod(string s, double saturation)
         {
             Color c = ColorTranslator.FromHtml("#" + s);
 
-            return SetSaturation(c, saturation);
+            return SetSaturationMod(c, saturation);
         }
+        public string SetSaturationOff(string s, double saturation)
+        {
+            Color c = ColorTranslator.FromHtml("#" + s);
 
+            return SetSaturationOff(c, saturation);
+        }
         public string SetBrightness(string s, double luminance)
         {
             Color c = ColorTranslator.FromHtml("#" + s);
 
             return SetBrightness(c, luminance);
         }
-
         public string SetHueMod(string s, double hueMod)
         {
             Color c = ColorTranslator.FromHtml("#" + s);
 
             return SetHueMod(c, hueMod);
         }
-
         private double RGB_to_linearRGB(double val){
 
             if (val < 0.0)
@@ -80,86 +94,11 @@ namespace ConsoleApplication
             */
 
         }
-        private HSLColor CreateHSL(int r, int g, int b)
-        {
-            HSLColor hsl = new HSLColor();
-
-            double R = (double)r / 255;
-            double G = (double)g / 255;
-            double B = (double)b / 255;
-            double max = 0, min = 0;
-            double H = 0, S = 0, L = 0;
-            bool rBool = false, gBool = false, bBool = false;
-
-            //find max
-            if ((R > G) && (R > B)){
-                max = R;
-                rBool = true;
-            }
-            else if ((G > R) && (G > B)){
-                max = G;
-                gBool = true;
-            }
-            else if ((B > G) && (B > R))
-            {
-                max = B;
-                bBool = true;
-            }
-
-            if ((R < G) && (R < B))
-                min = R;
-            else if ((G < R) && (G < B))
-                min = G;
-            else if ((B < G) && (B < R))
-                min = B;
-
-            //set Luminance
-            hsl.Luminance = (min + max) / 2;
-
-            if (min == max)
-            {
-                hsl.Saturation = 0;
-                hsl.Hue = 0;
-            }
-
-            //set saturation
-            if (hsl.Luminance < 0.5)
-                hsl.Saturation = (max - min) / (max + min);
-            else if (hsl.Luminance > 0.5)
-                hsl.Saturation = (max - min) / (2.0 - max - min);
-
-            if (rBool)
-            {
-                H = ((G - B) / (max - min))*60.0;
-                Console.WriteLine("red");
-            }
-            if (gBool)
-            {
-                H = ((2.0 + ((B - R) / (max - min)))*60.0);
-                Console.WriteLine("green");
-            }
-            if (bBool)
-            {
-                H= (4.0 + (R - G) / (max - min))*60.0;
-                Console.WriteLine("blue");
-            }
-
-            if (H < 0)
-                H += 360;
-
-            H = Math.Round(H);
-            H = H / 360;
-
-            hsl.Hue = H;
-
-            return hsl;
-        }
         public string SetShade(Color c, double shade)
         {
             //Console.WriteLine("Shade: " + shade);
-            int hexValue = (int)(shade/1000);
 
-            double convShade = (double) Convert.ToInt32(hexValue.ToString(), 16) / 255;
+            double convShade = (shade / 1000) * 0.01;
 
             double r = (double) c.R / 255;
             double g = (double) c.G / 255;
@@ -242,24 +181,26 @@ namespace ConsoleApplication
 
             return outColor.R.ToString("X2") + outColor.G.ToString("X2") + outColor.B.ToString("X2");
         }
-        public string SetSaturation(Color c, double saturation)
+        public string SetSaturationMod(Color c, double saturation)
         {
             double satMod = (saturation / 1000)*0.01;
-            double satOff = 0;
-
-            if (!(satMod > 1))
-                satOff = 1 - satMod;
 
             HSLColor hsl = RGB_to_HSL(c);
-
             hsl.Saturation *= satMod;
-            hsl.Saturation += satOff;
-
             c = HSL_to_RGB(hsl);
 
             return c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
         }
+        public string SetSaturationOff(Color c, double saturation)
+        {
+            double satOff = (saturation / 1000) * 0.01;
 
+            HSLColor hsl = RGB_to_HSL(c);
+            hsl.Saturation += satOff;
+            c = HSL_to_RGB(hsl);
+
+            return c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
+        }
         public string SetBrightness(Color c, double brightness)
         {
             
@@ -305,6 +246,7 @@ namespace ConsoleApplication
 
         }
 
+
         private HSLColor RGB_to_HSL(Color c)
         {
             HSLColor hsl = new HSLColor();
@@ -312,6 +254,82 @@ namespace ConsoleApplication
             hsl.Hue = c.GetHue() / 360.0;
             hsl.Luminance = c.GetBrightness();
             hsl.Saturation = c.GetSaturation();
+
+            return hsl;
+        }
+        private HSLColor CreateHSL(int r, int g, int b)
+        {
+            HSLColor hsl = new HSLColor();
+
+            double R = (double)r / 255;
+            double G = (double)g / 255;
+            double B = (double)b / 255;
+            double max = 0, min = 0;
+            double H = 0, S = 0, L = 0;
+            bool rBool = false, gBool = false, bBool = false;
+
+            //find max
+            if ((R > G) && (R > B))
+            {
+                max = R;
+                rBool = true;
+            }
+            else if ((G > R) && (G > B))
+            {
+                max = G;
+                gBool = true;
+            }
+            else if ((B > G) && (B > R))
+            {
+                max = B;
+                bBool = true;
+            }
+
+            if ((R < G) && (R < B))
+                min = R;
+            else if ((G < R) && (G < B))
+                min = G;
+            else if ((B < G) && (B < R))
+                min = B;
+
+            //set Luminance
+            hsl.Luminance = (min + max) / 2;
+
+            if (min == max)
+            {
+                hsl.Saturation = 0;
+                hsl.Hue = 0;
+            }
+
+            //set saturation
+            if (hsl.Luminance < 0.5)
+                hsl.Saturation = (max - min) / (max + min);
+            else if (hsl.Luminance > 0.5)
+                hsl.Saturation = (max - min) / (2.0 - max - min);
+
+            if (rBool)
+            {
+                H = ((G - B) / (max - min)) * 60.0;
+                Console.WriteLine("red");
+            }
+            if (gBool)
+            {
+                H = ((2.0 + ((B - R) / (max - min))) * 60.0);
+                Console.WriteLine("green");
+            }
+            if (bBool)
+            {
+                H = (4.0 + (R - G) / (max - min)) * 60.0;
+                Console.WriteLine("blue");
+            }
+
+            if (H < 0)
+                H += 360;
+
+            H = Math.Round(H);
+            H = H / 360;
+
+            hsl.Hue = H;
 
             return hsl;
         }

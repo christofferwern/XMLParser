@@ -74,9 +74,26 @@ namespace ConsoleApplication
         //TODO
         public string getAdjustedColor()
         {
+            ColorConverter conv = new ColorConverter();
+            string color = _color;
+
+            if (Tint != 0)
+                color = conv.SetTint(color, _tint);
+            if (Shade != 0)
+                color = conv.SetShade(color, _shade);
+            if (LumMod != 0)
+                color = conv.SetLuminanceMod(color, _lumMod);
+            if (LumOff != 0)
+                color = conv.SetLuminanceOff(color, _lumOff);
+            if (SatMod != 0)
+                color = conv.SetSaturationMod(color, _satMod);
+            if (SatOff != 0)
+                color = conv.SetSaturationOff(color, _satOff);
+            if (HueMod != 0)
+                color = conv.SetHueMod(color, _hueMod);
 
 
-            return _color;
+            return color;
         }
 
         public override string ToString()
