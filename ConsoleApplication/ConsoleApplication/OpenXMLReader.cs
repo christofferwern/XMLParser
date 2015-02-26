@@ -181,12 +181,12 @@ namespace ConsoleApplication
             SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
             ShapeObject shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
 
-
             //**TODO**
             //Get siblings and check for offsets!!!
 
+            bool HasBg = false, HasLine = false, HasValidGeometry = false,
+                 solidFillColorChange = false, lineColorChange = false;
 
-            bool HasBg = false, HasLine = false, HasValidGeometry = false;
             foreach (var child in shape.ChildElements)
             {
                 if(child.LocalName == "nvSpPr")
@@ -251,13 +251,36 @@ namespace ConsoleApplication
                                                      12;
                             }
 
+                            if (prstGeom.Preset == "roundRect" || prstGeom.Preset == "flowChartAlternateProcess" || prstGeom.Preset == "flowChartTerminator")
+                            {
+                                HasValidGeometry = true;
+                                shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
+                                shapeObject.CornerRadius = 3906;
+
+                                if (prstGeom.AdjustValueList != null)
+                                {
+                                    if (prstGeom.AdjustValueList.HasChildren)
+                                    {
+                                        foreach (var adjChild in prstGeom.AdjustValueList)
+                                        {
+                                            if (adjChild.LocalName == "gd")
+                                            {
+                                                DrawingML.ShapeGuide gd = (DrawingML.ShapeGuide)adjChild;
+
+                                                shapeObject.CornerRadius = float.Parse(gd.Formula.Value.ToString().Remove(0, 4));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
 
                         }
 
                         if(spPrChild.LocalName == "solidFill")
                         {
                             HasBg = true;
-                            shapeObject.FillColor = getColor((DrawingML.SolidFill)spPrChild);
+                            solidFillColorChange = true;
+                            shapeObject.FillColor = getColor(spPrChild);
                         }   
 
                         if(spPrChild.LocalName == "gradFill")
@@ -280,30 +303,116 @@ namespace ConsoleApplication
 
                         if(spPrChild.LocalName == "ln")
                         {
+                            DrawingML.Outline ln = (DrawingML.Outline)spPrChild; 
+                            
+                            shapeObject.LineSize = (ln.Width!=null) ? ln.Width.Value : shapeObject.LineSize;
+                            shapeObject.LineEnabled = true;
+                            foreach (var lnChild in ln)
+                            {
+                                if (lnChild.LocalName == "solidFill")
+                                {
+                                    lineColorChange = true;
+                                    shapeObject.LineColor = getColor(lnChild);
+                                }
 
-
+                                if (lnChild.LocalName == "gradFill")
+                                {
+                                    lineColorChange = true;
+                                    shapeObject.LineColor = getColors(lnChild)[0];
+                                }
+                            }
+                            
                             HasLine = true;
                         }
                     }
                 }
 
-                if(child.LocalName == "style")
+                if(child.LocalName == "txBody")
+                {
+
+                }
+
+                if (child.LocalName == "style")
                 {
                     PresentationML.ShapeStyle style = (PresentationML.ShapeStyle)child;
-                    
-                    foreach(var styleChild in child)
+
+                    foreach (var styleChild in child)
                     {
-                        if(styleChild.LocalName == "lnRef")
+                        if (styleChild.LocalName == "lnRef")
                         {
                             DrawingML.LineReference lnRef = (DrawingML.LineReference)styleChild;
+
+                            string color = getColor(lnRef);
+
+                            int lineRefIndex = (int)lnRef.Index.Value;
+
+                            DrawingML.LineStyleList lineStyleList = _presentationDocument.PresentationPart.ThemePart.Theme.ThemeElements.FormatScheme.LineStyleList;
+
+                            int lineStyleIndex = 1;
+                            foreach (var ln in lineStyleList)
+                            {
+                                foreach (var lineStyle in ln)
+                                {
+                                    if (lineRefIndex == lineStyleIndex)
+                                    {
+                                        if (lineStyle.LocalName == "solidFill")
+                                        {
+                                            if (!lineColorChange)
+                                            {
+                                                HasLine = true;
+                                                shapeObject.LineColor = getColor(lineStyle, color);
+                                                shapeObject.LineEnabled = true;
+                                            }
+                                        }
+
+                                        if (lineStyle.LocalName == "gradFill")
+                                        {
+                                            HasLine = true;
+                                        }
+                                    }
+                                }
+
+                                lineStyleIndex++;
+                            }
+
                         }
 
-                        if(styleChild.LocalName == "fillRef")
+                        if (styleChild.LocalName == "fillRef")
                         {
                             DrawingML.FillReference fillRef = (DrawingML.FillReference)styleChild;
+
+                            string color = getColor(fillRef);
+
+                            int fillRefIndex = (int)fillRef.Index.Value;
+
+                            DrawingML.FillStyleList fillStyleList = _presentationDocument.PresentationPart.ThemePart.Theme.ThemeElements.FormatScheme.FillStyleList;
+
+                            int fillStyleIndex = 1;
+                            foreach (var fillStyle in fillStyleList)
+                            {
+                                if (fillRefIndex == fillStyleIndex)
+                                {
+                                    if (fillStyle.LocalName == "solidFill")
+                                    {
+                                        if (!solidFillColorChange)
+                                        {
+                                            HasBg = true;
+                                            shapeObject.FillColor = getColor(fillStyle, color);
+                                        }
+                                    }
+
+                                    if (fillStyle.LocalName == "gradFill")
+                                    {
+                                        HasBg = true;
+                                    }
+                                }
+
+                                fillStyleIndex++;
+                            }
+
                         }
 
-                        if(styleChild.LocalName == "fontRef")
+                        if (styleChild.LocalName == "fontRef")
                         {
                             DrawingML.FontReference fontRef = (DrawingML.FontReference)styleChild;
                         }
@@ -311,12 +420,7 @@ namespace ConsoleApplication
 
                 }
 
-                if(child.LocalName == "txBody")
-                {
-
-                }
             }
-
 
             if (HasValidGeometry && (HasLine || HasBg))
                 sceneObjectList.Add(shapeObject);
