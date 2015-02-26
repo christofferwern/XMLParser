@@ -468,6 +468,7 @@ namespace ConsoleApplication
                         shape.FillType = "linear";
                         var angle = gradientType.Current as DrawingML.LinearGradientFill;
                         shape.GradientAngle = angle.Angle;
+                        Console.WriteLine("Angle: " + shape.GradientAngle);
                     }
                 }
 
