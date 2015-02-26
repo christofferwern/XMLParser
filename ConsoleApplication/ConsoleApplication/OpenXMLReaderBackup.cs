@@ -149,6 +149,7 @@ namespace ConsoleApplication
 
         private ShapeObject getBackgroundShapeFromSlideMaster()
         {
+
             SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
             simpleSceneObject.ClipHeight = _presentationSizeY;
             simpleSceneObject.ClipWidth = _presentationSizeX;

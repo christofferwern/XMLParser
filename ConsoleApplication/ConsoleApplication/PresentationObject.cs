@@ -183,11 +183,12 @@ namespace ConsoleApplication
             {
                 foreach (SceneObject sceneObject in scene.SceneObjectList)
                 {
-                    sceneObject.ConvertToYoobaUnits(width, height);  
+                    sceneObject.ConvertToYoobaUnits(width, height);
+                    Console.WriteLine(sceneObject);    
                 }
-
                 
             }
+
             foreach (SceneObject sceneObject in BackgroundSceneObjectList)
             {
                 sceneObject.ConvertToYoobaUnits(width, height);
