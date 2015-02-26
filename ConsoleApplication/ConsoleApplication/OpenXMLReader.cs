@@ -184,7 +184,7 @@ namespace ConsoleApplication
             //Get siblings and check for offsets!!!
 
             bool HasBg = false, HasLine = false, HasValidGeometry = false,
-                 solidFillColorChange = false, lineColorChange = false;
+                 solidFillColorChange = false, lineColorChange = false, gradientColorChange = false;
 
             foreach (var child in shape.ChildElements)
             {
@@ -280,15 +280,19 @@ namespace ConsoleApplication
                             HasBg = true;
                             solidFillColorChange = true;
                             shapeObject.FillColor = getColor(spPrChild);
+                            Console.WriteLine(shapeObject.FillColor);
                         }   
 
                         if(spPrChild.LocalName == "gradFill")
                         {
+                            shapeObject.GradientType = getGradientType((DrawingML.GradientFill)spPrChild);
+                            shapeObject.GradientAngle = getGradientAngle((DrawingML.GradientFill)spPrChild);
+
                             HasBg = true;
                             List<string> colors = getColors(spPrChild);
                             shapeObject.FillColor1 = colors[0];
                             shapeObject.FillColor2 = colors[colors.Count-1];
-
+                            gradientColorChange = true;
                         }  
 
                         if(spPrChild.LocalName == "noFill")
@@ -311,18 +315,19 @@ namespace ConsoleApplication
                             {
                                 if (lnChild.LocalName == "solidFill")
                                 {
+                                    HasLine = true;
                                     lineColorChange = true;
                                     shapeObject.LineColor = getColor(lnChild);
                                 }
 
                                 if (lnChild.LocalName == "gradFill")
                                 {
+                                    HasLine = true;
                                     lineColorChange = true;
                                     shapeObject.LineColor = getColors(lnChild)[0];
                                 }
                             }
                             
-                            HasLine = true;
                         }
                     }
                 }
@@ -332,7 +337,7 @@ namespace ConsoleApplication
 
                 }
 
-                if (child.LocalName == "style")
+                if(child.LocalName == "style")
                 {
                     PresentationML.ShapeStyle style = (PresentationML.ShapeStyle)child;
 
@@ -403,15 +408,18 @@ namespace ConsoleApplication
 
                                     if (fillStyle.LocalName == "gradFill")
                                     {
-                                        shapeObject.GradientType = getGradientType((DrawingML.GradientFill)fillStyle);
-                                        shapeObject.GradientAngle = getGradientAngle((DrawingML.GradientFill)fillStyle);
+                                        if (!gradientColorChange)
+                                        {
+                                            shapeObject.GradientType = getGradientType((DrawingML.GradientFill)fillStyle);
+                                            shapeObject.GradientAngle = getGradientAngle((DrawingML.GradientFill)fillStyle);
 
-                                        List<string> colors = getColors(fillStyle, color);
-                                        shapeObject.FillColor1 = colors.First();
-                                        shapeObject.FillColor2 = colors.Last();
-                                        shapeObject.FillType = "gradient";
+                                            List<string> colors = getColors(fillStyle, color);
+                                            shapeObject.FillColor1 = colors.First();
+                                            shapeObject.FillColor2 = colors.Last();
+                                            shapeObject.FillType = "gradient";
 
-                                        HasBg = true;
+                                            HasBg = true;
+                                        }
                                     }
                                 }
 
@@ -428,8 +436,9 @@ namespace ConsoleApplication
 
                 }
 
-            }
 
+
+            }
             if (HasValidGeometry && (HasLine || HasBg))
                 sceneObjectList.Add(shapeObject);
 
