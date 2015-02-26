@@ -92,7 +92,6 @@ namespace ConsoleApplication
             if (HueMod != 0)
                 color = conv.SetHueMod(color, _hueMod);
 
-
             return color;
         }
 
