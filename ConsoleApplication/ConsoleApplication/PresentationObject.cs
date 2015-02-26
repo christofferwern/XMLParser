@@ -180,19 +180,12 @@ namespace ConsoleApplication
         public void ConvertToYoobaUnits(int width, int height)
         {
             foreach(Scene scene in this.sceneList)
-            {
                 foreach (SceneObject sceneObject in scene.SceneObjectList)
-                {
                     sceneObject.ConvertToYoobaUnits(width, height);
-                    Console.WriteLine(sceneObject);    
-                }
-                
-            }
 
             foreach (SceneObject sceneObject in BackgroundSceneObjectList)
-            {
                 sceneObject.ConvertToYoobaUnits(width, height);
-            }
+
         }
     }
 }
