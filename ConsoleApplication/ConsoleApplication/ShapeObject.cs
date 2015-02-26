@@ -137,6 +137,7 @@ namespace ConsoleApplication
 
         public override void ConvertToYoobaUnits(int width, int height)
         {
+
             base.ConvertToYoobaUnits(width, height);
             if (_fillType.Equals("solid"))
             {
@@ -146,7 +147,7 @@ namespace ConsoleApplication
 
             if (_fillType.Equals("gradient"))
             {
-                _fillColor = getColorAsInteger(_gradientFills[0]).ToString();
+                _fillColor = getColorAsInteger(_fillColor1).ToString();
 
                 if (_gradientAlphas[0] != 1)
                     _fillAlpha1 = ((_gradientAlphas[0] / 1000) / 100);
@@ -154,11 +155,12 @@ namespace ConsoleApplication
                     _fillAlpha2 = ((_gradientAlphas[1] / 1000) / 100);
 
                 _fillColor1 = _fillColor;
-                _fillColor2 = getColorAsInteger(_gradientFills[1]).ToString();
+                _fillColor2 = getColorAsInteger(_fillColor2).ToString();
+                
 
                 _gradientAngle /= 60000; 
             }
-
+            
             _lineSize = (int) Math.Round((double)_lineSize / 10000);
             _lineColor = getColorAsInteger(_lineColor).ToString();
             _cornerRadius = (float) Math.Round((_cornerRadius / 100000) * 128 * 4);
