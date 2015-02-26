@@ -118,6 +118,8 @@ namespace ConsoleApplication
 
                         sceneCounter++;
                     }
+
+                    _presentationObject.ConvertToYoobaUnits(_presentationSizeX, _presentationSizeY);
                 }
            // }
            // catch
@@ -173,6 +175,149 @@ namespace ConsoleApplication
         private List<SceneObject> getSceneObjects(PresentationML.Shape shape)
         {
             List<SceneObject> sceneObjectList = new List<SceneObject>();
+            SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
+            ShapeObject shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
+
+
+            //**TODO**
+            //Get siblings and check for offsets!!!
+
+
+            bool HasBg = false, HasLine = false, HasValidGeometry = false;
+            foreach (var child in shape.ChildElements)
+            {
+                if(child.LocalName == "nvSpPr")
+                {
+
+                }
+
+                if(child.LocalName == "spPr")
+                {
+                    PresentationML.ShapeProperties spPr = (PresentationML.ShapeProperties)child;
+
+                    if (spPr.Transform2D != null)
+                    {
+                        simpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : simpleSceneObject.BoundsX;
+                        simpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : simpleSceneObject.BoundsY;
+                        simpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : simpleSceneObject.ClipWidth;
+                        simpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : simpleSceneObject.ClipHeight;
+                    }
+
+                    foreach(var spPrChild in child)
+                    {
+                        if(spPrChild.LocalName == "prstGeom")
+                        {
+                            DrawingML.PresetGeometry prstGeom = (DrawingML.PresetGeometry)spPrChild;
+
+                            if (prstGeom.Preset == "rect"           || prstGeom.Preset == "snip1Rect"       || prstGeom.Preset == "snip2DiagRect"   ||
+                                prstGeom.Preset == "round1Rect"     || prstGeom.Preset == "round2DiagRect"  || prstGeom.Preset == "round2SameRect"  ||
+                                prstGeom.Preset == "snip2SameRect"  || prstGeom.Preset == "snipRoundRect"   || prstGeom.Preset == "round1Rect"      ||
+                                prstGeom.Preset == "flowChartProcess")
+                            {
+                                HasValidGeometry = true;
+                                shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
+                            }
+
+
+                            if (prstGeom.Preset == "ellipse" || prstGeom.Preset == "flowChartConnector")
+                            {
+                                shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Circle);
+                                HasValidGeometry = true;
+                            }
+
+                            if (prstGeom.Preset == "triangle" || prstGeom.Preset == "diamond" || prstGeom.Preset == "flowChartDecision" || prstGeom.Preset == "flowChartExtract" ||
+                                prstGeom.Preset == "pentagon" || prstGeom.Preset == "hexagon" || prstGeom.Preset == "heptagon" || prstGeom.Preset == "flowChartPreparation" ||
+                                prstGeom.Preset == "octagon" || prstGeom.Preset == "decagon" || prstGeom.Preset == "dodecagon" || prstGeom.Preset == "flowChartMerge")
+                            {
+                                HasValidGeometry = true;
+
+                                if (prstGeom.Preset == "flowChartMerge")
+                                {
+                                    simpleSceneObject.Rotation = 180 * 60000;
+                                    shapeObject.Rotation += 180 * 60000;
+                                }
+
+                                shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Polygon);
+                                shapeObject.Points = (prstGeom.Preset == "triangle" || prstGeom.Preset == "flowChartExtract" || prstGeom.Preset == "flowChartMerge") ? 3 :
+                                                     (prstGeom.Preset == "diamond" || prstGeom.Preset == "flowChartDecision") ? 4 :
+                                                     (prstGeom.Preset == "pentagon") ? 5 :
+                                                     (prstGeom.Preset == "hexagon" || prstGeom.Preset == "flowChartPreparation") ? 6 :
+                                                     (prstGeom.Preset == "heptagon") ? 7 :
+                                                     (prstGeom.Preset == "octagon") ? 8 :
+                                                     (prstGeom.Preset == "decagon") ? 10 :
+                                                     12;
+                            }
+
+
+                        }
+
+                        if(spPrChild.LocalName == "solidFill")
+                        {
+                            HasBg = true;
+                            shapeObject.FillColor = getColor((DrawingML.SolidFill)spPrChild);
+                        }   
+
+                        if(spPrChild.LocalName == "gradFill")
+                        {
+                            HasBg = true;
+                            List<string> colors = getColors((DrawingML.GradientFill)spPrChild);
+                            shapeObject.FillColor1 = colors[0];
+                            shapeObject.FillColor2 = colors[colors.Count-1];
+                        }  
+
+                        if(spPrChild.LocalName == "noFill")
+                        {
+                        
+                        } 
+
+                        if(spPrChild.LocalName == "blipFill")
+                        {
+                        
+                        }  
+
+                        if(spPrChild.LocalName == "ln")
+                        {
+
+
+                            HasLine = true;
+                        }
+                    }
+                }
+
+                if(child.LocalName == "style")
+                {
+                    PresentationML.ShapeStyle style = (PresentationML.ShapeStyle)child;
+                    
+                    foreach(var styleChild in child)
+                    {
+                        if(styleChild.LocalName == "lnRef")
+                        {
+                            DrawingML.LineReference lnRef = (DrawingML.LineReference)styleChild;
+                        }
+
+                        if(styleChild.LocalName == "fillRef")
+                        {
+                            DrawingML.FillReference fillRef = (DrawingML.FillReference)styleChild;
+                        }
+
+                        if(styleChild.LocalName == "fontRef")
+                        {
+                            DrawingML.FontReference fontRef = (DrawingML.FontReference)styleChild;
+                        }
+                    }
+
+                }
+
+                if(child.LocalName == "txBody")
+                {
+
+                }
+            }
+
+
+            if (HasValidGeometry && (HasLine || HasBg))
+                sceneObjectList.Add(shapeObject);
+
             return sceneObjectList;
         }
 
@@ -190,7 +335,7 @@ namespace ConsoleApplication
             return colors;
         }
 
-        private string getColor(DrawingML.SolidFill solidFill)
+        private string getColor(OpenXmlElement openXmlElement)
         {
             string color = "";
 
