@@ -403,6 +403,9 @@ namespace ConsoleApplication
 
                                     if (fillStyle.LocalName == "gradFill")
                                     {
+                                        shapeObject.GradientType = getGradientType((DrawingML.GradientFill)fillStyle);
+                                        shapeObject.GradientAngle = getGradientAngle((DrawingML.GradientFill)fillStyle);
+
                                         List<string> colors = getColors(fillStyle, color);
                                         shapeObject.FillColor1 = colors.First();
                                         shapeObject.FillColor2 = colors.Last();
@@ -708,5 +711,26 @@ namespace ConsoleApplication
             return false;
         }
 
+
+        public int getGradientAngle(DrawingML.GradientFill gradFill)
+        {
+            foreach (var lin in gradFill.Descendants<DrawingML.LinearGradientFill>())
+                if(lin.Angle!=null)
+                    return lin.Angle.Value;
+                                        
+            return 0;
+        }
+
+        public string getGradientType(DrawingML.GradientFill gradFill)
+        {
+            foreach (var lin in gradFill)
+            {
+                if (lin.GetType() == typeof(DrawingML.LinearGradientFill)) return "linear";
+                if (lin.GetType() == typeof(DrawingML.PathGradientFill)) return "radial";
+            }
+
+            //Default
+            return "linear";
+        }
     }
 }
