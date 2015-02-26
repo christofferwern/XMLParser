@@ -120,6 +120,7 @@ namespace ConsoleApplication
 
                         sceneCounter++;
                     }
+
                     _presentationObject.ConvertToYoobaUnits(_presentationSizeX, _presentationSizeY);
                 }
            // }
@@ -176,6 +177,259 @@ namespace ConsoleApplication
         private List<SceneObject> getSceneObjects(PresentationML.Shape shape)
         {
             List<SceneObject> sceneObjectList = new List<SceneObject>();
+            SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
+            ShapeObject shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
+
+            //**TODO**
+            //Get siblings and check for offsets!!!
+
+            bool HasBg = false, HasLine = false, HasValidGeometry = false,
+                 solidFillColorChange = false, lineColorChange = false;
+
+            foreach (var child in shape.ChildElements)
+            {
+                if(child.LocalName == "nvSpPr")
+                {
+
+                }
+
+                if(child.LocalName == "spPr")
+                {
+                    PresentationML.ShapeProperties spPr = (PresentationML.ShapeProperties)child;
+
+                    if (spPr.Transform2D != null)
+                    {
+                        simpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : simpleSceneObject.BoundsX;
+                        simpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : simpleSceneObject.BoundsY;
+                        simpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : simpleSceneObject.ClipWidth;
+                        simpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : simpleSceneObject.ClipHeight;
+                    }
+
+                    foreach(var spPrChild in child)
+                    {
+                        if(spPrChild.LocalName == "prstGeom")
+                        {
+                            DrawingML.PresetGeometry prstGeom = (DrawingML.PresetGeometry)spPrChild;
+
+                            if (prstGeom.Preset == "rect"           || prstGeom.Preset == "snip1Rect"       || prstGeom.Preset == "snip2DiagRect"   ||
+                                prstGeom.Preset == "round1Rect"     || prstGeom.Preset == "round2DiagRect"  || prstGeom.Preset == "round2SameRect"  ||
+                                prstGeom.Preset == "snip2SameRect"  || prstGeom.Preset == "snipRoundRect"   || prstGeom.Preset == "round1Rect"      ||
+                                prstGeom.Preset == "flowChartProcess")
+                            {
+                                HasValidGeometry = true;
+                                shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
+                            }
+
+
+                            if (prstGeom.Preset == "ellipse" || prstGeom.Preset == "flowChartConnector")
+                            {
+                                shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Circle);
+                                HasValidGeometry = true;
+                            }
+
+                            if (prstGeom.Preset == "triangle" || prstGeom.Preset == "diamond" || prstGeom.Preset == "flowChartDecision" || prstGeom.Preset == "flowChartExtract" ||
+                                prstGeom.Preset == "pentagon" || prstGeom.Preset == "hexagon" || prstGeom.Preset == "heptagon" || prstGeom.Preset == "flowChartPreparation" ||
+                                prstGeom.Preset == "octagon" || prstGeom.Preset == "decagon" || prstGeom.Preset == "dodecagon" || prstGeom.Preset == "flowChartMerge")
+                            {
+                                HasValidGeometry = true;
+
+                                if (prstGeom.Preset == "flowChartMerge")
+                                {
+                                    simpleSceneObject.Rotation = 180 * 60000;
+                                    shapeObject.Rotation += 180 * 60000;
+                                }
+
+                                shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Polygon);
+                                shapeObject.Points = (prstGeom.Preset == "triangle" || prstGeom.Preset == "flowChartExtract" || prstGeom.Preset == "flowChartMerge") ? 3 :
+                                                     (prstGeom.Preset == "diamond" || prstGeom.Preset == "flowChartDecision") ? 4 :
+                                                     (prstGeom.Preset == "pentagon") ? 5 :
+                                                     (prstGeom.Preset == "hexagon" || prstGeom.Preset == "flowChartPreparation") ? 6 :
+                                                     (prstGeom.Preset == "heptagon") ? 7 :
+                                                     (prstGeom.Preset == "octagon") ? 8 :
+                                                     (prstGeom.Preset == "decagon") ? 10 :
+                                                     12;
+                            }
+
+                            if (prstGeom.Preset == "roundRect" || prstGeom.Preset == "flowChartAlternateProcess" || prstGeom.Preset == "flowChartTerminator")
+                            {
+                                HasValidGeometry = true;
+                                shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
+                                shapeObject.CornerRadius = 3906;
+
+                                if (prstGeom.AdjustValueList != null)
+                                {
+                                    if (prstGeom.AdjustValueList.HasChildren)
+                                    {
+                                        foreach (var adjChild in prstGeom.AdjustValueList)
+                                        {
+                                            if (adjChild.LocalName == "gd")
+                                            {
+                                                DrawingML.ShapeGuide gd = (DrawingML.ShapeGuide)adjChild;
+
+                                                shapeObject.CornerRadius = float.Parse(gd.Formula.Value.ToString().Remove(0, 4));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                        }
+
+                        if(spPrChild.LocalName == "solidFill")
+                        {
+                            HasBg = true;
+                            solidFillColorChange = true;
+                            shapeObject.FillColor = getColor(spPrChild);
+                        }   
+
+                        if(spPrChild.LocalName == "gradFill")
+                        {
+                            HasBg = true;
+                            List<string> colors = getColors(spPrChild);
+                            shapeObject.FillColor1 = colors[0];
+                            shapeObject.FillColor2 = colors[colors.Count-1];
+
+                        }  
+
+                        if(spPrChild.LocalName == "noFill")
+                        {
+                        
+                        } 
+
+                        if(spPrChild.LocalName == "blipFill")
+                        {
+                        
+                        }  
+
+                        if(spPrChild.LocalName == "ln")
+                        {
+                            DrawingML.Outline ln = (DrawingML.Outline)spPrChild; 
+                            
+                            shapeObject.LineSize = (ln.Width!=null) ? ln.Width.Value : shapeObject.LineSize;
+                            shapeObject.LineEnabled = true;
+                            foreach (var lnChild in ln)
+                            {
+                                if (lnChild.LocalName == "solidFill")
+                                {
+                                    lineColorChange = true;
+                                    shapeObject.LineColor = getColor(lnChild);
+                                }
+
+                                if (lnChild.LocalName == "gradFill")
+                                {
+                                    lineColorChange = true;
+                                    shapeObject.LineColor = getColors(lnChild)[0];
+                                }
+                            }
+                            
+                            HasLine = true;
+                        }
+                    }
+                }
+
+                if(child.LocalName == "txBody")
+                {
+
+                }
+
+                if (child.LocalName == "style")
+                {
+                    PresentationML.ShapeStyle style = (PresentationML.ShapeStyle)child;
+
+                    foreach (var styleChild in child)
+                    {
+                        if (styleChild.LocalName == "lnRef")
+                        {
+                            DrawingML.LineReference lnRef = (DrawingML.LineReference)styleChild;
+
+                            string color = getColor(lnRef);
+
+                            int lineRefIndex = (int)lnRef.Index.Value;
+
+                            DrawingML.LineStyleList lineStyleList = _presentationDocument.PresentationPart.ThemePart.Theme.ThemeElements.FormatScheme.LineStyleList;
+
+                            int lineStyleIndex = 1;
+                            foreach (var ln in lineStyleList)
+                            {
+                                foreach (var lineStyle in ln)
+                                {
+                                    if (lineRefIndex == lineStyleIndex)
+                                    {
+                                        if (lineStyle.LocalName == "solidFill")
+                                        {
+                                            if (!lineColorChange)
+                                            {
+                                                HasLine = true;
+                                                shapeObject.LineColor = getColor(lineStyle, color);
+                                                shapeObject.LineEnabled = true;
+                                            }
+                                        }
+
+                                        if (lineStyle.LocalName == "gradFill")
+                                        {
+                                            HasLine = true;
+                                        }
+                                    }
+                                }
+
+                                lineStyleIndex++;
+                            }
+
+                        }
+
+                        if (styleChild.LocalName == "fillRef")
+                        {
+                            DrawingML.FillReference fillRef = (DrawingML.FillReference)styleChild;
+
+                            string color = getColor(fillRef);
+
+                            int fillRefIndex = (int)fillRef.Index.Value;
+
+                            DrawingML.FillStyleList fillStyleList = _presentationDocument.PresentationPart.ThemePart.Theme.ThemeElements.FormatScheme.FillStyleList;
+
+                            int fillStyleIndex = 1;
+                            foreach (var fillStyle in fillStyleList)
+                            {
+                                if (fillRefIndex == fillStyleIndex)
+                                {
+                                    if (fillStyle.LocalName == "solidFill")
+                                    {
+                                        if (!solidFillColorChange)
+                                        {
+                                            HasBg = true;
+                                            shapeObject.FillColor = getColor(fillStyle, color);
+                                        }
+                                    }
+
+                                    if (fillStyle.LocalName == "gradFill")
+                                    {
+                                        List<string> colors = getColors(fillStyle, color);
+                                        shapeObject.FillColor1 = colors.First();
+                                        shapeObject.FillColor2 = colors.Last();
+                                        shapeObject.FillType = "gradient";
+
+                                        HasBg = true;
+                                    }
+                                }
+
+                                fillStyleIndex++;
+                            }
+
+                        }
+
+                        if (styleChild.LocalName == "fontRef")
+                        {
+                            DrawingML.FontReference fontRef = (DrawingML.FontReference)styleChild;
+                        }
+                    }
+
+                }
+
+            }
+
+            if (HasValidGeometry && (HasLine || HasBg))
+                sceneObjectList.Add(shapeObject);
+
             return sceneObjectList;
         }
 
@@ -234,6 +488,7 @@ namespace ConsoleApplication
         {
             return getColors(xmlElement, "");
         }
+
         private List<string> getColors(OpenXmlElement xmlElement, string phClr)
         {
             List<string> colors = new List<string>();
@@ -241,10 +496,11 @@ namespace ConsoleApplication
             OpenXmlElement elementType = xmlElement.FirstChild;
 
             foreach (DrawingML.GradientStop gs in elementType.Descendants<DrawingML.GradientStop>())
-                colors.Add(getColor(gs));
+                colors.Add(getColor(gs,phClr));
 
             return colors;
         }
+       
         private string getColor(OpenXmlElement xmlElement)
         {
             return getColor(xmlElement, "");
