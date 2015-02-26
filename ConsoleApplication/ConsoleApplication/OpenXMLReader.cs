@@ -27,7 +27,6 @@ namespace ConsoleApplication
 
         private XmlDocument _rootXmlDoc;
 
-
         internal PresentationObject PresentationObject
         {
             get { return _presentationObject; }
@@ -921,48 +920,50 @@ namespace ConsoleApplication
                         shapeObject.LineEnabled = true;
                         shapeObject.LineSize = 10000;
 
-                        if (table.TableProperties.FirstRow && rowIndex==0)
+                        if(table.TableProperties!=null)
                         {
-                            if (lineColorDictionary["firstRow"].Color != "")
-                                shapeObject.LineColor = lineColorDictionary["firstRow"].getAdjustedColor();
-
-                            if (fillColorDictionary["firstRow"].Color != "")
-                                shapeObject.FillColor = fillColorDictionary["firstRow"].getAdjustedColor();
-                        }
-                        else if (table.TableProperties.BandRow)
-                        {
-                            if (rowIndex % 2 == 0)
+                            if (table.TableProperties.FirstRow!=null && rowIndex==0)
                             {
-                                if (lineColorDictionary.Keys.Contains("band1H"))
-                                {
-                                    if (lineColorDictionary["band1H"].Color != "")
-                                        shapeObject.LineColor = lineColorDictionary["band1H"].getAdjustedColor();
+                                if (lineColorDictionary["firstRow"].Color != "")
+                                    shapeObject.LineColor = lineColorDictionary["firstRow"].getAdjustedColor();
 
-                                    if (fillColorDictionary["band1H"].Color != "")
-                                        shapeObject.FillColor = fillColorDictionary["band1H"].getAdjustedColor();
+                                if (fillColorDictionary["firstRow"].Color != "")
+                                    shapeObject.FillColor = fillColorDictionary["firstRow"].getAdjustedColor();
+                            }
+                            else if (table.TableProperties.BandRow != null)
+                            {
+                                if (rowIndex % 2 == 0)
+                                {
+                                    if (lineColorDictionary.Keys.Contains("band1H"))
+                                    {
+                                        if (lineColorDictionary["band1H"].Color != "")
+                                            shapeObject.LineColor = lineColorDictionary["band1H"].getAdjustedColor();
+
+                                        if (fillColorDictionary["band1H"].Color != "")
+                                            shapeObject.FillColor = fillColorDictionary["band1H"].getAdjustedColor();
+                                    }
+                                }
+                                else
+                                {
+                                    if (lineColorDictionary.Keys.Contains("band2H"))
+                                    {
+                                        if (lineColorDictionary["band2H"].Color != "")
+                                            shapeObject.LineColor = lineColorDictionary["band2H"].getAdjustedColor();
+
+                                        if (fillColorDictionary["band2H"].Color != "")
+                                            shapeObject.FillColor = fillColorDictionary["band2H"].getAdjustedColor();
+                                    }
                                 }
                             }
                             else
                             {
-                                if (lineColorDictionary.Keys.Contains("band2H"))
-                                {
-                                    if (lineColorDictionary["band2H"].Color != "")
-                                        shapeObject.LineColor = lineColorDictionary["band2H"].getAdjustedColor();
+                                if (lineColorDictionary["wholeTbl"].Color != "")
+                                    shapeObject.LineColor = lineColorDictionary["wholeTbl"].getAdjustedColor();
 
-                                    if (fillColorDictionary["band2H"].Color != "")
-                                        shapeObject.FillColor = fillColorDictionary["band2H"].getAdjustedColor();
-                                }
+                                if (fillColorDictionary["wholeTbl"].Color != "")
+                                    shapeObject.FillColor = fillColorDictionary["wholeTbl"].getAdjustedColor();
                             }
                         }
-                        else
-                        {
-                            if (lineColorDictionary["wholeTbl"].Color != "")
-                                shapeObject.LineColor = lineColorDictionary["wholeTbl"].getAdjustedColor();
-
-                            if (fillColorDictionary["wholeTbl"].Color != "")
-                                shapeObject.FillColor = fillColorDictionary["wholeTbl"].getAdjustedColor();
-                        }
-                        
 
                         shapeObjectList.Add(shapeObject);
 
