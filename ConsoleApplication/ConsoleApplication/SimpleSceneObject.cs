@@ -37,6 +37,14 @@ namespace ConsoleApplication
             _flip = 0;
             _properties = new Properties();
             _optimizedClip = new OptimizedClip();
+
+            _rotation = 0;
+            _z = 0;
+            _type = "";
+            _boundsX = 0;
+            _boundsY = 0;
+            _clipHeight = 0;
+            _clipWidth = 0;
         }
 
         public SimpleSceneObject(SimpleSceneObject s)
@@ -52,6 +60,19 @@ namespace ConsoleApplication
             _flip = 0;
             _properties = new Properties();
             _optimizedClip = new OptimizedClip();
+
+            _rotation = s.Rotation;
+            _z = s.Z;
+            _type = s.Type;
+            _boundsX = s.BoundsX;
+            _boundsY = s.BoundsY;
+            _clipHeight = s.ClipHeight;
+            _clipWidth = s.ClipWidth;
+        }
+
+        public object Clone()
+        {
+            return this;
         }
 
         public void ConvertToYoobaUnits(int width, int height)

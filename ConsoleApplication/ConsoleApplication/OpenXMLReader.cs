@@ -25,7 +25,12 @@ namespace ConsoleApplication
         private List<PowerPointText> _slideMasterPowerPointShapes;
         private PresentationDocument _presentationDocument;
 
+        private List<PowerPointText> _placeHolderTextObjectsMaster;
+        private List<PowerPointText> _placeHolderTextObjectsLayout;
+        private bool _masterLevel, _layoutLevel, _slideLevel;
+
         private XmlDocument _rootXmlDoc;
+
 
         internal PresentationObject PresentationObject
         {
@@ -47,6 +52,12 @@ namespace ConsoleApplication
             _presentationSizeX = 0;
             _presentationSizeY = 0;
 
+            _placeHolderTextObjectsMaster = new List<PowerPointText>();
+            _placeHolderTextObjectsLayout = new List<PowerPointText>();
+
+            _masterLevel = false;
+            _layoutLevel = false;
+            _slideLevel = false;
         }
 
         public string Path
@@ -57,83 +68,97 @@ namespace ConsoleApplication
 
         public void read()
         {
-           // try
-           // {
-                // Open the presentation file as read-only.
-                using (_presentationDocument = PresentationDocument.Open(_path, false))
+            // try
+            // {
+            // Open the presentation file as read-only.
+            using (_presentationDocument = PresentationDocument.Open(_path, false))
+            {
+                //Read all colors from theme
+                readTheme();
+
+                //Retrive the presentation part
+                var presentation = _presentationDocument.PresentationPart.Presentation;
+
+                //Get the size of presentation
+                PresentationML.SlideSize slideInfo = presentation.SlideSize;
+                _presentationSizeX = slideInfo.Cx.Value;
+                _presentationSizeY = slideInfo.Cy.Value;
+
+
+                //Get the slidemaster scene object, background etc
+                PresentationML.SlideMaster slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster; ;
+
+                _masterLevel = true;
+                foreach (var child in slideMaster.CommonSlideData.ChildElements)
                 {
-                    //Read all colors from theme
-                    readTheme();
+                    if (child.LocalName == "bg")
+                        _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.Background)child));
 
-                    //Retrive the presentation part
-                    var presentation = _presentationDocument.PresentationPart.Presentation;
+                    if (child.LocalName == "spTree")
+                        _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
+                }
+                _masterLevel = false;
 
-                    //Get the size of presentation
-                    PresentationML.SlideSize slideInfo = presentation.SlideSize;
-                    _presentationSizeX = slideInfo.Cx.Value;
-                    _presentationSizeY = slideInfo.Cy.Value;
+                //Counter of scenes
+                int sceneCounter = 1;
 
+                //Go through all Slides in the PowerPoint presentation
+                foreach (PresentationML.SlideId slideID in presentation.SlideIdList)
+                {
+                    SlidePart slidePart = _presentationDocument.PresentationPart.GetPartById(slideID.RelationshipId) as SlidePart;
+                    Scene scene = new Scene(sceneCounter);
 
-                    //Get the slidemaster scene object, background etc
-                    PresentationML.SlideMaster slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster;;
-
-                    foreach (var child in slideMaster.CommonSlideData.ChildElements)
+                    //Go through all elements in the slide layout
+                    _placeHolderTextObjectsLayout.Clear();
+                    _layoutLevel = true;
+                    foreach (var child in slidePart.SlideLayoutPart.SlideLayout.CommonSlideData.ChildElements)
                     {
                         if (child.LocalName == "bg")
-                            _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.Background)child));
+                            scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.Background)child));
 
                         if (child.LocalName == "spTree")
-                            _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
+                            scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
                     }
+                    _layoutLevel = false;
 
-                    //Counter of scenes
-                    int sceneCounter = 1;
-
-                    //Go through all Slides in the PowerPoint presentation
-                    foreach (PresentationML.SlideId slideID in presentation.SlideIdList)
+                    //Go through all elements in the slide
+                    _slideLevel = true;
+                    foreach (var child in slidePart.Slide.CommonSlideData.ChildElements)
                     {
-                        SlidePart slidePart = _presentationDocument.PresentationPart.GetPartById(slideID.RelationshipId) as SlidePart;
-                        Scene scene = new Scene(sceneCounter);
-                        Console.WriteLine("\n*************Slide: " + sceneCounter.ToString());
-                        //Go through all elements in the slide layout
-                        foreach (var child in slidePart.SlideLayoutPart.SlideLayout.CommonSlideData.ChildElements)
-                        {
-                            if (child.LocalName == "bg")
-                                scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.Background)child));
 
-                            if (child.LocalName == "spTree")
-                            {
-                                Console.WriteLine("*****************Slide Layout: " + child.LocalName);
-                                scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
-                            }
-                        }
+                        if (child.LocalName == "bg")
+                            scene.SceneObjectList.InsertRange(0, getSceneObjects((PresentationML.Background)child));
 
-                        //Go through all elements in the slide
-                        foreach(var child in slidePart.Slide.CommonSlideData.ChildElements)
+                        if (child.LocalName == "spTree")
                         {
+
                             if(child.LocalName == "bg")
                                 scene.SceneObjectList.InsertRange(0,getSceneObjects((PresentationML.Background)child));
 
                             if (child.LocalName == "spTree")
                             {
-                                Console.WriteLine("*****************Slide: " + child.LocalName);
                                 scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
                             }
+
+                            scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
+
                         }
-
-                        //Add scene to presentation
-                        _presentationObject.addScene(scene);
-
-                        sceneCounter++;
                     }
+                    _slideLevel = false;
 
-                    _presentationObject.ConvertToYoobaUnits(_presentationSizeX, _presentationSizeY);
+                    //Add scene to presentation
+                    _presentationObject.addScene(scene);
+
+                    sceneCounter++;
                 }
-           // }
-           // catch
-           // {
-           //     Console.WriteLine("Error reading: " + _path);
-           // }
+
+                _presentationObject.ConvertToYoobaUnits(_presentationSizeX, _presentationSizeY);
+            }
+            // }
+            // catch
+            // {
+            //     Console.WriteLine("Error reading: " + _path);
+            // }
         }
 
         private List<SceneObject> getSceneObjects(PresentationML.ShapeTree shapeTree)
@@ -205,9 +230,16 @@ namespace ConsoleApplication
         private List<SceneObject> getSceneObjects(PresentationML.Shape shape)
         {
             List<SceneObject> sceneObjectList = new List<SceneObject>();
-            SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
-            ShapeObject shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
+
             int GchildOffX = 0, GchildOffY = 0, GchildExtX = 0, GchildExtY = 0, GoffX = 0, GoffY = 0, GextX = 0, GextY = 0;
+
+            SimpleSceneObject shapeSimpleSceneObject = new SimpleSceneObject(),
+                              textSimpleSceneObject = new SimpleSceneObject();
+
+            ShapeObject shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Rectangle);
+            TextObject textObject = new TextObject(textSimpleSceneObject);
+            PowerPointText powerPointText = new PowerPointText();
+
 
             //**TODO**
             //Get siblings and check for offsets!!!
@@ -240,8 +272,8 @@ namespace ConsoleApplication
                         GchildExtX = chExtX;
                         GchildExtY = chExtY;
 
-                        simpleSceneObject.BoundsX = GchildOffX;
-                        simpleSceneObject.BoundsY = GchildOffY;
+                        shapeSimpleSceneObject.BoundsX = GchildOffX;
+                        shapeSimpleSceneObject.BoundsY = GchildOffY;
                     }
                 }
 
@@ -249,14 +281,26 @@ namespace ConsoleApplication
           
 
 
-            bool HasBg = false, HasLine = false, HasValidGeometry = false,
+            bool HasBg = false, HasLine = false, HasValidGeometry = false, HasText = false, HasTransform = false,
                  solidFillColorChange = false, lineColorChange = false, gradientColorChange = false;
             
             foreach (var child in shape.ChildElements)
             {
                 if(child.LocalName == "nvSpPr")
                 {
+                    foreach (var nvSpPrChild in child)
+                    {
+                        if (nvSpPrChild.LocalName == "nvPr")
+                        {
+                            PresentationML.ApplicationNonVisualDrawingProperties nvPr = (PresentationML.ApplicationNonVisualDrawingProperties)nvSpPrChild;
 
+                            if (nvPr.PlaceholderShape != null)
+                            {
+                                powerPointText.Idx = (nvPr.PlaceholderShape.Index != null) ? (int)nvPr.PlaceholderShape.Index.Value : powerPointText.Idx;
+                                powerPointText.Type = (nvPr.PlaceholderShape.Type != null) ? nvPr.PlaceholderShape.Type.InnerText.ToString() : powerPointText.Type;
+                            }
+                        }
+                    }
                 }
 
                 if(child.LocalName == "spPr")
@@ -266,17 +310,26 @@ namespace ConsoleApplication
                     if (spPr.Transform2D != null)
                     {
 
-                        Console.WriteLine(GchildOffX + " " + GchildOffY + " " + GchildExtX + " " + GchildExtY);
-                        Console.WriteLine("BoundsX: " + simpleSceneObject.BoundsX + ", BoundsY: " + simpleSceneObject.BoundsY + ", ClipWidth: " + simpleSceneObject.ClipWidth + ", ClipHeight: " + simpleSceneObject.ClipHeight);
-                        simpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X: simpleSceneObject.BoundsX;
-                        simpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y: simpleSceneObject.BoundsY;
-                        simpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : simpleSceneObject.ClipWidth;
-                        simpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : simpleSceneObject.ClipHeight;
+                        //Dessa ska bero på gruppens Transform2D
+                        shapeSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
+                        shapeSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
+                        shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
+                        shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
 
-                        
-                        Console.WriteLine("BoundsX: " + simpleSceneObject.BoundsX + ", BoundsY: " + simpleSceneObject.BoundsY + ", ClipWidth: " + simpleSceneObject.ClipWidth + ", ClipHeight: " + simpleSceneObject.ClipHeight);
+                        textSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
+                        textSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
+                        textSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
+                        textSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
+
+                        powerPointText.X = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : powerPointText.X;
+                        powerPointText.Y = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : powerPointText.Y;
+                        powerPointText.Cx = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : powerPointText.Cx;
+                        powerPointText.Cy = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : powerPointText.Cy;
+
+                        HasTransform = true;
                     }
 
+                    
                     foreach(var spPrChild in child)
                     {
                         if(spPrChild.LocalName == "prstGeom")
@@ -289,13 +342,13 @@ namespace ConsoleApplication
                                 prstGeom.Preset == "flowChartProcess")
                             {
                                 HasValidGeometry = true;
-                                shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
+                                shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Rectangle);
                             }
 
 
                             if (prstGeom.Preset == "ellipse" || prstGeom.Preset == "flowChartConnector")
                             {
-                                shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Circle);
+                                shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Circle);
                                 HasValidGeometry = true;
                             }
 
@@ -307,11 +360,11 @@ namespace ConsoleApplication
 
                                 if (prstGeom.Preset == "flowChartMerge")
                                 {
-                                    simpleSceneObject.Rotation = 180 * 60000;
+                                    shapeSimpleSceneObject.Rotation = 180 * 60000;
                                     shapeObject.Rotation += 180 * 60000;
                                 }
 
-                                shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Polygon);
+                                shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Polygon);
                                 shapeObject.Points = (prstGeom.Preset == "triangle" || prstGeom.Preset == "flowChartExtract" || prstGeom.Preset == "flowChartMerge") ? 3 :
                                                      (prstGeom.Preset == "diamond" || prstGeom.Preset == "flowChartDecision") ? 4 :
                                                      (prstGeom.Preset == "pentagon") ? 5 :
@@ -325,7 +378,7 @@ namespace ConsoleApplication
                             if (prstGeom.Preset == "roundRect" || prstGeom.Preset == "flowChartAlternateProcess" || prstGeom.Preset == "flowChartTerminator")
                             {
                                 HasValidGeometry = true;
-                                shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
+                                shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Rectangle);
                                 shapeObject.CornerRadius = 3906;
 
                                 if (prstGeom.AdjustValueList != null)
@@ -405,7 +458,73 @@ namespace ConsoleApplication
 
                 if(child.LocalName == "txBody")
                 {
+                    //Get the data from the above layers
+                    if ((powerPointText.Idx > 0) || (powerPointText.Type != ""))
+                    {
+                        //if layout level, get data from master level
+                        if(_layoutLevel)
+                        {
+                            if(powerPointText.Type.Contains("Title"))
+                            {
+                                PowerPointText temp = new PowerPointText();
+                                temp.Type = "title";
+                                temp = GetPowerPointObject(_placeHolderTextObjectsMaster, powerPointText);
+                                if (temp != null)
+                                {
+                                    temp.Type = powerPointText.Type;
+                                    powerPointText.setVisualAttribues(temp);
+                                }
+                            }
 
+                            PowerPointText master = GetPowerPointObject(_placeHolderTextObjectsMaster,powerPointText);
+                            if (master != null)
+                                powerPointText = master;
+                        }
+
+                        //if slide level, get data from both master and layout level
+                        if (_slideLevel)
+                        {
+                            PowerPointText master = GetPowerPointObject(_placeHolderTextObjectsMaster, powerPointText);
+                            if (master != null)
+                                powerPointText = master;
+
+                            PowerPointText layout = GetPowerPointObject(_placeHolderTextObjectsLayout, powerPointText);
+                            if (layout != null)
+                                powerPointText = layout;
+                        }
+
+                        if (HasTransform)
+                        {
+                            powerPointText.X = textSimpleSceneObject.BoundsX;
+                            powerPointText.Y = textSimpleSceneObject.BoundsY;
+                            powerPointText.Cx = textSimpleSceneObject.ClipWidth;
+                            powerPointText.Cy = textSimpleSceneObject.ClipHeight;
+                        }
+                    }
+
+                    textSimpleSceneObject.BoundsX = powerPointText.X;
+                    textSimpleSceneObject.BoundsY = powerPointText.Y;
+                    textSimpleSceneObject.ClipWidth = powerPointText.Cx;
+                    textSimpleSceneObject.ClipHeight = powerPointText.Cy;
+
+                    textObject = new TextObject(textSimpleSceneObject);
+
+                    foreach (DrawingML.Paragraph p in child.Descendants<DrawingML.Paragraph>())
+                    {
+                        foreach (DrawingML.Run r in p.Descendants<DrawingML.Run>())
+                        {
+                            if(r.Text.InnerText!=null)
+                                HasText = true;
+                            
+                            TextFragment textFragment = new TextFragment();
+                            TextStyle textStyle = new TextStyle();
+
+                            textFragment.Text = r.Text.InnerText;
+                            textObject.StyleList.Add(textStyle);
+                            textFragment.StyleId = textObject.StyleList.IndexOf(textStyle);
+                            textObject.FragmentsList.Add(textFragment);
+                        }
+                    }
                 }
 
                 if(child.LocalName == "style")
@@ -450,7 +569,6 @@ namespace ConsoleApplication
 
                                 lineStyleIndex++;
                             }
-
                         }
 
                         if (styleChild.LocalName == "fillRef")
@@ -508,10 +626,60 @@ namespace ConsoleApplication
                 }
 
             }
+
             if (HasValidGeometry && (HasLine || HasBg))
                 sceneObjectList.Add(shapeObject);
 
+            if (_slideLevel && HasText)
+                sceneObjectList.Add(textObject);
+
+            if (_layoutLevel)
+                _placeHolderTextObjectsLayout.Add(powerPointText);
+
+            if (_masterLevel)
+                _placeHolderTextObjectsMaster.Add(powerPointText);
+
             return sceneObjectList;
+        }
+
+        private PowerPointText GetPowerPointObject(List<PowerPointText> list, PowerPointText powerPointText)
+        {
+            PowerPointText temp = new PowerPointText();
+
+            foreach (PowerPointText ppt in list)
+            {
+                if (ppt.Level == powerPointText.Level)
+                {
+                    if ((ppt.Idx == powerPointText.Idx && ppt.Idx > 0) && (ppt.Type == powerPointText.Type && ppt.Type != ""))
+                    {
+                        temp = new PowerPointText(ppt);
+                        temp.Type = powerPointText.Type;
+                        return temp;
+                    }
+                }
+            }
+
+            foreach (PowerPointText ppt in list)
+            {
+                if (ppt.Level == powerPointText.Level)
+                {
+                    if (ppt.Idx == powerPointText.Idx && ppt.Idx > 0)
+                    {
+                        temp = new PowerPointText(ppt);
+                        temp.Type = powerPointText.Type;
+                        return temp;
+                    }
+
+                    if (ppt.Type == powerPointText.Type && ppt.Type != "")
+                    {
+                        temp = new PowerPointText(ppt);
+                        temp.Idx = powerPointText.Idx;
+                        return temp;
+                    }
+                }
+            }
+
+            return null;
         }
 
         private List<SceneObject> getSceneObjects(PresentationML.Background background)

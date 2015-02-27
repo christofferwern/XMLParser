@@ -18,9 +18,12 @@ namespace ConsoleApplication
         private XmlDocument _doc;
         private string[] _textObjectPropertiesAttributes = new string[14]{   "font", "align", "color", "italic", "bold", "underline", "size", "runningText",
                                                                              "autosize", "leading", "letterSpacing", "antiAlias", "useScroller", "selectable"};
+        private SimpleSceneObject _simpleSceneObject;
 
-        public TextObject(SceneObject sceneobject) : base(sceneobject) 
+        public TextObject(SimpleSceneObject sceneobject) : base(sceneobject) 
         {
+            _simpleSceneObject = sceneobject;
+                       
             _align = "left";
             _antiAlias = "normal";
             _font = "Arial";
@@ -44,6 +47,45 @@ namespace ConsoleApplication
                                          false, true, true, true, true, true, true));
 
             sceneobject.setObjectType(objectType);
+        }
+
+        public override object Clone()
+        {
+            SimpleSceneObject simpleSceneObject = _simpleSceneObject;
+
+            TextObject textObject = new TextObject(simpleSceneObject);
+
+            textObject.Align = _align;
+            textObject.AntiAlias = _antiAlias;
+            textObject.Font = _font;
+            textObject.Autosize = _autosize;
+            textObject.Color = _color;
+            textObject.Leading = _leading;
+            textObject.LetterSpacing = _letterSpacing;
+            textObject.Size = _size;
+            textObject.Bold = _bold;
+            textObject.Italic = _italic;
+            textObject.Underline = _underline;
+            textObject.Selectable = _selectable;
+            textObject.RunningText = _runningText;
+            textObject.UseScroller = _useScroller;
+
+            string objectType = "com.customObjects.TextObject";
+            _styleList = new List<TextStyle>();
+            _fragmentsList = new List<TextFragment>();
+
+            setProperties(new Properties(true, false, true, true, true, true, true, true,
+                                         false, true, true, true, true, true, true));
+
+            textObject.setObjectType(objectType);
+
+            return textObject;
+        }
+
+        public TextObject setClipWidth(int clipWidth)
+        {
+            _simpleSceneObject.ClipWidth = clipWidth;
+            return (TextObject)Clone();
         }
 
         public void addToStyleList(TextStyle textStyle)
@@ -570,5 +612,6 @@ namespace ConsoleApplication
             get { return _useScroller; }
             set { _useScroller = value; }
         }
+
     }
 }
