@@ -159,6 +159,26 @@ namespace ConsoleApplication
         private List<SceneObject> getSceneObjects(PresentationML.GroupShape groupShape)
         {
             List<SceneObject> sceneObjectList = new List<SceneObject>();
+
+            foreach (var child in groupShape.ChildElements)
+            {
+                if (child.LocalName == "sp")
+                    sceneObjectList.AddRange(getSceneObjects((PresentationML.Shape)child));
+
+
+                if (child.LocalName == "graphicFrame")
+                    sceneObjectList.AddRange(getSceneObjects((PresentationML.GraphicFrame)child));
+
+
+                if (child.LocalName == "pic")
+                    sceneObjectList.AddRange(getSceneObjects((PresentationML.Picture)child));
+
+
+                if (child.LocalName == "grpSp")
+                    sceneObjectList.AddRange(getSceneObjects((PresentationML.GroupShape)child));
+
+            }
+
             return sceneObjectList;
         }
 
@@ -182,6 +202,10 @@ namespace ConsoleApplication
 
             //**TODO**
             //Get siblings and check for offsets!!!
+            /*
+             *Hämta syskon grSpPr -> xfrm 
+             *Om inte noll!
+             */
 
             bool HasBg = false, HasLine = false, HasValidGeometry = false,
                  solidFillColorChange = false, lineColorChange = false, gradientColorChange = false;
@@ -199,6 +223,7 @@ namespace ConsoleApplication
 
                     if (spPr.Transform2D != null)
                     {
+                        //Dessa ska bero på gruppens Transform2D
                         simpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : simpleSceneObject.BoundsX;
                         simpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : simpleSceneObject.BoundsY;
                         simpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : simpleSceneObject.ClipWidth;
@@ -435,8 +460,6 @@ namespace ConsoleApplication
                     }
 
                 }
-
-
 
             }
             if (HasValidGeometry && (HasLine || HasBg))
