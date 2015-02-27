@@ -20,9 +20,9 @@ namespace ConsoleApplication
             _bold = false;
             _underline = false;
             _italic = false;
-            _fontSize = 0;
-            _fontColor = "";
-            _font = "";
+            _fontSize = 1400;
+            _fontColor = "000000";
+            _font = "Arial";
         }
 
         public string attrubiteValue()

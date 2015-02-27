@@ -16,5 +16,6 @@ namespace ConsoleApplication
         XmlDocument getXMLDocumentRoot();
         void setObjectType(string objectType);
         void ConvertToYoobaUnits(int width, int height);
+        object Clone();
     }
 }
