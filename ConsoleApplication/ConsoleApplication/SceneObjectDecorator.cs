@@ -16,6 +16,11 @@ namespace ConsoleApplication
             _sceneObject = so;
         }
 
+        public virtual object Clone()
+        {
+            return _sceneObject.Clone();
+        }
+
         public virtual XmlElement getXMLTree()
         {
             return _sceneObject.getXMLTree();
