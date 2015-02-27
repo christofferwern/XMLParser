@@ -131,7 +131,17 @@ namespace ConsoleApplication
 
                         if (child.LocalName == "spTree")
                         {
+
+                            if(child.LocalName == "bg")
+                                scene.SceneObjectList.InsertRange(0,getSceneObjects((PresentationML.Background)child));
+
+                            if (child.LocalName == "spTree")
+                            {
+                                scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
+                            }
+
                             scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
+
                         }
                     }
                     _slideLevel = false;
@@ -181,6 +191,8 @@ namespace ConsoleApplication
         {
             List<SceneObject> sceneObjectList = new List<SceneObject>();
 
+
+
             foreach (var child in groupShape.ChildElements)
             {
                 if (child.LocalName == "sp")
@@ -218,6 +230,9 @@ namespace ConsoleApplication
         private List<SceneObject> getSceneObjects(PresentationML.Shape shape)
         {
             List<SceneObject> sceneObjectList = new List<SceneObject>();
+
+            int GchildOffX = 0, GchildOffY = 0, GchildExtX = 0, GchildExtY = 0, GoffX = 0, GoffY = 0, GextX = 0, GextY = 0;
+
             SimpleSceneObject shapeSimpleSceneObject = new SimpleSceneObject(),
                               textSimpleSceneObject = new SimpleSceneObject();
 
@@ -225,16 +240,50 @@ namespace ConsoleApplication
             TextObject textObject = new TextObject(textSimpleSceneObject);
             PowerPointText powerPointText = new PowerPointText();
 
+
             //**TODO**
             //Get siblings and check for offsets!!!
             /*
              *Hämta syskon grSpPr -> xfrm 
              *Om inte noll!
              */
+            IEnumerator<OpenXmlElement> parent = shape.Parent.GetEnumerator();
+
+            while (parent.MoveNext())
+            {
+                if (parent.Current.LocalName == "grpSpPr")
+                {
+                    PresentationML.GroupShapeProperties grpSpPr = (PresentationML.GroupShapeProperties)parent.Current;
+
+                    int offX = (int)grpSpPr.TransformGroup.Offset.X;
+                    int offY = (int)grpSpPr.TransformGroup.Offset.Y;
+                    int extX = (int)grpSpPr.TransformGroup.Extents.Cx;
+                    int extY = (int)grpSpPr.TransformGroup.Extents.Cy;
+
+                    int chOffX = (int)grpSpPr.TransformGroup.ChildOffset.X;
+                    int chOffY = (int)grpSpPr.TransformGroup.ChildOffset.Y;
+                    int chExtX = (int)grpSpPr.TransformGroup.ChildExtents.Cx;
+                    int chExtY = (int)grpSpPr.TransformGroup.ChildExtents.Cy;
+
+                    if (!((chOffX == chOffY) && (chExtX == chExtY) && (offX == offY) && (extX == extY) && extY == 0))
+                    {
+                        GchildOffX = chOffX;
+                        GchildOffY = chOffY;
+                        GchildExtX = chExtX;
+                        GchildExtY = chExtY;
+
+                        shapeSimpleSceneObject.BoundsX = GchildOffX;
+                        shapeSimpleSceneObject.BoundsY = GchildOffY;
+                    }
+                }
+
+            }
+          
+
 
             bool HasBg = false, HasLine = false, HasValidGeometry = false, HasText = false, HasTransform = false,
                  solidFillColorChange = false, lineColorChange = false, gradientColorChange = false;
-
+            
             foreach (var child in shape.ChildElements)
             {
                 if(child.LocalName == "nvSpPr")
@@ -257,9 +306,10 @@ namespace ConsoleApplication
                 if(child.LocalName == "spPr")
                 {
                     PresentationML.ShapeProperties spPr = (PresentationML.ShapeProperties)child;
-
+                    
                     if (spPr.Transform2D != null)
                     {
+
                         //Dessa ska bero på gruppens Transform2D
                         shapeSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
                         shapeSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
