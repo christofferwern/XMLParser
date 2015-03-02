@@ -84,6 +84,8 @@ namespace ConsoleApplication
                 _presentationSizeX = slideInfo.Cx.Value;
                 _presentationSizeY = slideInfo.Cy.Value;
 
+                Console.WriteLine(_presentationSizeX + " " + _presentationSizeY);
+
 
                 //Get the slidemaster scene object, background etc
                 PresentationML.SlideMaster slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster; ;
@@ -111,6 +113,7 @@ namespace ConsoleApplication
                     //Go through all elements in the slide layout
                     _placeHolderTextObjectsLayout.Clear();
                     _layoutLevel = true;
+                    Console.WriteLine("\n\n******************************Slide Layout" + sceneCounter.ToString());
                     foreach (var child in slidePart.SlideLayoutPart.SlideLayout.CommonSlideData.ChildElements)
                     {
                         if (child.LocalName == "bg")
@@ -191,8 +194,6 @@ namespace ConsoleApplication
         {
             List<SceneObject> sceneObjectList = new List<SceneObject>();
 
-
-
             foreach (var child in groupShape.ChildElements)
             {
                 if (child.LocalName == "sp")
@@ -239,6 +240,7 @@ namespace ConsoleApplication
             ShapeObject shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Rectangle);
             TextObject textObject = new TextObject(textSimpleSceneObject);
             PowerPointText powerPointText = new PowerPointText();
+            bool isGroup = false;
 
 
             //**TODO**
@@ -248,9 +250,9 @@ namespace ConsoleApplication
              *Om inte noll!
              */
             IEnumerator<OpenXmlElement> parent = shape.Parent.GetEnumerator();
-
             while (parent.MoveNext())
             {
+                //Console.WriteLine(parent.Current.LocalName);
                 if (parent.Current.LocalName == "grpSpPr")
                 {
                     PresentationML.GroupShapeProperties grpSpPr = (PresentationML.GroupShapeProperties)parent.Current;
@@ -267,13 +269,33 @@ namespace ConsoleApplication
 
                     if (!((chOffX == chOffY) && (chExtX == chExtY) && (offX == offY) && (extX == extY) && extY == 0))
                     {
+
+                        /*offX = chOffX;
+                        offY = chOffY;
+                        extX = chExtX;
+                        extY = chExtY;*/
+
                         GchildOffX = chOffX;
                         GchildOffY = chOffY;
                         GchildExtX = chExtX;
                         GchildExtY = chExtY;
 
-                        shapeSimpleSceneObject.BoundsX = GchildOffX;
-                        shapeSimpleSceneObject.BoundsY = GchildOffY;
+                        GoffX = offX;
+                        GoffY = offY;
+                        GextX = extX;
+                        GextY = extY;
+                        
+                        Console.WriteLine("boundsX: " + shapeSimpleSceneObject.BoundsX);
+                        Console.WriteLine("boundsX: " + shapeSimpleSceneObject.BoundsY);
+                        shapeSimpleSceneObject.BoundsX = offX;
+                        shapeSimpleSceneObject.BoundsY = offY;
+                        shapeSimpleSceneObject.ClipWidth = extX;
+                        shapeSimpleSceneObject.ClipHeight = extY;
+                        Console.WriteLine("boundsX: " + shapeSimpleSceneObject.BoundsX);
+                        Console.WriteLine("boundsY: " + shapeSimpleSceneObject.BoundsY + "\n");
+                        
+                        isGroup = true;
+                        //Console.WriteLine("offX: " + offX + "\noffY: " + offY + "\nextX : " + extX + "\nextY: " + extY + "\nchOffX: " + chOffX + "\nchOffY: " + chOffY + "\nchExtX: " + chExtX + "\nchExtY: " + chExtY + "\n");
                     }
                 }
 
@@ -309,17 +331,56 @@ namespace ConsoleApplication
                     
                     if (spPr.Transform2D != null)
                     {
+                        if (isGroup)
+                        {
+                            /*Console.WriteLine("pptSizeX :" + _presentationSizeX / 360000f + " pptSizeY: " + _presentationSizeY / 360000f);
+                            Console.WriteLine("GchildOffX: " + (GchildOffX / 360000f) + " childOffX: " + (double)(spPr.Transform2D.Offset.X / 360000f));
+                            Console.WriteLine("GchildOffY: " + (GchildOffY / 360000f) + " childOffY: " + (double)(spPr.Transform2D.Offset.Y / 360000f));
+                            Console.WriteLine("GchildExtX: " + (GchildExtX / 360000f) + " childExtX: " + (double)(spPr.Transform2D.Extents.Cx) / 360000f);
+                            Console.WriteLine("GchildExtY: " + (GchildExtY) + " childExtY: " + (double)(spPr.Transform2D.Extents.Cy));*/
+                            //Console.WriteLine(((int)spPr.Transform2D.Offset.Y) - GchildOffY + "\n");
 
-                        //Dessa ska bero på gruppens Transform2D
-                        shapeSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
-                        shapeSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
-                        shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
-                        shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
+                            
+                            //(int)spPr.Transform2D.Offset.X + ((int)spPr.Transform2D.Offset.X) - GchildOffX
+                            //(int)spPr.Transform2D.Offset.Y + ((int)spPr.Transform2D.Offset.Y) - GchildOffY
+                            Console.WriteLine("G_Offset_X: " + (int)spPr.Transform2D.Offset.Y);
 
-                        textSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
-                        textSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
-                        textSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
-                        textSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
+                            shapeSimpleSceneObject.BoundsX = (GoffX - GchildOffX + (int)spPr.Transform2D.Offset.X);
+                            shapeSimpleSceneObject.BoundsY = (GoffY - GchildOffY + (int)spPr.Transform2D.Offset.Y);
+                            shapeSimpleSceneObject.BoundsX = ((shapeSimpleSceneObject.BoundsX - GoffX) * (GextX / GchildExtX)) + GoffX;
+                            shapeSimpleSceneObject.BoundsY = ((shapeSimpleSceneObject.BoundsY - GoffY) * (GextY / GchildExtY)) + GoffY;
+
+                            Console.WriteLine("ChildOffset_X: " + shapeSimpleSceneObject.BoundsX);
+                            Console.WriteLine("ChildOffset_Y: " + shapeSimpleSceneObject.BoundsY);
+                            //shapeSimpleSceneObject.BoundsX += (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Extents.Cx + ((int)spPr.Transform2D.Offset.X) - GchildOffX : 0;
+                            //shapeSimpleSceneObject.BoundsY += (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Extents.Cy + ((int)spPr.Transform2D.Offset.Y) - GchildOffY : 0;
+
+                            //shapeSimpleSceneObject.ClipHeight= (((int)spPr.Transform2D.Offset.X - GchildOffX)*(GextX/GchildExtX)) + GoffX;
+                            //shapeSimpleSceneObject.ClipWidth = (((int)spPr.Transform2D.Offset.Y - GchildOffY) * (GextY / GchildExtY)) + GoffY;
+                            shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)(spPr.Transform2D.Extents.Cx) : shapeSimpleSceneObject.ClipWidth;
+                            shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)(spPr.Transform2D.Extents.Cy) : shapeSimpleSceneObject.ClipHeight;
+
+                            //Dessa ska bero på gruppens Transform2D
+                            textSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X: shapeSimpleSceneObject.BoundsX;
+                            textSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y: shapeSimpleSceneObject.BoundsY;
+                            textSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
+                            textSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
+
+                        }
+                        else
+                        {
+
+                            shapeSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
+                            shapeSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
+                            shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
+                            shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
+
+                            textSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
+                            textSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
+                            textSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
+                            textSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
+                            
+                        }     
 
                         powerPointText.X = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : powerPointText.X;
                         powerPointText.Y = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : powerPointText.Y;
@@ -405,6 +466,7 @@ namespace ConsoleApplication
                             HasBg = true;
                             solidFillColorChange = true;
                             shapeObject.FillColor = getColor(spPrChild);
+                            Console.WriteLine("Color: " +shapeObject.FillColor);
                         }   
 
                         if(spPrChild.LocalName == "gradFill")
