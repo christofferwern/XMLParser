@@ -194,18 +194,20 @@ namespace ConsoleApplication
         public void setVisualAttribues(PowerPointText temp)
         {
             this.Anchor = temp.Anchor;
-            this.Alignment = temp.Alignment;
+            this.Alignment = (temp.Alignment!="")?temp.Alignment:this.Alignment;
             this.Bold = temp.Bold;
-            this.Cx = temp.Cx;
-            this.Cy = temp.Cy;
-            this.Font = temp.Font;
-            this.FontColor = temp.FontColor;
-            this.FontSize = temp.FontSize;
+            this.Cx = (temp.Cx != 0) ? temp.Cx : this.Cx;
+            this.Cy = (temp.Cy != 0) ? temp.Cy : this.Cy;
+            this.Font = (temp.Font != "") ? temp.Font : this.Font;
+            this.FontColor = (temp.FontColor != "") ? temp.FontColor : this.FontColor;
+            this.FontSize = (temp.FontSize != 0) ? temp.FontSize : this.FontSize;
             this.Italic = temp.Italic;
-            this.Rotation = temp.Rotation;
+            this.Rotation = (temp.Rotation != 0) ? temp.Rotation : this.Rotation;
             this.Underline = temp.Underline;
-            this.X = temp.X;
-            this.Y = temp.Y;
+            this.X = (temp.X != 0) ? temp.X : this.X;
+            this.Y = (temp.Y != 0) ? temp.Y : this.Y;
+            this.Level = (temp.Level > 0) ? temp.Level : this.Level;
+
         }
     }
 }

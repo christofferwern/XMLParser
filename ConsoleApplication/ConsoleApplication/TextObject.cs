@@ -483,7 +483,7 @@ namespace ConsoleApplication
 
             //Font size convertion
             _size /= 100;
-            _size = (int)Math.Round(_size * 1.5);
+            //_size = (int)Math.Round(_size * 1.5);
 
             //Font color
             _color = getFontColorAsInteger(_color).ToString();
@@ -492,7 +492,7 @@ namespace ConsoleApplication
             {
                 //Font size convertion
                 style.FontSize /= 100;
-                style.FontSize = (int) Math.Round(style.FontSize*1.5);
+                //style.FontSize = (int) Math.Round(style.FontSize*1.5);
 
                 //Fake font and color
                 style.Font = "Arial";
