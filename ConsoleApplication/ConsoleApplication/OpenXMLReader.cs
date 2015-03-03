@@ -135,8 +135,6 @@ namespace ConsoleApplication
                 //Go through all Slides in the PowerPoint presentation
                 foreach (PresentationML.SlideId slideID in presentation.SlideIdList)
                 {
-                    Console.WriteLine("SCENE: " + sceneCounter + ". -------------");
-
                     SlidePart slidePart = _presentationDocument.PresentationPart.GetPartById(slideID.RelationshipId) as SlidePart;
                     Scene scene = new Scene(sceneCounter);
 
@@ -850,16 +848,10 @@ namespace ConsoleApplication
             }
 
             if (HasValidGeometry && (HasLine || HasBg))
-            {
-                Console.WriteLine("SHAPE");
                 sceneObjectList.Add(shapeObject);
-            }
-
+            
             if (_slideLevel && HasText)
-            {
-                Console.WriteLine("TEXT");
                 sceneObjectList.Add(textObject);
-            }
                 
             if (_layoutLevel)
             {
@@ -1246,18 +1238,15 @@ namespace ConsoleApplication
         public int getAlpha(OpenXmlElement xmlElement)
         {
             foreach (var child in xmlElement.FirstChild)
-            {
                 if (child.LocalName == "alpha")
                 {
                     DrawingML.Alpha alpha = (DrawingML.Alpha)child;
                     return alpha.Val.Value;
                 }
-            }
 
             //Default
             return 1;
         }
-
 
         public PowerPointText[] getListStyles(OpenXmlElement listStyleElement)
         {
