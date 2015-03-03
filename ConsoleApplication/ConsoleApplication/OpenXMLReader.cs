@@ -84,11 +84,11 @@ namespace ConsoleApplication
                 _presentationSizeX = slideInfo.Cx.Value;
                 _presentationSizeY = slideInfo.Cy.Value;
 
-
                 //Get the slidemaster scene object, background etc
                 PresentationML.SlideMaster slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster; ;
 
                 _masterLevel = true;
+                
                 foreach (var child in slideMaster.CommonSlideData.ChildElements)
                 {
                     if (child.LocalName == "bg")
@@ -191,8 +191,6 @@ namespace ConsoleApplication
         {
             List<SceneObject> sceneObjectList = new List<SceneObject>();
 
-
-
             foreach (var child in groupShape.ChildElements)
             {
                 if (child.LocalName == "sp")
@@ -239,18 +237,14 @@ namespace ConsoleApplication
             ShapeObject shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Rectangle);
             TextObject textObject = new TextObject(textSimpleSceneObject);
             PowerPointText powerPointText = new PowerPointText();
+            bool isGroup = false;
 
 
-            //**TODO**
-            //Get siblings and check for offsets!!!
-            /*
-             *Hämta syskon grSpPr -> xfrm 
-             *Om inte noll!
-             */
+            //Check for potential group shapes.
             IEnumerator<OpenXmlElement> parent = shape.Parent.GetEnumerator();
-
             while (parent.MoveNext())
             {
+
                 if (parent.Current.LocalName == "grpSpPr")
                 {
                     PresentationML.GroupShapeProperties grpSpPr = (PresentationML.GroupShapeProperties)parent.Current;
@@ -267,13 +261,24 @@ namespace ConsoleApplication
 
                     if (!((chOffX == chOffY) && (chExtX == chExtY) && (offX == offY) && (extX == extY) && extY == 0))
                     {
+
                         GchildOffX = chOffX;
                         GchildOffY = chOffY;
                         GchildExtX = chExtX;
                         GchildExtY = chExtY;
 
-                        shapeSimpleSceneObject.BoundsX = GchildOffX;
-                        shapeSimpleSceneObject.BoundsY = GchildOffY;
+                        GoffX = offX;
+                        GoffY = offY;
+                        GextX = extX;
+                        GextY = extY;
+                        
+                        shapeSimpleSceneObject.BoundsX = offX;
+                        shapeSimpleSceneObject.BoundsY = offY;
+                        shapeSimpleSceneObject.ClipWidth = extX;
+                        shapeSimpleSceneObject.ClipHeight = extY;
+                        
+                        isGroup = true;
+                        
                     }
                 }
 
@@ -282,7 +287,7 @@ namespace ConsoleApplication
 
 
             bool HasBg = false, HasLine = false, HasValidGeometry = false, HasText = false, HasTransform = false,
-                 solidFillColorChange = false, lineColorChange = false, gradientColorChange = false;
+                 solidFillColorChange = false, lineColorChange = false, gradientColorChange = false, IsLine = false;
             
             foreach (var child in shape.ChildElements)
             {
@@ -309,12 +314,30 @@ namespace ConsoleApplication
                     
                     if (spPr.Transform2D != null)
                     {
+                        if (isGroup)
+                        {
 
-                        //Dessa ska bero på gruppens Transform2D
-                        shapeSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
-                        shapeSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
-                        shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
-                        shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
+                            double scaleX = (double)GextX / GchildExtX;
+                            double scaleY = (double)GextY / GchildExtY;
+
+                            shapeSimpleSceneObject.BoundsX = (GoffX - GchildOffX + (int)spPr.Transform2D.Offset.X);
+                            shapeSimpleSceneObject.BoundsY = (GoffY - GchildOffY + (int)spPr.Transform2D.Offset.Y);
+                            shapeSimpleSceneObject.BoundsX = (int)((shapeSimpleSceneObject.BoundsX - GoffX) * scaleX) + GoffX;
+                            shapeSimpleSceneObject.BoundsY = (int)((shapeSimpleSceneObject.BoundsY - GoffY) * scaleY) + GoffY;
+
+                            shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)(spPr.Transform2D.Extents.Cx * scaleX) : shapeSimpleSceneObject.ClipWidth;
+                            shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)(spPr.Transform2D.Extents.Cy * scaleY) : shapeSimpleSceneObject.ClipHeight;
+
+                        }
+                        else
+                        {
+
+                            shapeSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
+                            shapeSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
+                            shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
+                            shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
+
+                        }
 
                         textSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
                         textSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
@@ -332,6 +355,7 @@ namespace ConsoleApplication
                     
                     foreach(var spPrChild in child)
                     {
+
                         if(spPrChild.LocalName == "prstGeom")
                         {
                             DrawingML.PresetGeometry prstGeom = (DrawingML.PresetGeometry)spPrChild;
@@ -344,7 +368,10 @@ namespace ConsoleApplication
                                 HasValidGeometry = true;
                                 shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Rectangle);
                             }
-
+                            if (prstGeom.Preset == "line")
+                            {
+                                IsLine = true;
+                            }
 
                             if (prstGeom.Preset == "ellipse" || prstGeom.Preset == "flowChartConnector")
                             {
@@ -399,7 +426,7 @@ namespace ConsoleApplication
                             }
 
                         }
-
+                        
                         if(spPrChild.LocalName == "solidFill")
                         {
                             HasBg = true;
@@ -431,17 +458,35 @@ namespace ConsoleApplication
 
                         if(spPrChild.LocalName == "ln")
                         {
-                            DrawingML.Outline ln = (DrawingML.Outline)spPrChild; 
-                            
-                            shapeObject.LineSize = (ln.Width!=null) ? ln.Width.Value : shapeObject.LineSize;
-                            shapeObject.LineEnabled = true;
+                            DrawingML.Outline ln = (DrawingML.Outline)spPrChild;
+                            if (IsLine)
+                            {
+
+                                if (shapeSimpleSceneObject.ClipWidth == 0)
+                                    shapeSimpleSceneObject.ClipWidth = ln.Width.Value*100;
+                                else if (shapeSimpleSceneObject.ClipHeight == 0)
+                                    shapeSimpleSceneObject.ClipHeight = ln.Width.Value*100;
+
+                                shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Rectangle);
+
+                            }
+                            else
+                            {
+                                shapeObject.LineSize = (ln.Width != null) ? ln.Width.Value : shapeObject.LineSize;
+                                shapeObject.LineEnabled = true;
+
+                            }
+                                
                             foreach (var lnChild in ln)
                             {
                                 if (lnChild.LocalName == "solidFill")
                                 {
                                     HasLine = true;
                                     lineColorChange = true;
-                                    shapeObject.LineColor = getColor(lnChild);
+                                    if (IsLine)
+                                        shapeObject.FillColor = getColor(lnChild);
+                                    else
+                                        shapeObject.LineColor = getColor(lnChild);
                                 }
 
                                 if (lnChild.LocalName == "gradFill")
@@ -453,6 +498,7 @@ namespace ConsoleApplication
                             }
                             
                         }
+
                     }
                 }
 
@@ -626,6 +672,8 @@ namespace ConsoleApplication
                 }
 
             }
+
+            
 
             if (HasValidGeometry && (HasLine || HasBg))
                 sceneObjectList.Add(shapeObject);
