@@ -67,9 +67,9 @@ namespace ConsoleApplication
             _cornerRadius = 0;
             _gradientAngle = 90;
             _gradientType = "linear";
-            _fillAlpha = 1;
-            _fillAlpha1 = 1;
-            _fillAlpha2 = 1;
+            _fillAlpha = 100000;
+            _fillAlpha1 = 100000;
+            _fillAlpha2 = 100000;
             _fillColor = "16743690";
             _fillEnable = true;
             _fillType = "solid";
@@ -142,22 +142,19 @@ namespace ConsoleApplication
             if (_fillType.Equals("solid"))
             {
                 _fillColor = getColorAsInteger(_fillColor).ToString();
-                _fillAlpha = (_fillAlpha/100000);
+                _fillAlpha /= _fillAlpha/100000;
             }
 
             if (_fillType.Equals("gradient"))
             {
                 _fillColor = getColorAsInteger(_fillColor1).ToString();
 
-                if (_gradientAlphas[0] != 1)
-                    _fillAlpha1 = ((_gradientAlphas[0] / 1000) / 100);
-                if (_gradientAlphas[1] != 1)
-                    _fillAlpha2 = ((_gradientAlphas[1] / 1000) / 100);
+                _fillAlpha1 /= 100000;
+                _fillAlpha2 /= 100000;
 
                 _fillColor1 = _fillColor;
                 _fillColor2 = getColorAsInteger(_fillColor2).ToString();
                 
-
                 _gradientAngle /= 60000; 
             }
 
