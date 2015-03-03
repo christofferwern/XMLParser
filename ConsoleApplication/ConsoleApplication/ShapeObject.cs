@@ -67,9 +67,9 @@ namespace ConsoleApplication
             _cornerRadius = 0;
             _gradientAngle = 90;
             _gradientType = "linear";
-            _fillAlpha = 1;
-            _fillAlpha1 = 1;
-            _fillAlpha2 = 1;
+            _fillAlpha = 100000;
+            _fillAlpha1 = 100000;
+            _fillAlpha2 = 100000;
             _fillColor = "16743690";
             _fillEnable = true;
             _fillType = "solid";

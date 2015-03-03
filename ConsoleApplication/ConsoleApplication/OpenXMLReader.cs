@@ -237,6 +237,85 @@ namespace ConsoleApplication
         private List<SceneObject> getSceneObjects(PresentationML.GraphicFrame graphicFrame)
         {
             List<SceneObject> sceneObjectList = new List<SceneObject>();
+
+            int boundsX = (int)graphicFrame.Transform.Offset.X,
+                boundsY = (int)graphicFrame.Transform.Offset.Y;
+
+            foreach (DrawingML.Table table in graphicFrame.Graphic.GraphicData.Descendants<DrawingML.Table>())
+            {
+                //Get the table style from the tabelStyles.xml (stored in tableStyle)
+                DrawingML.TableStyleList tableStyleList = _presentationDocument.PresentationPart.TableStylesPart.TableStyleList;
+                DrawingML.TableStyleEntry tableStyle = new DrawingML.TableStyleEntry();
+                foreach (DrawingML.TableStyleId tableStyleId in table.TableProperties.Descendants<DrawingML.TableStyleId>())
+                {
+                    string tableId = tableStyleId.InnerText;
+                    foreach (DrawingML.TableStyleEntry style in tableStyleList.Descendants<DrawingML.TableStyleEntry>())
+                        if (style.StyleId == tableId)
+                            tableStyle = style;
+                }
+
+                List<TableStyle> tableStyles = new List<TableStyle>();
+
+                foreach(var style in tableStyle)
+                {
+                    TableStyle t = new TableStyle();
+                    t.Type = style.LocalName;
+
+                    foreach (var child in style)
+                    {
+                        if (child.LocalName == "tcTxStyle")
+                        {
+                            
+                        }
+                        
+                        if (child.LocalName == "tcStyle")
+                        {
+                            
+                        }
+                    }
+
+                    tableStyles.Add(t);
+                }
+
+                foreach (TableStyle t in tableStyles)
+                    Console.WriteLine(t.ToString());
+
+                //Store the column widths
+                List<int> gridColWidthList = new List<int>();
+                foreach (DrawingML.GridColumn gridCol in table.TableGrid)
+                {
+                    gridColWidthList.Add((int)gridCol.Width);
+                }
+
+                int width, height, colIndex, rowIndex = 0, totalHeight = 0, totalWidth = 0;
+                foreach (DrawingML.TableRow tr in table.Descendants<DrawingML.TableRow>())
+                {
+                    height = (int) tr.Height;
+                    colIndex = 0;
+                    foreach (DrawingML.TableCell tc in tr.Descendants<DrawingML.TableCell>())
+                    {
+                        width = gridColWidthList[colIndex];
+
+                        SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
+                        simpleSceneObject.BoundsX = boundsX + totalWidth;
+                        simpleSceneObject.BoundsY = boundsY + totalHeight;
+                        simpleSceneObject.ClipWidth = width;
+                        simpleSceneObject.ClipHeight = height;
+
+                        ShapeObject shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
+
+                        sceneObjectList.Add(shapeObject);
+
+                        colIndex++;
+                        totalWidth += width;
+                    }
+
+                    rowIndex++;
+                    totalHeight += height;
+                    totalWidth = 0;
+                }
+            }
+
             return sceneObjectList;
         }
 
@@ -451,7 +530,7 @@ namespace ConsoleApplication
                             HasBg = true;
                             solidFillColorChange = true;
                             shapeObject.FillColor = getColor(spPrChild);
-                            shapeObject.FillAlpha = getAlpha(spPrChild);;
+                            shapeObject.FillAlpha = getAlpha(spPrChild);
                         }   
 
                         if(spPrChild.LocalName == "gradFill")
@@ -808,6 +887,7 @@ namespace ConsoleApplication
                                         {
                                             HasBg = true;
                                             shapeObject.FillColor = getColor(fillStyle, color);
+                                            shapeObject.FillAlpha = getAlpha(fillStyle);
                                         }
                                     }
 
@@ -1245,7 +1325,7 @@ namespace ConsoleApplication
                 }
 
             //Default
-            return 1;
+            return 100000;
         }
 
         public PowerPointText[] getListStyles(OpenXmlElement listStyleElement)
