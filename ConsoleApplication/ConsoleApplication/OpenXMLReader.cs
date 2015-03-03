@@ -342,6 +342,7 @@ namespace ConsoleApplication
                             double scaleX = (double)GextX / GchildExtX;
                             double scaleY = (double)GextY / GchildExtY;
 
+                            shapeSimpleSceneObject.Rotation = (spPr.Transform2D.Rotation != null) ? (int)spPr.Transform2D.Rotation.Value : shapeSimpleSceneObject.Rotation;
                             shapeSimpleSceneObject.BoundsX = (GoffX - GchildOffX + (int)spPr.Transform2D.Offset.X);
                             shapeSimpleSceneObject.BoundsY = (GoffY - GchildOffY + (int)spPr.Transform2D.Offset.Y);
                             shapeSimpleSceneObject.BoundsX = (int)((shapeSimpleSceneObject.BoundsX - GoffX) * scaleX) + GoffX;
@@ -352,17 +353,20 @@ namespace ConsoleApplication
                         }
                         else
                         {
+                            shapeSimpleSceneObject.Rotation = (spPr.Transform2D.Rotation != null) ? (int)spPr.Transform2D.Rotation.Value : shapeSimpleSceneObject.Rotation;
                             shapeSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
                             shapeSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
                             shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
                             shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
                         }
 
+                        textSimpleSceneObject.Rotation = (spPr.Transform2D.Rotation != null) ? (int)spPr.Transform2D.Rotation.Value : textSimpleSceneObject.Rotation;
                         textSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
                         textSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
                         textSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
                         textSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
 
+                        powerPointText.Rotation = (spPr.Transform2D.Rotation != null) ? (int)spPr.Transform2D.Rotation.Value : powerPointText.Rotation;
                         powerPointText.X = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : powerPointText.X;
                         powerPointText.Y = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : powerPointText.Y;
                         powerPointText.Cx = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : powerPointText.Cx;
@@ -451,7 +455,8 @@ namespace ConsoleApplication
                             HasBg = true;
                             solidFillColorChange = true;
                             shapeObject.FillColor = getColor(spPrChild);
-                            shapeObject.FillAlpha = getAlpha(spPrChild);;
+                            shapeObject.FillAlpha = getAlpha(spPrChild);
+                            shapeObject.FillType = "solid";
                         }   
 
                         if(spPrChild.LocalName == "gradFill")
@@ -461,8 +466,13 @@ namespace ConsoleApplication
 
                             HasBg = true;
                             List<string> colors = getColors(spPrChild);
+                            List<int> alphas = getAlphas(spPrChild);
+
+                            shapeObject.FillAlpha1 = alphas.First();
+                            shapeObject.FillAlpha2 = alphas.Last();
                             shapeObject.FillColor1 = colors[0];
                             shapeObject.FillColor2 = colors[colors.Count-1];
+                            shapeObject.FillType = "gradient";
                             gradientColorChange = true;
                         }  
 
@@ -684,7 +694,13 @@ namespace ConsoleApplication
                                 runPPT.Bold = (rPr.Bold != null) ? rPr.Bold.Value : runPPT.Bold;
                                 runPPT.Italic = (rPr.Italic != null) ? rPr.Italic.Value : runPPT.Italic;
                                 runPPT.FontSize = (rPr.FontSize != null) ? rPr.FontSize.Value : runPPT.FontSize;
-                                runPPT.Underline = (rPr.Underline != null) ? true : runPPT.Underline;
+                                if (rPr.Underline != null)
+                                {
+                                    if (rPr.Underline.Value.ToString() == "sng")
+                                    {
+                                        powerPointText.Underline = true;
+                                    }
+                                }
 
                                 //Get font color
                                 if (rPr.HasChildren)
@@ -808,6 +824,8 @@ namespace ConsoleApplication
                                         {
                                             HasBg = true;
                                             shapeObject.FillColor = getColor(fillStyle, color);
+                                            shapeObject.FillAlpha = getAlpha(fillStyle);
+                                            shapeObject.FillType = "solid";
                                         }
                                     }
 
@@ -818,9 +836,14 @@ namespace ConsoleApplication
                                             shapeObject.GradientType = getGradientType((DrawingML.GradientFill)fillStyle);
                                             shapeObject.GradientAngle = getGradientAngle((DrawingML.GradientFill)fillStyle);
 
+                                            List<int> alphas = getAlphas(fillStyle);
+                                            shapeObject.FillAlpha1 = alphas.First();
+                                            shapeObject.FillAlpha2 = alphas.Last();
+
                                             List<string> colors = getColors(fillStyle, color);
                                             shapeObject.FillColor1 = colors.First();
                                             shapeObject.FillColor2 = colors.Last();
+
                                             shapeObject.FillType = "gradient";
 
                                             HasBg = true;
