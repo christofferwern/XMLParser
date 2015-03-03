@@ -25,8 +25,8 @@ namespace ConsoleApplication
         private List<PowerPointText> _slideMasterPowerPointShapes;
         private PresentationDocument _presentationDocument;
 
-        private List<PowerPointText> _placeHolderTextObjectsMaster;
-        private List<PowerPointText> _placeHolderTextObjectsLayout;
+        private List<PowerPointText> _placeHolderListMaster;
+        private List<PowerPointText> _placeHolderListLayout;
         private bool _masterLevel, _layoutLevel, _slideLevel;
 
         private XmlDocument _rootXmlDoc;
@@ -52,8 +52,8 @@ namespace ConsoleApplication
             _presentationSizeX = 0;
             _presentationSizeY = 0;
 
-            _placeHolderTextObjectsMaster = new List<PowerPointText>();
-            _placeHolderTextObjectsLayout = new List<PowerPointText>();
+            _placeHolderListMaster = new List<PowerPointText>();
+            _placeHolderListLayout = new List<PowerPointText>();
 
             _masterLevel = false;
             _layoutLevel = false;
@@ -88,7 +88,6 @@ namespace ConsoleApplication
                 PresentationML.SlideMaster slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster; ;
 
                 _masterLevel = true;
-                
                 foreach (var child in slideMaster.CommonSlideData.ChildElements)
                 {
                     if (child.LocalName == "bg")
@@ -98,6 +97,37 @@ namespace ConsoleApplication
                         _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
                 }
                 _masterLevel = false;
+
+                //If master list do not contains any template named title or body,
+                //add those with just the general attributes for them.
+                bool title = false, body = false;
+                foreach (PowerPointText p in _placeHolderListMaster)
+                {
+                    if (p.Type == "title")
+                        title = true;
+                    if (p.Type == "body")
+                        body = true;
+                    if (title && body)
+                        continue;
+                }
+
+                if (!title)
+                {
+                    PowerPointText[] range = getListStyles(slideMaster.TextStyles.TitleStyle);
+                    foreach (PowerPointText p in range)
+                        p.Type = "title";
+
+                    _placeHolderListMaster.AddRange(range);
+                }
+                    
+                if (!body)
+                {
+                    PowerPointText[] range = getListStyles(slideMaster.TextStyles.BodyStyle);
+                    foreach (PowerPointText p in range)
+                        p.Type = "body";
+
+                    _placeHolderListMaster.AddRange(range);
+                }
 
                 //Counter of scenes
                 int sceneCounter = 1;
@@ -109,7 +139,7 @@ namespace ConsoleApplication
                     Scene scene = new Scene(sceneCounter);
 
                     //Go through all elements in the slide layout
-                    _placeHolderTextObjectsLayout.Clear();
+                    _placeHolderListLayout.Clear();
                     _layoutLevel = true;
                     foreach (var child in slidePart.SlideLayoutPart.SlideLayout.CommonSlideData.ChildElements)
                     {
@@ -125,23 +155,12 @@ namespace ConsoleApplication
                     _slideLevel = true;
                     foreach (var child in slidePart.Slide.CommonSlideData.ChildElements)
                     {
-
-                        if (child.LocalName == "bg")
-                            scene.SceneObjectList.InsertRange(0, getSceneObjects((PresentationML.Background)child));
+                        if(child.LocalName == "bg")
+                            scene.SceneObjectList.InsertRange(0,getSceneObjects((PresentationML.Background)child));
 
                         if (child.LocalName == "spTree")
                         {
-
-                            if(child.LocalName == "bg")
-                                scene.SceneObjectList.InsertRange(0,getSceneObjects((PresentationML.Background)child));
-
-                            if (child.LocalName == "spTree")
-                            {
-                                scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
-                            }
-
                             scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
-
                         }
                     }
                     _slideLevel = false;
@@ -196,18 +215,14 @@ namespace ConsoleApplication
                 if (child.LocalName == "sp")
                     sceneObjectList.AddRange(getSceneObjects((PresentationML.Shape)child));
 
-
                 if (child.LocalName == "graphicFrame")
                     sceneObjectList.AddRange(getSceneObjects((PresentationML.GraphicFrame)child));
-
 
                 if (child.LocalName == "pic")
                     sceneObjectList.AddRange(getSceneObjects((PresentationML.Picture)child));
 
-
                 if (child.LocalName == "grpSp")
                     sceneObjectList.AddRange(getSceneObjects((PresentationML.GroupShape)child));
-
             }
 
             return sceneObjectList;
@@ -237,14 +252,26 @@ namespace ConsoleApplication
             ShapeObject shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Rectangle);
             TextObject textObject = new TextObject(textSimpleSceneObject);
             PowerPointText powerPointText = new PowerPointText();
-            bool isGroup = false;
 
+            const int styles = 9;
+            PowerPointText[]    powerPointLevelList = new PowerPointText[styles],
+                                listStyleList = new PowerPointText[styles];
+
+            for (int i = 0; i < styles; i++)
+            {
+                PowerPointText p = new PowerPointText();
+                powerPointLevelList[i] = p;
+
+                PowerPointText p2 = new PowerPointText();
+                listStyleList[i] = p2;
+            }
+
+            bool isGroup = false;
 
             //Check for potential group shapes.
             IEnumerator<OpenXmlElement> parent = shape.Parent.GetEnumerator();
             while (parent.MoveNext())
             {
-
                 if (parent.Current.LocalName == "grpSpPr")
                 {
                     PresentationML.GroupShapeProperties grpSpPr = (PresentationML.GroupShapeProperties)parent.Current;
@@ -261,7 +288,6 @@ namespace ConsoleApplication
 
                     if (!((chOffX == chOffY) && (chExtX == chExtY) && (offX == offY) && (extX == extY) && extY == 0))
                     {
-
                         GchildOffX = chOffX;
                         GchildOffY = chOffY;
                         GchildExtX = chExtX;
@@ -278,13 +304,10 @@ namespace ConsoleApplication
                         shapeSimpleSceneObject.ClipHeight = extY;
                         
                         isGroup = true;
-                        
                     }
                 }
 
             }
-          
-
 
             bool HasBg = false, HasLine = false, HasValidGeometry = false, HasText = false, HasTransform = false,
                  solidFillColorChange = false, lineColorChange = false, gradientColorChange = false, IsLine = false;
@@ -316,7 +339,6 @@ namespace ConsoleApplication
                     {
                         if (isGroup)
                         {
-
                             double scaleX = (double)GextX / GchildExtX;
                             double scaleY = (double)GextY / GchildExtY;
 
@@ -327,16 +349,13 @@ namespace ConsoleApplication
 
                             shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)(spPr.Transform2D.Extents.Cx * scaleX) : shapeSimpleSceneObject.ClipWidth;
                             shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)(spPr.Transform2D.Extents.Cy * scaleY) : shapeSimpleSceneObject.ClipHeight;
-
                         }
                         else
                         {
-
                             shapeSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
                             shapeSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
                             shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
                             shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
-
                         }
 
                         textSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
@@ -432,6 +451,7 @@ namespace ConsoleApplication
                             HasBg = true;
                             solidFillColorChange = true;
                             shapeObject.FillColor = getColor(spPrChild);
+                            shapeObject.FillAlpha = getAlpha(spPrChild);;
                         }   
 
                         if(spPrChild.LocalName == "gradFill")
@@ -501,51 +521,101 @@ namespace ConsoleApplication
 
                     }
                 }
-
+                
                 if(child.LocalName == "txBody")
                 {
+                    PresentationML.TextBody txBody = (PresentationML.TextBody)child;
+
                     //Get the data from the above layers
                     if ((powerPointText.Idx > 0) || (powerPointText.Type != ""))
-                    {
+                    {    
+                        //if master level, get data from the general styles
+                        if (_masterLevel)
+                        {
+                            var textStyles = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster.TextStyles;
+
+                            //Put data into the level list from the corresponding listStyle
+                            if (powerPointText.Type == "title")
+                                powerPointLevelList = getListStyles(textStyles.TitleStyle);   
+                            else if (powerPointText.Type == "body")
+                                powerPointLevelList = getListStyles(textStyles.BodyStyle);  
+                            else //others
+                                powerPointLevelList = getListStyles(textStyles.OtherStyle);
+
+                            for(int i=0;i<9;i++)
+                            {
+                                powerPointLevelList[i].setVisualAttribues(powerPointText);
+                                powerPointLevelList[i].Idx = powerPointText.Idx;
+                                powerPointLevelList[i].Type = powerPointText.Type;
+                                powerPointLevelList[i].Level = i;
+                            }
+                        }
+
                         //if layout level, get data from master level
                         if(_layoutLevel)
                         {
-                            if(powerPointText.Type.Contains("Title"))
+                            for (int i = 0; i < 9; i++)
                             {
-                                PowerPointText temp = new PowerPointText();
-                                temp.Type = "title";
-                                temp = GetPowerPointObject(_placeHolderTextObjectsMaster, powerPointText);
-                                if (temp != null)
+                                powerPointLevelList[i].Idx = powerPointText.Idx;
+                                powerPointLevelList[i].Type = powerPointText.Type;
+                                powerPointLevelList[i].Level = i;
+
+                                //if the type contains the name title, get info from master on "title"
+                                if (powerPointLevelList[i].Type.Contains("Title"))
                                 {
-                                    temp.Type = powerPointText.Type;
-                                    powerPointText.setVisualAttribues(temp);
+                                    PowerPointText temp = new PowerPointText();
+                                    temp.Type = "title";
+                                    temp = getPowerPointObject(_placeHolderListMaster, temp);
+                                    if (temp != null)
+                                    {
+                                        powerPointLevelList[i].Idx = powerPointText.Idx;
+                                        powerPointLevelList[i].Type = powerPointText.Type;
+                                        powerPointLevelList[i].setVisualAttribues(temp);
+                                        powerPointLevelList[i].Level = i;
+                                    }
+                                }
+
+                                PowerPointText master = getPowerPointObject(_placeHolderListMaster, powerPointLevelList[i]);
+                                if (master != null)
+                                {
+                                    powerPointLevelList[i].setVisualAttribues(master);
+                                    powerPointLevelList[i].Level = i;
                                 }
                             }
-
-                            PowerPointText master = GetPowerPointObject(_placeHolderTextObjectsMaster,powerPointText);
-                            if (master != null)
-                                powerPointText = master;
                         }
 
                         //if slide level, get data from both master and layout level
                         if (_slideLevel)
                         {
-                            PowerPointText master = GetPowerPointObject(_placeHolderTextObjectsMaster, powerPointText);
-                            if (master != null)
-                                powerPointText = master;
-
-                            PowerPointText layout = GetPowerPointObject(_placeHolderTextObjectsLayout, powerPointText);
+                            PowerPointText layout = getPowerPointObject(_placeHolderListLayout, powerPointText);
                             if (layout != null)
-                                powerPointText = layout;
+                                powerPointText.setVisualAttribues(layout);
                         }
 
+                        //Get the transform properties
                         if (HasTransform)
                         {
                             powerPointText.X = textSimpleSceneObject.BoundsX;
                             powerPointText.Y = textSimpleSceneObject.BoundsY;
                             powerPointText.Cx = textSimpleSceneObject.ClipWidth;
                             powerPointText.Cy = textSimpleSceneObject.ClipHeight;
+
+                            for (int i = 0; i < 9; i++)
+                            {
+                                powerPointLevelList[i].X = textSimpleSceneObject.BoundsX;
+                                powerPointLevelList[i].Y = textSimpleSceneObject.BoundsY;
+                                powerPointLevelList[i].Cx = textSimpleSceneObject.ClipWidth;
+                                powerPointLevelList[i].Cy = textSimpleSceneObject.ClipHeight;
+                            }
                         }
+                    }
+
+                    //if textbody contains listinfo, get that information
+                    if (txBody.ListStyle != null)
+                    {
+                        listStyleList = getListStyles(txBody.ListStyle);
+                        for (int i = 0; i < 9; i++)
+                            powerPointLevelList[i].setVisualAttribues(listStyleList[i]);
                     }
 
                     textSimpleSceneObject.BoundsX = powerPointText.X;
@@ -555,24 +625,124 @@ namespace ConsoleApplication
 
                     textObject = new TextObject(textSimpleSceneObject);
 
+                    int paragraphIndex = 0;
+                    
                     foreach (DrawingML.Paragraph p in child.Descendants<DrawingML.Paragraph>())
                     {
+                        PowerPointText paragraghPPT = new PowerPointText(powerPointText);
+                        //Get the paragraph properties
+                        if (p.ParagraphProperties != null)
+                        {
+                            paragraghPPT.Alignment = (p.ParagraphProperties.Alignment != null) ? p.ParagraphProperties.Alignment.Value.ToString() : powerPointText.Alignment;
+
+                            textObject.Align = paragraghPPT.Alignment;
+
+                            if (p.ParagraphProperties.Level != null)
+                            {
+                                paragraghPPT.Level = p.ParagraphProperties.Level.Value;
+
+                                PowerPointText temp = powerPointLevelList[paragraghPPT.Level];
+                                if(temp!=null)
+                                    paragraghPPT.setVisualAttribues(temp);
+                            }
+                            else
+                            {
+                                paragraghPPT.Level = 0;
+                            }
+                        }
+
+                        textObject.Align = (paragraghPPT.Alignment != "") ? paragraghPPT.Alignment : textObject.Align;
+                        textObject.Color = (paragraghPPT.FontColor != "") ? paragraghPPT.FontColor : textObject.Color;
+                        textObject.Size = (paragraghPPT.FontSize > 0) ? paragraghPPT.FontSize : textObject.Size;
+
+                        bool HasRun = false;
+                        //Get the run properties
+                        int runIndex = 0;
                         foreach (DrawingML.Run r in p.Descendants<DrawingML.Run>())
                         {
-                            if(r.Text.InnerText!=null)
+                            HasRun = true;
+
+                            if (r.Text.InnerText != "")
                                 HasText = true;
-                            
+
+                            PowerPointText runPPT = new PowerPointText(paragraghPPT);
+
                             TextFragment textFragment = new TextFragment();
                             TextStyle textStyle = new TextStyle();
 
+                            if (runIndex == 0)
+                            {
+                                textFragment.Level = runPPT.Level;
+
+                                if (paragraphIndex != 0)
+                                    textFragment.NewParagraph = true;
+                            }
+
+                            if (r.RunProperties != null)
+                            {
+                                DrawingML.RunProperties rPr = r.RunProperties;
+                                runPPT.Bold = (rPr.Bold != null) ? rPr.Bold.Value : runPPT.Bold;
+                                runPPT.Italic = (rPr.Italic != null) ? rPr.Italic.Value : runPPT.Italic;
+                                runPPT.FontSize = (rPr.FontSize != null) ? rPr.FontSize.Value : runPPT.FontSize;
+                                runPPT.Underline = (rPr.Underline != null) ? true : runPPT.Underline;
+
+                                //Get font color
+                                if (rPr.HasChildren)
+                                {
+                                    foreach (var rPrChild in rPr.ChildElements)
+                                    {
+                                        if (rPrChild.LocalName == "solidFill")
+                                        {
+                                            runPPT.FontColor = getColor(rPrChild);
+                                                
+                                        }
+                                    }
+                                }
+                            
+                            }
+
+                            textStyle.Bold = runPPT.Bold;
+                            textStyle.Italic = runPPT.Italic;
+                            textStyle.Underline = runPPT.Underline;
+                            textStyle.FontSize = runPPT.FontSize;
+                            textStyle.FontColor = runPPT.FontColor;
                             textFragment.Text = r.Text.InnerText;
+
+                            //Set to default stuffs
+                            var style = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster.TextStyles.OtherStyle;
+                            PowerPointText[] defaultPPT = getListStyles(style);
+
+                            if (textStyle.FontSize == 0)
+                                textStyle.FontSize = defaultPPT[runPPT.Level].FontSize;
+
+                            if (textStyle.FontColor == "")
+                                textStyle.FontColor = defaultPPT[runPPT.Level].FontColor;
+
+                            if (textObject.Align == "")
+                                textObject.Align = defaultPPT[runPPT.Level].Alignment;
+
                             textObject.StyleList.Add(textStyle);
                             textFragment.StyleId = textObject.StyleList.IndexOf(textStyle);
                             textObject.FragmentsList.Add(textFragment);
-                        }
-                    }
-                }
 
+                            //Increase the run index
+                            runIndex++;
+                        }
+
+                        //If paragraph has no run means it has no text, but it still will correspong to a new line 
+                        if (!HasRun)
+                        {
+                            if (textObject.FragmentsList.Count > 0)
+                                textObject.FragmentsList.Last().Breaks++;
+                        }
+
+                        //Increase the paragragh index
+                        paragraphIndex++;
+                    }
+
+
+                }
+                
                 if(child.LocalName == "style")
                 {
                     PresentationML.ShapeStyle style = (PresentationML.ShapeStyle)child;
@@ -666,6 +836,10 @@ namespace ConsoleApplication
                         if (styleChild.LocalName == "fontRef")
                         {
                             DrawingML.FontReference fontRef = (DrawingML.FontReference)styleChild;
+
+                            string color = getColor(fontRef);
+                            textObject.Color = color;
+                            powerPointText.FontColor = color;
                         }
                     }
 
@@ -673,24 +847,38 @@ namespace ConsoleApplication
 
             }
 
-            
-
             if (HasValidGeometry && (HasLine || HasBg))
                 sceneObjectList.Add(shapeObject);
-
+            
             if (_slideLevel && HasText)
                 sceneObjectList.Add(textObject);
-
+                
             if (_layoutLevel)
-                _placeHolderTextObjectsLayout.Add(powerPointText);
+            {
+                for(int i=0;i<9;i++)
+                {
+                    if (powerPointLevelList[i].Idx > 0 || powerPointLevelList[i].Type != "")
+                    {
+                        _placeHolderListLayout.Add(powerPointLevelList[i]);
+                    }
+                }
+            }
 
             if (_masterLevel)
-                _placeHolderTextObjectsMaster.Add(powerPointText);
+            {
+                for (int i = 0; i < 9; i++)
+                {
+                    if (powerPointLevelList[i].Idx > 0 || powerPointLevelList[i].Type != "")
+                    {
+                        _placeHolderListMaster.Add(powerPointLevelList[i]);
+                    }
+                }
+            }
 
             return sceneObjectList;
         }
 
-        private PowerPointText GetPowerPointObject(List<PowerPointText> list, PowerPointText powerPointText)
+        private PowerPointText getPowerPointObject(List<PowerPointText> list, PowerPointText powerPointText)
         {
             PowerPointText temp = new PowerPointText();
 
@@ -841,11 +1029,12 @@ namespace ConsoleApplication
             }
             else
                 foreach (var colorValue in colorType.Parent.Descendants<DrawingML.SchemeColor>())
+                {
                     if (colorValue.Val.ToString() == "phClr")
                         color = phClr;
                     else
                         color = getColorFromTheme(colorValue.Val.ToString());
-
+                }
 
             if (colorType.HasChildren)
             {
@@ -891,7 +1080,7 @@ namespace ConsoleApplication
                 if (colorAttr.LocalName == "lumOff")
                     powerPointColor.LumOff = ((DrawingML.LuminanceOffset)colorAttr).Val;
                 if (colorAttr.LocalName == "lumMod")
-                    powerPointColor.Lum = ((DrawingML.LuminanceModulation)colorAttr).Val;
+                    powerPointColor.LumMod = ((DrawingML.LuminanceModulation)colorAttr).Val;
                 if (colorAttr.LocalName == "red")
                     powerPointColor.Red = ((DrawingML.Red)colorAttr).Val;
                 if (colorAttr.LocalName == "redOff")
@@ -1045,5 +1234,108 @@ namespace ConsoleApplication
             //Default
             return "linear";
         }
+
+        public int getAlpha(OpenXmlElement xmlElement)
+        {
+            foreach (var child in xmlElement.FirstChild)
+                if (child.LocalName == "alpha")
+                {
+                    DrawingML.Alpha alpha = (DrawingML.Alpha)child;
+                    return alpha.Val.Value;
+                }
+
+            //Default
+            return 1;
+        }
+
+        public PowerPointText[] getListStyles(OpenXmlElement listStyleElement)
+        {
+            int styles = 9;
+            PowerPointText[] array = new PowerPointText[styles];
+
+            for (int i = 0; i < styles; i++)
+            {
+                PowerPointText p = new PowerPointText();
+                array[i] = p;
+            }
+
+            int level = 0;
+            foreach (var child in listStyleElement)
+            {
+                if (child.LocalName == "defPPr")
+                {
+                    //TODO
+                }
+                else
+                {
+                    PowerPointText p = getLevelProperties(child);
+                    p.Level = level;
+                    array[level] = p;
+                    level++;
+                }
+            }
+
+            return array;
+        }
+
+        public PowerPointText getLevelProperties<T>(T input)
+        {
+
+            PowerPointText powerPointText = new PowerPointText();
+
+            if (input == null)
+                return powerPointText;
+
+            bool hasAttr = (bool)input.GetType().GetMethod("get_HasAttributes").Invoke(input, null);
+
+            if (hasAttr)
+            {
+                List<OpenXmlAttribute> attrs = (List<OpenXmlAttribute>)input.GetType().GetMethod("GetAttributes").Invoke(input, null);
+
+                foreach (var attr in attrs)
+                {
+                    if (attr.LocalName == "algn")
+                    {
+                        powerPointText.Alignment = input.GetType().GetMethod("get_Alignment").Invoke(input, null).ToString();
+                    }
+                }
+            }
+
+            OpenXmlElementList childElements = (OpenXmlElementList)input.GetType().GetMethod("get_ChildElements").Invoke(input, null);
+
+            foreach (var childElement in childElements)
+            {
+                if (childElement.LocalName == "defRPr")
+                {
+                    DrawingML.DefaultRunProperties defRPR = (DrawingML.DefaultRunProperties)childElement;
+
+                    //Get run properties (size, bold, italic, underline) and insert into style
+                    powerPointText.FontSize = (defRPR.FontSize != null) ? (int)defRPR.FontSize : powerPointText.FontSize;
+                    powerPointText.Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointText.Bold;
+                    powerPointText.Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointText.Italic;
+                    //powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
+
+                    if (defRPR.Underline != null)
+                    {
+                        if (defRPR.Underline.Value.ToString() == "sng")
+                        {
+                            powerPointText.Underline = true;
+                        }
+                    }
+
+                    foreach (var defRPrChild in childElement)
+                    {
+                        if (defRPrChild.LocalName == "solidFill")
+                        {
+                            powerPointText.FontColor = getColor(defRPrChild);
+                        }
+                    }
+                }
+            }
+
+            return powerPointText;
+        }
+
+        
     }
 }
