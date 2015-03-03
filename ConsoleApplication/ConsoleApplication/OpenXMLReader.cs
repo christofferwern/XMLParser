@@ -84,7 +84,6 @@ namespace ConsoleApplication
                 _presentationSizeX = slideInfo.Cx.Value;
                 _presentationSizeY = slideInfo.Cy.Value;
 
-
                 //Get the slidemaster scene object, background etc
                 PresentationML.SlideMaster slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster; ;
 
@@ -136,6 +135,8 @@ namespace ConsoleApplication
                 //Go through all Slides in the PowerPoint presentation
                 foreach (PresentationML.SlideId slideID in presentation.SlideIdList)
                 {
+                    Console.WriteLine("SCENE: " + sceneCounter + ". -------------");
+
                     SlidePart slidePart = _presentationDocument.PresentationPart.GetPartById(slideID.RelationshipId) as SlidePart;
                     Scene scene = new Scene(sceneCounter);
 
@@ -156,9 +157,8 @@ namespace ConsoleApplication
                     _slideLevel = true;
                     foreach (var child in slidePart.Slide.CommonSlideData.ChildElements)
                     {
-
-                        if (child.LocalName == "bg")
-                            scene.SceneObjectList.InsertRange(0, getSceneObjects((PresentationML.Background)child));
+                        if(child.LocalName == "bg")
+                            scene.SceneObjectList.InsertRange(0,getSceneObjects((PresentationML.Background)child));
 
                         if (child.LocalName == "spTree")
                         {
@@ -166,17 +166,6 @@ namespace ConsoleApplication
                         }
                     }
                     _slideLevel = false;
-
-
-                    //if (sceneCounter == 1)
-                    //    foreach (PowerPointText p in _placeHolderListMaster)
-                    //        if (p.Level < 1)
-                    //            Console.WriteLine(p.toString());
-
-                    //if (sceneCounter == 1)
-                    //    foreach (PowerPointText p in _placeHolderListLayout)
-                    //        if (p.Level < 1)
-                    //            Console.WriteLine(p.toString());
 
                     //Add scene to presentation
                     _presentationObject.addScene(scene);
@@ -228,18 +217,14 @@ namespace ConsoleApplication
                 if (child.LocalName == "sp")
                     sceneObjectList.AddRange(getSceneObjects((PresentationML.Shape)child));
 
-
                 if (child.LocalName == "graphicFrame")
                     sceneObjectList.AddRange(getSceneObjects((PresentationML.GraphicFrame)child));
-
 
                 if (child.LocalName == "pic")
                     sceneObjectList.AddRange(getSceneObjects((PresentationML.Picture)child));
 
-
                 if (child.LocalName == "grpSp")
                     sceneObjectList.AddRange(getSceneObjects((PresentationML.GroupShape)child));
-
             }
 
             return sceneObjectList;
@@ -260,12 +245,16 @@ namespace ConsoleApplication
         private List<SceneObject> getSceneObjects(PresentationML.Shape shape)
         {
             List<SceneObject> sceneObjectList = new List<SceneObject>();
+
+            int GchildOffX = 0, GchildOffY = 0, GchildExtX = 0, GchildExtY = 0, GoffX = 0, GoffY = 0, GextX = 0, GextY = 0;
+
             SimpleSceneObject shapeSimpleSceneObject = new SimpleSceneObject(),
                               textSimpleSceneObject = new SimpleSceneObject();
 
             ShapeObject shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Rectangle);
             TextObject textObject = new TextObject(textSimpleSceneObject);
             PowerPointText powerPointText = new PowerPointText();
+
             const int styles = 9;
             PowerPointText[]    powerPointLevelList = new PowerPointText[styles],
                                 listStyleList = new PowerPointText[styles];
@@ -279,16 +268,52 @@ namespace ConsoleApplication
                 listStyleList[i] = p2;
             }
 
-            //**TODO**
-            //Get siblings and check for offsets!!!
-            /*
-             *Hämta syskon grSpPr -> xfrm 
-             *Om inte noll!
-             */
+            bool isGroup = false;
+
+            //Check for potential group shapes.
+            IEnumerator<OpenXmlElement> parent = shape.Parent.GetEnumerator();
+            while (parent.MoveNext())
+            {
+                if (parent.Current.LocalName == "grpSpPr")
+                {
+                    PresentationML.GroupShapeProperties grpSpPr = (PresentationML.GroupShapeProperties)parent.Current;
+
+                    int offX = (int)grpSpPr.TransformGroup.Offset.X;
+                    int offY = (int)grpSpPr.TransformGroup.Offset.Y;
+                    int extX = (int)grpSpPr.TransformGroup.Extents.Cx;
+                    int extY = (int)grpSpPr.TransformGroup.Extents.Cy;
+
+                    int chOffX = (int)grpSpPr.TransformGroup.ChildOffset.X;
+                    int chOffY = (int)grpSpPr.TransformGroup.ChildOffset.Y;
+                    int chExtX = (int)grpSpPr.TransformGroup.ChildExtents.Cx;
+                    int chExtY = (int)grpSpPr.TransformGroup.ChildExtents.Cy;
+
+                    if (!((chOffX == chOffY) && (chExtX == chExtY) && (offX == offY) && (extX == extY) && extY == 0))
+                    {
+                        GchildOffX = chOffX;
+                        GchildOffY = chOffY;
+                        GchildExtX = chExtX;
+                        GchildExtY = chExtY;
+
+                        GoffX = offX;
+                        GoffY = offY;
+                        GextX = extX;
+                        GextY = extY;
+                        
+                        shapeSimpleSceneObject.BoundsX = offX;
+                        shapeSimpleSceneObject.BoundsY = offY;
+                        shapeSimpleSceneObject.ClipWidth = extX;
+                        shapeSimpleSceneObject.ClipHeight = extY;
+                        
+                        isGroup = true;
+                    }
+                }
+
+            }
 
             bool HasBg = false, HasLine = false, HasValidGeometry = false, HasText = false, HasTransform = false,
-                 solidFillColorChange = false, lineColorChange = false, gradientColorChange = false;
-
+                 solidFillColorChange = false, lineColorChange = false, gradientColorChange = false, IsLine = false;
+            
             foreach (var child in shape.ChildElements)
             {
                 if(child.LocalName == "nvSpPr")
@@ -311,14 +336,29 @@ namespace ConsoleApplication
                 if(child.LocalName == "spPr")
                 {
                     PresentationML.ShapeProperties spPr = (PresentationML.ShapeProperties)child;
-
+                    
                     if (spPr.Transform2D != null)
                     {
-                        //Dessa ska bero på gruppens Transform2D
-                        shapeSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
-                        shapeSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
-                        shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
-                        shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
+                        if (isGroup)
+                        {
+                            double scaleX = (double)GextX / GchildExtX;
+                            double scaleY = (double)GextY / GchildExtY;
+
+                            shapeSimpleSceneObject.BoundsX = (GoffX - GchildOffX + (int)spPr.Transform2D.Offset.X);
+                            shapeSimpleSceneObject.BoundsY = (GoffY - GchildOffY + (int)spPr.Transform2D.Offset.Y);
+                            shapeSimpleSceneObject.BoundsX = (int)((shapeSimpleSceneObject.BoundsX - GoffX) * scaleX) + GoffX;
+                            shapeSimpleSceneObject.BoundsY = (int)((shapeSimpleSceneObject.BoundsY - GoffY) * scaleY) + GoffY;
+
+                            shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)(spPr.Transform2D.Extents.Cx * scaleX) : shapeSimpleSceneObject.ClipWidth;
+                            shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)(spPr.Transform2D.Extents.Cy * scaleY) : shapeSimpleSceneObject.ClipHeight;
+                        }
+                        else
+                        {
+                            shapeSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
+                            shapeSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
+                            shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
+                            shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
+                        }
 
                         textSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
                         textSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
@@ -336,6 +376,7 @@ namespace ConsoleApplication
                     
                     foreach(var spPrChild in child)
                     {
+
                         if(spPrChild.LocalName == "prstGeom")
                         {
                             DrawingML.PresetGeometry prstGeom = (DrawingML.PresetGeometry)spPrChild;
@@ -348,7 +389,10 @@ namespace ConsoleApplication
                                 HasValidGeometry = true;
                                 shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Rectangle);
                             }
-
+                            if (prstGeom.Preset == "line")
+                            {
+                                IsLine = true;
+                            }
 
                             if (prstGeom.Preset == "ellipse" || prstGeom.Preset == "flowChartConnector")
                             {
@@ -403,7 +447,7 @@ namespace ConsoleApplication
                             }
 
                         }
-
+                        
                         if(spPrChild.LocalName == "solidFill")
                         {
                             HasBg = true;
@@ -436,17 +480,35 @@ namespace ConsoleApplication
 
                         if(spPrChild.LocalName == "ln")
                         {
-                            DrawingML.Outline ln = (DrawingML.Outline)spPrChild; 
-                            
-                            shapeObject.LineSize = (ln.Width!=null) ? ln.Width.Value : shapeObject.LineSize;
-                            shapeObject.LineEnabled = true;
+                            DrawingML.Outline ln = (DrawingML.Outline)spPrChild;
+                            if (IsLine)
+                            {
+
+                                if (shapeSimpleSceneObject.ClipWidth == 0)
+                                    shapeSimpleSceneObject.ClipWidth = ln.Width.Value*100;
+                                else if (shapeSimpleSceneObject.ClipHeight == 0)
+                                    shapeSimpleSceneObject.ClipHeight = ln.Width.Value*100;
+
+                                shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Rectangle);
+
+                            }
+                            else
+                            {
+                                shapeObject.LineSize = (ln.Width != null) ? ln.Width.Value : shapeObject.LineSize;
+                                shapeObject.LineEnabled = true;
+
+                            }
+                                
                             foreach (var lnChild in ln)
                             {
                                 if (lnChild.LocalName == "solidFill")
                                 {
                                     HasLine = true;
                                     lineColorChange = true;
-                                    shapeObject.LineColor = getColor(lnChild);
+                                    if (IsLine)
+                                        shapeObject.FillColor = getColor(lnChild);
+                                    else
+                                        shapeObject.LineColor = getColor(lnChild);
                                 }
 
                                 if (lnChild.LocalName == "gradFill")
@@ -458,6 +520,7 @@ namespace ConsoleApplication
                             }
                             
                         }
+
                     }
                 }
                 
@@ -787,10 +850,14 @@ namespace ConsoleApplication
             }
 
             if (HasValidGeometry && (HasLine || HasBg))
+            {
+                Console.WriteLine("SHAPE");
                 sceneObjectList.Add(shapeObject);
+            }
 
             if (_slideLevel && HasText)
             {
+                Console.WriteLine("TEXT");
                 sceneObjectList.Add(textObject);
             }
                 
@@ -815,8 +882,7 @@ namespace ConsoleApplication
                     }
                 }
             }
-                
-        
+
             return sceneObjectList;
         }
 
@@ -1184,9 +1250,6 @@ namespace ConsoleApplication
                 if (child.LocalName == "alpha")
                 {
                     DrawingML.Alpha alpha = (DrawingML.Alpha)child;
-
-                    Console.WriteLine(alpha.Val.Value);
-
                     return alpha.Val.Value;
                 }
             }

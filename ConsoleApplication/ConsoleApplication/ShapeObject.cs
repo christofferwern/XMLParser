@@ -76,7 +76,7 @@ namespace ConsoleApplication
             _lineAlpha = 1;
             _lineColor = "6426397";
             _lineEnabled = false;
-            _lineSize = 1;
+            _lineSize = 0;
             _points = 3;
             _radius = 0;
             _rotation = 0;
@@ -160,8 +160,10 @@ namespace ConsoleApplication
 
                 _gradientAngle /= 60000; 
             }
-            
-            _lineSize = (int) Math.Round((double)_lineSize / 10000);
+
+            _lineSize = (int) Math.Round((double)_lineSize / 12700);
+            if (_lineSize <= 0)
+                _lineEnabled = false;
             _lineColor = getColorAsInteger(_lineColor).ToString();
             _cornerRadius = (float) Math.Round((_cornerRadius / 100000) * 128 * 4);
 
