@@ -941,10 +941,16 @@ namespace ConsoleApplication
 
                 foreach (var bgStyle in bgStyleList)
                 {
+                    
                     if (counter == bgRefIndex)
                     {
                         if (bgStyle.LocalName == "solidFill")
+                        {
                             shape.FillColor = getColor(bgStyle, color);
+                            shape.FillAlpha = getAlpha(bgStyle);
+                            sceneObjectList.Add(shape);
+                        }
+                            
 
                         if (bgStyle.LocalName == "gradFill")
                         {
@@ -952,10 +958,19 @@ namespace ConsoleApplication
                             shape.GradientAngle = getGradientAngle((DrawingML.GradientFill)bgStyle);
 
                             List<string> colors = getColors(bgStyle, color);
+                            List<int> gradientAlphaList = getAlphas(bgStyle);
+
+                            shape.FillAlpha1 = gradientAlphaList.First();
+                            shape.FillAlpha2 = gradientAlphaList.Last();
                             shape.FillColor1 = colors.First();
                             shape.FillColor2 = colors.Last();
                             shape.FillType = "gradient";
+                            sceneObjectList.Add(shape);
 
+                        }
+                        if (bgStyle.LocalName == "blipFill")
+                        {
+                            //sceneObjectList.Add(shape);
                         }
                     }
                     counter++;
@@ -963,28 +978,50 @@ namespace ConsoleApplication
                 
 
             }
-
-            //FIX ALPHA
-
-            foreach (DrawingML.SolidFill solidFill in background.Descendants<DrawingML.SolidFill>())
+            else if (background.FirstChild.GetType() == typeof(PresentationML.BackgroundProperties))
             {
-                shape.FillType = "solid";
-                shape.FillColor = getColor(solidFill);
+                foreach (var bgType in background.FirstChild)
+                {
+                    if (bgType.LocalName == "solidFill")
+                    {
+                        foreach (DrawingML.SolidFill solidFill in background.Descendants<DrawingML.SolidFill>())
+                        {
+                            shape.FillType = "solid";
+                            shape.FillColor = getColor(solidFill);
+                            shape.FillAlpha = getAlpha(solidFill);
+                        }
+                        sceneObjectList.Add(shape);
+                    }
+                    if (bgType.LocalName == "gradFill")
+                    {
+                        foreach (DrawingML.GradientFill gradientFill in background.Descendants<DrawingML.GradientFill>())
+                        {
+
+                            shape.FillType = "gradient";
+                            shape.GradientType = getGradientType(gradientFill);
+                            shape.GradientAngle = getGradientAngle(gradientFill);
+
+                            List<string> gradientColorList = getColors(gradientFill);
+                            List<int> gradientAlphaList = getAlphas(gradientFill);
+
+                            shape.FillAlpha1 = gradientAlphaList.First();
+                            shape.FillAlpha2 = gradientAlphaList.Last();
+                            shape.FillColor1 = gradientColorList.First();
+                            shape.FillColor2 = gradientColorList.Last();
+                        }
+                        sceneObjectList.Add(shape);
+                    }
+                    if (bgType.LocalName == "blipFill")
+                    {
+                        foreach (DrawingML.BlipFill blipFill in background.Descendants<DrawingML.BlipFill>())
+                        {
+
+                        }
+                        //sceneObjectList.Add(shape);
+                    }
+                }
+
             }
-            foreach (DrawingML.GradientFill gradientFill in background.Descendants<DrawingML.GradientFill>())
-            {
-
-                shape.FillType = "gradient";
-                shape.GradientType = getGradientType(gradientFill);
-                shape.GradientAngle = getGradientAngle(gradientFill);
-
-                List<string> gradientColorList = getColors(gradientFill);
-
-                shape.FillColor1 = gradientColorList.First();
-                shape.FillColor2 = gradientColorList.Last();
-            }
-
-            sceneObjectList.Add(shape);
 
             return sceneObjectList;
         }
@@ -1213,7 +1250,6 @@ namespace ConsoleApplication
             return false;
         }
 
-
         public int getGradientAngle(DrawingML.GradientFill gradFill)
         {
             foreach (var lin in gradFill.Descendants<DrawingML.LinearGradientFill>())
@@ -1245,9 +1281,19 @@ namespace ConsoleApplication
                 }
 
             //Default
-            return 1;
+            return 100000;
         }
 
+        public List<int> getAlphas(OpenXmlElement xmlElement)
+        {
+            List<int> alphas = new List<int>();
+            OpenXmlElement elementType = xmlElement.FirstChild;
+
+            foreach (DrawingML.GradientStop gs in elementType.Descendants<DrawingML.GradientStop>())
+                alphas.Add(getAlpha(gs));
+
+            return alphas;
+        }
         public PowerPointText[] getListStyles(OpenXmlElement listStyleElement)
         {
             int styles = 9;
