@@ -95,8 +95,6 @@ namespace ConsoleApplication
 
             _fillColor1 = _fillColor;
             _fillColor2 = "10834182";
-            _fillAlpha1 = 1;
-            _fillAlpha2 = 1;
 
             _properties = new Properties(true,false,true,true,true,true,true,true,false,true,true,false,true,true,true);
         }
@@ -142,32 +140,37 @@ namespace ConsoleApplication
             if (_fillType.Equals("solid"))
             {
                 _fillColor = getColorAsInteger(_fillColor).ToString();
-                _fillAlpha = (_fillAlpha/100000);
+                _fillAlpha /= 100000;
             }
 
             if (_fillType.Equals("gradient"))
             {
+                Console.WriteLine(_fillAlpha1);
+                
                 _fillColor = getColorAsInteger(_fillColor1).ToString();
 
-                if (_gradientAlphas[0] != 1)
-                    _fillAlpha1 = ((_gradientAlphas[0] / 1000) / 100);
-                if (_gradientAlphas[1] != 1)
-                    _fillAlpha2 = ((_gradientAlphas[1] / 1000) / 100);
+                _fillAlpha1 /= 100000;
+                _fillAlpha2 /= 100000;
 
                 _fillColor1 = _fillColor;
                 _fillColor2 = getColorAsInteger(_fillColor2).ToString();
                 
+                _gradientAngle /= 60000;
 
-                _gradientAngle /= 60000; 
+                Console.WriteLine(_fillAlpha1);
             }
 
             _lineSize = (int) Math.Round((double)_lineSize / 12700);
-            if (_lineSize <= 0)
-                _lineEnabled = false;
+
+            //if (_lineSize <= 0)
+            //    _lineEnabled = false;
+
             _lineColor = getColorAsInteger(_lineColor).ToString();
             _cornerRadius = (float) Math.Round((_cornerRadius / 100000) * 128 * 4);
 
             _rotation /= 60000;
+
+            
         }
 
         public override XmlDocument getXMLDocumentRoot()
@@ -380,6 +383,17 @@ namespace ConsoleApplication
         {
             get { return _properties; }
             set { _properties = value; }
+        }
+
+        internal void setAttributes(TableStyle tableStyle)
+        {
+            if (tableStyle == null)
+                return;
+
+            FillAlpha = (tableStyle.FillAlpha != 0) ? tableStyle.FillAlpha : FillAlpha;
+            FillColor = (tableStyle.FillColor != "") ? tableStyle.FillColor : FillColor;
+            LineSize = (tableStyle.LineSize != 0) ? tableStyle.LineSize : LineSize;
+            LineColor = (tableStyle.LineColor != "") ? tableStyle.LineColor : LineColor;
         }
     }
 }

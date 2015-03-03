@@ -265,12 +265,52 @@ namespace ConsoleApplication
                     {
                         if (child.LocalName == "tcTxStyle")
                         {
-                            
+                            //TODO
                         }
                         
                         if (child.LocalName == "tcStyle")
                         {
-                            
+                            foreach (var tcStyleChild in child)
+                            {
+                                if (tcStyleChild.LocalName == "fill")
+                                {
+                                    DrawingML.FillProperties fill = (DrawingML.FillProperties)tcStyleChild;
+
+                                    if (fill.SolidFill != null)
+                                    {
+                                        t.FillColor = getColor(fill.SolidFill);
+                                        t.FillAlpha = getAlpha(fill.SolidFill);
+                                    }
+                                }
+
+                                if (tcStyleChild.LocalName == "tcBdr")
+                                {
+                                    if (tcStyleChild.FirstChild != null)
+                                    {
+                                        if (tcStyleChild.FirstChild.FirstChild != null)
+                                        {
+                                            DrawingML.Outline ln = (DrawingML.Outline)tcStyleChild.FirstChild.FirstChild;
+
+                                            if (ln.Width != null)
+                                            {
+                                                t.LineSize = ln.Width.Value;
+
+                                                foreach (var lnChild in ln)
+                                                {
+                                                    if (lnChild.LocalName == "solidFill")
+                                                    {
+                                                        t.LineColor = getColor(lnChild);
+                                                    }
+                                                }
+                                            }
+
+                                        }
+                                    }
+
+                                    
+                                }
+                            }
+
                         }
                     }
 
@@ -280,12 +320,18 @@ namespace ConsoleApplication
                 foreach (TableStyle t in tableStyles)
                     Console.WriteLine(t.ToString());
 
+                int lastColIndex = -1, lastRowIndex = -1;
+
                 //Store the column widths
                 List<int> gridColWidthList = new List<int>();
                 foreach (DrawingML.GridColumn gridCol in table.TableGrid)
                 {
                     gridColWidthList.Add((int)gridCol.Width);
+                    lastColIndex++;
                 }
+
+                foreach (DrawingML.TableRow tr in table.Descendants<DrawingML.TableRow>())
+                    lastRowIndex++;
 
                 int width, height, colIndex, rowIndex = 0, totalHeight = 0, totalWidth = 0;
                 foreach (DrawingML.TableRow tr in table.Descendants<DrawingML.TableRow>())
@@ -304,6 +350,46 @@ namespace ConsoleApplication
 
                         ShapeObject shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
 
+                        //Set to default values
+                        shapeObject.setAttributes(getTableStyle(tableStyles, "wholeTbl"));
+
+                        //if band column
+                        if (table.TableProperties.BandRow != null)
+                        {
+                            if (rowIndex % 2 == 0)
+                                shapeObject.setAttributes(getTableStyle(tableStyles, "band1H"));
+                            else
+                                shapeObject.setAttributes(getTableStyle(tableStyles, "band2H"));
+                        }
+
+                        //if band column
+                        if (table.TableProperties.BandColumn != null)
+                        {
+                            if (colIndex % 2 == 0)
+                                shapeObject.setAttributes(getTableStyle(tableStyles, "band1V"));
+                            else
+                                shapeObject.setAttributes(getTableStyle(tableStyles, "band2V"));
+                        }
+
+                        //if first row
+                        if (table.TableProperties.FirstRow != null && (rowIndex == 0))
+                            shapeObject.setAttributes(getTableStyle(tableStyles, "firstRow"));
+
+                        //if first column
+                        if (table.TableProperties.FirstColumn != null && (colIndex == 0))
+                            shapeObject.setAttributes(getTableStyle(tableStyles, "firstCol"));
+
+                        //if last row
+                        if (table.TableProperties.LastRow != null && (rowIndex == lastRowIndex))
+                            shapeObject.setAttributes(getTableStyle(tableStyles, "lastRow"));
+
+                        //if last column
+                        if (table.TableProperties.LastColumn != null && (colIndex == lastColIndex))
+                            shapeObject.setAttributes(getTableStyle(tableStyles, "lastCol"));
+
+                        if (shapeObject.LineSize > 0)
+                            shapeObject.LineEnabled = true;
+
                         sceneObjectList.Add(shapeObject);
 
                         colIndex++;
@@ -317,6 +403,15 @@ namespace ConsoleApplication
             }
 
             return sceneObjectList;
+        }
+
+        private TableStyle getTableStyle(List<TableStyle> list, string type)
+        {
+            foreach (TableStyle t in list)
+                if (t.Type == type)
+                    return t;
+
+            return null;
         }
 
         private List<SceneObject> getSceneObjects(PresentationML.Shape shape)
@@ -530,7 +625,7 @@ namespace ConsoleApplication
                             HasBg = true;
                             solidFillColorChange = true;
                             shapeObject.FillColor = getColor(spPrChild);
-                            shapeObject.FillAlpha = getAlpha(spPrChild);
+                            //shapeObject.FillAlpha = getAlpha(spPrChild);
                         }   
 
                         if(spPrChild.LocalName == "gradFill")
@@ -887,7 +982,7 @@ namespace ConsoleApplication
                                         {
                                             HasBg = true;
                                             shapeObject.FillColor = getColor(fillStyle, color);
-                                            shapeObject.FillAlpha = getAlpha(fillStyle);
+                                            //shapeObject.FillAlpha = getAlpha(fillStyle);
                                         }
                                     }
 
@@ -1021,10 +1116,16 @@ namespace ConsoleApplication
 
                 foreach (var bgStyle in bgStyleList)
                 {
+                    
                     if (counter == bgRefIndex)
                     {
                         if (bgStyle.LocalName == "solidFill")
+                        {
                             shape.FillColor = getColor(bgStyle, color);
+                            shape.FillAlpha = getAlpha(bgStyle);
+                            sceneObjectList.Add(shape);
+                        }
+                            
 
                         if (bgStyle.LocalName == "gradFill")
                         {
@@ -1032,10 +1133,19 @@ namespace ConsoleApplication
                             shape.GradientAngle = getGradientAngle((DrawingML.GradientFill)bgStyle);
 
                             List<string> colors = getColors(bgStyle, color);
+                            //List<int> gradientAlphaList = getAlphas(bgStyle);
+
+                            //shape.FillAlpha1 = gradientAlphaList.First();
+                            //shape.FillAlpha2 = gradientAlphaList.Last();
                             shape.FillColor1 = colors.First();
                             shape.FillColor2 = colors.Last();
                             shape.FillType = "gradient";
+                            sceneObjectList.Add(shape);
 
+                        }
+                        if (bgStyle.LocalName == "blipFill")
+                        {
+                            //sceneObjectList.Add(shape);
                         }
                     }
                     counter++;
@@ -1043,28 +1153,50 @@ namespace ConsoleApplication
                 
 
             }
-
-            //FIX ALPHA
-
-            foreach (DrawingML.SolidFill solidFill in background.Descendants<DrawingML.SolidFill>())
+            else if (background.FirstChild.GetType() == typeof(PresentationML.BackgroundProperties))
             {
-                shape.FillType = "solid";
-                shape.FillColor = getColor(solidFill);
+                foreach (var bgType in background.FirstChild)
+                {
+                    if (bgType.LocalName == "solidFill")
+                    {
+                        foreach (DrawingML.SolidFill solidFill in background.Descendants<DrawingML.SolidFill>())
+                        {
+                            shape.FillType = "solid";
+                            shape.FillColor = getColor(solidFill);
+                            shape.FillAlpha = getAlpha(solidFill);
+                        }
+                        sceneObjectList.Add(shape);
+                    }
+                    if (bgType.LocalName == "gradFill")
+                    {
+                        foreach (DrawingML.GradientFill gradientFill in background.Descendants<DrawingML.GradientFill>())
+                        {
+
+                            shape.FillType = "gradient";
+                            shape.GradientType = getGradientType(gradientFill);
+                            shape.GradientAngle = getGradientAngle(gradientFill);
+
+                            List<string> gradientColorList = getColors(gradientFill);
+                            //List<int> gradientAlphaList = getAlphas(gradientFill);
+
+                            //shape.FillAlpha1 = gradientAlphaList.First();
+                            //shape.FillAlpha2 = gradientAlphaList.Last();
+                            shape.FillColor1 = gradientColorList.First();
+                            shape.FillColor2 = gradientColorList.Last();
+                        }
+                        sceneObjectList.Add(shape);
+                    }
+                    if (bgType.LocalName == "blipFill")
+                    {
+                        foreach (DrawingML.BlipFill blipFill in background.Descendants<DrawingML.BlipFill>())
+                        {
+
+                        }
+                        //sceneObjectList.Add(shape);
+                    }
+                }
+
             }
-            foreach (DrawingML.GradientFill gradientFill in background.Descendants<DrawingML.GradientFill>())
-            {
-
-                shape.FillType = "gradient";
-                shape.GradientType = getGradientType(gradientFill);
-                shape.GradientAngle = getGradientAngle(gradientFill);
-
-                List<string> gradientColorList = getColors(gradientFill);
-
-                shape.FillColor1 = gradientColorList.First();
-                shape.FillColor2 = gradientColorList.Last();
-            }
-
-            sceneObjectList.Add(shape);
 
             return sceneObjectList;
         }
@@ -1293,7 +1425,6 @@ namespace ConsoleApplication
             return false;
         }
 
-
         public int getGradientAngle(DrawingML.GradientFill gradFill)
         {
             foreach (var lin in gradFill.Descendants<DrawingML.LinearGradientFill>())
@@ -1328,6 +1459,16 @@ namespace ConsoleApplication
             return 100000;
         }
 
+        public List<int> getAlphas(OpenXmlElement xmlElement)
+        {
+            List<int> alphas = new List<int>();
+            OpenXmlElement elementType = xmlElement.FirstChild;
+
+            foreach (DrawingML.GradientStop gs in elementType.Descendants<DrawingML.GradientStop>())
+                alphas.Add(getAlpha(gs));
+
+            return alphas;
+        }
         public PowerPointText[] getListStyles(OpenXmlElement listStyleElement)
         {
             int styles = 9;
