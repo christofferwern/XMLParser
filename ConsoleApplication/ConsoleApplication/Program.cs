@@ -20,7 +20,7 @@ namespace ConsoleApplication
         {
             var watch = Stopwatch.StartNew();
 
-            string originalPath = @"C:\Users\ex1\downloads\Yooba.pptx";
+            string originalPath = @"C:\Users\ex1\downloads\Imi.pptx";
             string path = @"C:\Users\ex1\desktop\randomStuffNotANYHAVEBOfDY12723489";
 
             //Copyy file

@@ -145,6 +145,7 @@ namespace ConsoleApplication
 
             if (_fillType.Equals("gradient"))
             {
+
                 _fillColor = getColorAsInteger(_fillColor1).ToString();
 
                 _fillAlpha1 /= 100000;
@@ -154,6 +155,7 @@ namespace ConsoleApplication
                 _fillColor2 = getColorAsInteger(_fillColor2).ToString();
                 
                 _gradientAngle /= 60000;
+
             }
 
             _lineSize = (int) Math.Round((double)_lineSize / 12700);
