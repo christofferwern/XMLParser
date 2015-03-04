@@ -68,116 +68,117 @@ namespace ConsoleApplication
 
         public void read()
         {
-            // try
-            // {
-            // Open the presentation file as read-only.
-            using (_presentationDocument = PresentationDocument.Open(_path, false))
+            try
             {
-                //Read all colors from theme
-                readTheme();
-
-                //Retrive the presentation part
-                var presentation = _presentationDocument.PresentationPart.Presentation;
-
-                //Get the size of presentation
-                PresentationML.SlideSize slideInfo = presentation.SlideSize;
-                _presentationSizeX = slideInfo.Cx.Value;
-                _presentationSizeY = slideInfo.Cy.Value;
-
-                //Get the slidemaster scene object, background etc
-                PresentationML.SlideMaster slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster; ;
-
-                _masterLevel = true;
-                foreach (var child in slideMaster.CommonSlideData.ChildElements)
+                // Open the presentation file as read-only.
+                using (_presentationDocument = PresentationDocument.Open(_path, false))
                 {
-                    if (child.LocalName == "bg")
-                        _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.Background)child));
+                    //Read all colors from theme
+                    readTheme();
 
-                    if (child.LocalName == "spTree")
-                        _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
-                }
-                _masterLevel = false;
+                    //Retrive the presentation part
+                    var presentation = _presentationDocument.PresentationPart.Presentation;
 
-                //If master list do not contains any template named title or body,
-                //add those with just the general attributes for them.
-                bool title = false, body = false;
-                foreach (PowerPointText p in _placeHolderListMaster)
-                {
-                    if (p.Type == "title")
-                        title = true;
-                    if (p.Type == "body")
-                        body = true;
-                    if (title && body)
-                        continue;
-                }
+                    //Get the size of presentation
+                    PresentationML.SlideSize slideInfo = presentation.SlideSize;
+                    _presentationSizeX = slideInfo.Cx.Value;
+                    _presentationSizeY = slideInfo.Cy.Value;
 
-                if (!title)
-                {
-                    PowerPointText[] range = getListStyles(slideMaster.TextStyles.TitleStyle);
-                    foreach (PowerPointText p in range)
-                        p.Type = "title";
+                    //Get the slidemaster scene object, background etc
+                    PresentationML.SlideMaster slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster; ;
 
-                    _placeHolderListMaster.AddRange(range);
-                }
-                    
-                if (!body)
-                {
-                    PowerPointText[] range = getListStyles(slideMaster.TextStyles.BodyStyle);
-                    foreach (PowerPointText p in range)
-                        p.Type = "body";
-
-                    _placeHolderListMaster.AddRange(range);
-                }
-
-                //Counter of scenes
-                int sceneCounter = 1;
-
-                //Go through all Slides in the PowerPoint presentation
-                foreach (PresentationML.SlideId slideID in presentation.SlideIdList)
-                {
-                    SlidePart slidePart = _presentationDocument.PresentationPart.GetPartById(slideID.RelationshipId) as SlidePart;
-                    Scene scene = new Scene(sceneCounter);
-
-                    //Go through all elements in the slide layout
-                    _placeHolderListLayout.Clear();
-                    _layoutLevel = true;
-                    foreach (var child in slidePart.SlideLayoutPart.SlideLayout.CommonSlideData.ChildElements)
+                    _masterLevel = true;
+                    foreach (var child in slideMaster.CommonSlideData.ChildElements)
                     {
                         if (child.LocalName == "bg")
-                            scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.Background)child));
+                            _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.Background)child));
 
                         if (child.LocalName == "spTree")
-                            scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
+                            _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
                     }
-                    _layoutLevel = false;
+                    _masterLevel = false;
 
-                    //Go through all elements in the slide
-                    _slideLevel = true;
-                    foreach (var child in slidePart.Slide.CommonSlideData.ChildElements)
+                    //If master list do not contains any template named title or body,
+                    //add those with just the general attributes for them.
+                    bool title = false, body = false;
+                    foreach (PowerPointText p in _placeHolderListMaster)
                     {
-                        if(child.LocalName == "bg")
-                            scene.SceneObjectList.InsertRange(0,getSceneObjects((PresentationML.Background)child));
-
-                        if (child.LocalName == "spTree")
-                        {
-                            scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
-                        }
+                        if (p.Type == "title")
+                            title = true;
+                        if (p.Type == "body")
+                            body = true;
+                        if (title && body)
+                            continue;
                     }
-                    _slideLevel = false;
 
-                    //Add scene to presentation
-                    _presentationObject.addScene(scene);
+                    if (!title)
+                    {
+                        PowerPointText[] range = getListStyles(slideMaster.TextStyles.TitleStyle);
+                        foreach (PowerPointText p in range)
+                            p.Type = "title";
 
-                    sceneCounter++;
+                        _placeHolderListMaster.AddRange(range);
+                    }
+
+                    if (!body)
+                    {
+                        PowerPointText[] range = getListStyles(slideMaster.TextStyles.BodyStyle);
+                        foreach (PowerPointText p in range)
+                            p.Type = "body";
+
+                        _placeHolderListMaster.AddRange(range);
+                    }
+
+                    //Counter of scenes
+                    int sceneCounter = 1;
+
+                    //Go through all Slides in the PowerPoint presentation
+                    foreach (PresentationML.SlideId slideID in presentation.SlideIdList)
+                    {
+                        SlidePart slidePart = _presentationDocument.PresentationPart.GetPartById(slideID.RelationshipId) as SlidePart;
+                        Scene scene = new Scene(sceneCounter);
+
+                        //Go through all elements in the slide layout
+                        _placeHolderListLayout.Clear();
+                        _layoutLevel = true;
+                        foreach (var child in slidePart.SlideLayoutPart.SlideLayout.CommonSlideData.ChildElements)
+                        {
+                            if (child.LocalName == "bg")
+                                scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.Background)child));
+
+                            if (child.LocalName == "spTree")
+                                scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
+                        }
+                        _layoutLevel = false;
+
+                        //Go through all elements in the slide
+                        _slideLevel = true;
+                        foreach (var child in slidePart.Slide.CommonSlideData.ChildElements)
+                        {
+                            if (child.LocalName == "bg")
+                                scene.SceneObjectList.InsertRange(0, getSceneObjects((PresentationML.Background)child));
+
+                            if (child.LocalName == "spTree")
+                            {
+                                scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
+                            }
+                        }
+                        _slideLevel = false;
+
+                        //Add scene to presentation
+                        _presentationObject.addScene(scene);
+
+                        sceneCounter++;
+                    }
+
+                    _presentationObject.ConvertToYoobaUnits(_presentationSizeX, _presentationSizeY);
                 }
-
-                _presentationObject.ConvertToYoobaUnits(_presentationSizeX, _presentationSizeY);
             }
-            // }
-            // catch
-            // {
-            //     Console.WriteLine("Error reading: " + _path);
-            // }
+            catch(Exception e)
+            {
+                Console.WriteLine("Error reading '" + _path + "'");
+                Console.WriteLine("\nError code: \n\n" + e);
+            }
         }
 
         private List<SceneObject> getSceneObjects(PresentationML.ShapeTree shapeTree)

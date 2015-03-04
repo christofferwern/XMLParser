@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
+using System.IO.Compression;
 
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml;
@@ -18,19 +20,40 @@ namespace ConsoleApplication
         {
             var watch = Stopwatch.StartNew();
 
-            string path = @"C:\Users\ex1\downloads\tabell.pptx";
+            string originalPath = @"C:\Users\ex1\downloads\Imi.pptx";
+            string path = @"C:\Users\ex1\desktop\randomStuffNotANYHAVEBOfDY12723489";
 
-            OpenXMLReader reader = new OpenXMLReader(path);
+            //Kopierar filen
+            File.Copy(originalPath, path + ".pptx");
 
-            reader.read();
+            //Change to .zip
+            path.Replace(Path.GetExtension(path + ".pptx"), ".zip");
 
-            reader.PresentationObject.getXMLTree().Save(@"C:\Users\ex1\Desktop\out.xml");
+            using (ZipArchive zip = ZipFile.Open(path + ".zip", ZipArchiveMode.Update))
+            {
+                for (int i = zip.Entries.Count - 1; i >= 0; i--)
+                {
+                    ZipArchiveEntry e = zip.Entries[i];
 
-            ////// Write the XML to a file.
-            //System.IO.StreamWriter file = new System.IO.StreamWriter(@"C:\Users\ex1\Desktop\output.txt", true);
-            //file.WriteLine(reader.PresentationObject.getXMLTree().InnerXml);
+                    if (e.Name == "app.xml" || e.Name == "core.xml")
+                    {
+                        e.Delete();
+                    }
+                }
+            }
 
-            //file.Close();
+            //Change back to .pptx
+            path.Replace(Path.GetExtension(path + ".zip"), ".pptx");
+
+            //OpenXMLReader reader = new OpenXMLReader(path + ".pptx");
+
+            //reader.read();
+
+            ///reader.PresentationObject.getXMLTree().Save(@"C:\Users\ex1\Desktop\out.xml");
+
+            //File.Delete(path + ".pptx");
+
+
             Console.WriteLine("\nCompilation time: " + (double)watch.ElapsedMilliseconds/1000 + "s");
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
