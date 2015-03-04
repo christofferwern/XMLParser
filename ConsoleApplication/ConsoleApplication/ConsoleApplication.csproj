@@ -54,6 +54,7 @@
     <Compile Include="GradientInfo.cs" />
     <Compile Include="HSLColor.cs" />
     <Compile Include="ImageObject.cs" />
+    <Compile Include="MediaFile.cs" />
     <Compile Include="OpenXMLReader.cs" />
     <Compile Include="OpenXMLReaderBackup.cs" />
     <Compile Include="OptimizedClip.cs" />
