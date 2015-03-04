@@ -21,9 +21,9 @@ namespace ConsoleApplication
             var watch = Stopwatch.StartNew();
 
             string originalPath = @"C:\Users\ex1\downloads\Yooba.pptx";
+            
+            //Copy file
             string path = @"C:\Users\ex1\desktop\randomStuffNotANYHAVEBOfDY12723489";
-
-            //Copyy file
             File.Copy(originalPath, path + ".pptx");
 
             //Change to .zip
@@ -42,7 +42,7 @@ namespace ConsoleApplication
             reader.read();
             reader.PresentationObject.getXMLTree().Save(@"C:\Users\ex1\Desktop\out.xml");
 
-            //Delete copied file
+            //Delete file
             File.Delete(path + ".pptx");
 
             Console.WriteLine("\nCompilation time: " + (double)watch.ElapsedMilliseconds/1000 + "s");
