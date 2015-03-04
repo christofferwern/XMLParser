@@ -71,123 +71,123 @@ namespace ConsoleApplication
 
         public void read()
         {
-            // try
-            // {
-            // Open the presentation file as read-only.
-            
-            using (_presentationDocument = PresentationDocument.Open(_path, false))
-            {
-                //Read all colors from theme
-                readTheme();
 
-                //Retrive the presentation part
-                var presentation = _presentationDocument.PresentationPart.Presentation;
-
-                //Get the size of presentation
-                PresentationML.SlideSize slideInfo = presentation.SlideSize;
-                _presentationSizeX = slideInfo.Cx.Value;
-                _presentationSizeY = slideInfo.Cy.Value;
-
-                //Get the slidemaster scene object, background etc
-                PresentationML.SlideMaster slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster; ;
-                currentMaster = slideMaster;
-                _masterLevel = true;
-                Console.WriteLine("master");
-                foreach (var child in slideMaster.CommonSlideData.ChildElements)
+           // try
+           // {
+                // Open the presentation file as read-only.
+                using (_presentationDocument = PresentationDocument.Open(_path, false))
                 {
-                    
-                    if (child.LocalName == "bg")
-                        _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.Background)child));
+                    //Read all colors from theme
+                    readTheme();
 
-                    if (child.LocalName == "spTree")
-                        _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
-                }
-                _masterLevel = false;
+                    //Retrive the presentation part
+                    var presentation = _presentationDocument.PresentationPart.Presentation;
 
-                //If master list do not contains any template named title or body,
-                //add those with just the general attributes for them.
-                bool title = false, body = false;
-                foreach (PowerPointText p in _placeHolderListMaster)
-                {
-                    if (p.Type == "title")
-                        title = true;
-                    if (p.Type == "body")
-                        body = true;
-                    if (title && body)
-                        continue;
-                }
+                    //Get the size of presentation
+                    PresentationML.SlideSize slideInfo = presentation.SlideSize;
+                    _presentationSizeX = slideInfo.Cx.Value;
+                    _presentationSizeY = slideInfo.Cy.Value;
 
-                if (!title)
-                {
-                    PowerPointText[] range = getListStyles(slideMaster.TextStyles.TitleStyle);
-                    foreach (PowerPointText p in range)
-                        p.Type = "title";
-
-                    _placeHolderListMaster.AddRange(range);
-                }
-                    
-                if (!body)
-                {
-                    PowerPointText[] range = getListStyles(slideMaster.TextStyles.BodyStyle);
-                    foreach (PowerPointText p in range)
-                        p.Type = "body";
-
-                    _placeHolderListMaster.AddRange(range);
-                }
-
-                //Counter of scenes
-                int sceneCounter = 1;
-
-                //Go through all Slides in the PowerPoint presentation
-                foreach (PresentationML.SlideId slideID in presentation.SlideIdList)
-                {
-                    Console.WriteLine("slide");
-                    SlidePart slidePart = _presentationDocument.PresentationPart.GetPartById(slideID.RelationshipId) as SlidePart;
-                    
-                    Scene scene = new Scene(sceneCounter);
-
-                    //Go through all elements in the slide layout
-                    _placeHolderListLayout.Clear();
-                    _layoutLevel = true;
-                    foreach (var child in slidePart.SlideLayoutPart.SlideLayout.CommonSlideData.ChildElements)
+                    //Get the slidemaster scene object, background etc
+                    PresentationML.SlideMaster slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster; ;
+                    currentMaster = slideMaster;
+                    _masterLevel = true;
+                    foreach (var child in slideMaster.CommonSlideData.ChildElements)
                     {
-
+                    
                         if (child.LocalName == "bg")
-                            scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.Background)child));
+                            _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.Background)child));
 
                         if (child.LocalName == "spTree")
-                            scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
+                            _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
                     }
-                    _layoutLevel = false;
+                    _masterLevel = false;
 
-                    //Go through all elements in the slide
-                    currentSlide = slidePart.Slide;
-                    _slideLevel = true;
-                    foreach (var child in slidePart.Slide.CommonSlideData.ChildElements)
+                    //If master list do not contains any template named title or body,
+                    //add those with just the general attributes for them.
+                    bool title = false, body = false;
+                    foreach (PowerPointText p in _placeHolderListMaster)
                     {
-                        
-                        if(child.LocalName == "bg")
-                            scene.SceneObjectList.InsertRange(0,getSceneObjects((PresentationML.Background)child));
-                        if (child.LocalName == "spTree")
-                        {
-                            scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
-                        }
+                        if (p.Type == "title")
+                            title = true;
+                        if (p.Type == "body")
+                            body = true;
+                        if (title && body)
+                            continue;
                     }
-                    _slideLevel = false;
-                    currentSlide = null;
-                    //Add scene to presentation
-                    _presentationObject.addScene(scene);
 
-                    sceneCounter++;
+                    if (!title)
+                    {
+                        PowerPointText[] range = getListStyles(slideMaster.TextStyles.TitleStyle);
+                        foreach (PowerPointText p in range)
+                            p.Type = "title";
+
+                        _placeHolderListMaster.AddRange(range);
+                    }
+
+                    if (!body)
+                    {
+                        PowerPointText[] range = getListStyles(slideMaster.TextStyles.BodyStyle);
+                        foreach (PowerPointText p in range)
+                            p.Type = "body";
+
+                        _placeHolderListMaster.AddRange(range);
+                    }
+
+               
+                    //Counter of scenes
+                    int sceneCounter = 1;
+
+                    //Go through all Slides in the PowerPoint presentation
+                    foreach (PresentationML.SlideId slideID in presentation.SlideIdList)
+                    {
+
+                        SlidePart slidePart = _presentationDocument.PresentationPart.GetPartById(slideID.RelationshipId) as SlidePart;
+                        Scene scene = new Scene(sceneCounter);
+                        currentSlide = slidePart.Slide;
+                        //Go through all elements in the slide layout
+                        _placeHolderListLayout.Clear();
+                        _layoutLevel = true;
+                        foreach (var child in slidePart.SlideLayoutPart.SlideLayout.CommonSlideData.ChildElements)
+                        {
+                            if (child.LocalName == "bg")
+                                scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.Background)child));
+
+                            if (child.LocalName == "spTree")
+                                scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
+                        }
+                        _layoutLevel = false;
+
+                        //Go through all elements in the slide
+                        _slideLevel = true;
+                        foreach (var child in slidePart.Slide.CommonSlideData.ChildElements)
+                        {
+                            if (child.LocalName == "bg")
+                                scene.SceneObjectList.InsertRange(0, getSceneObjects((PresentationML.Background)child));
+
+                            if (child.LocalName == "spTree")
+                            {
+                                scene.SceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
+                            }
+                        }
+                        _slideLevel = false;
+
+                        currentSlide = null;
+
+                        //Add scene to presentation
+                        _presentationObject.addScene(scene);
+                        sceneCounter++;
+                    }
+
+
+                    _presentationObject.ConvertToYoobaUnits(_presentationSizeX, _presentationSizeY);
                 }
-
-                _presentationObject.ConvertToYoobaUnits(_presentationSizeX, _presentationSizeY);
-            }
-            // }
-            // catch
-            // {
-            //     Console.WriteLine("Error reading: " + _path);
-            // }
+          //  }
+            /*catch(Exception e)
+            {
+                Console.WriteLine("Error reading '" + _path + "'");
+                Console.WriteLine("\nError code: \n\n" + e);
+            }*/
         }
 
         private List<SceneObject> getSceneObjects(PresentationML.ShapeTree shapeTree)
@@ -273,11 +273,30 @@ namespace ConsoleApplication
                 {
                     TableStyle t = new TableStyle();
                     t.Type = style.LocalName;
+                    t.FontSize = 1400;
 
                     foreach (var child in style)
                     {
                         if (child.LocalName == "tcTxStyle")
                         {
+                            DrawingML.TableCellTextStyle tcTxStyle = (DrawingML.TableCellTextStyle)child;
+
+                            if (tcTxStyle.Italic != null)
+                                if (tcTxStyle.Italic.Value.ToString().ToLower() == "on" || tcTxStyle.Italic.Value.ToString().ToLower() == "true" ||
+                                    tcTxStyle.Italic.Value.ToString().ToLower() == "t"  || tcTxStyle.Italic.Value.ToString().ToLower() == "1")
+                                    t.Italic = true;
+
+                            if (tcTxStyle.Bold != null)
+                                if (tcTxStyle.Bold.Value.ToString().ToLower() == "on"   ||tcTxStyle.Bold.Value.ToString().ToLower() == "true" ||
+                                    tcTxStyle.Bold.Value.ToString().ToLower() == "t"    || tcTxStyle.Bold.Value.ToString().ToLower() == "1"    )
+                                    t.Bold = true;
+
+                            string color = getColor(tcTxStyle);
+                            if (color != "")
+                                t.FontColor = color;
+
+                            //FIX FONT AND FONT SIZE
+
                             //TODO
                         }
                         
@@ -319,8 +338,6 @@ namespace ConsoleApplication
 
                                         }
                                     }
-
-                                    
                                 }
                             }
 
@@ -329,9 +346,6 @@ namespace ConsoleApplication
 
                     tableStyles.Add(t);
                 }
-
-                foreach (TableStyle t in tableStyles)
-                    Console.WriteLine(t.ToString());
 
                 int lastColIndex = -1, lastRowIndex = -1;
 
@@ -349,68 +363,168 @@ namespace ConsoleApplication
                 int width, height, colIndex, rowIndex = 0, totalHeight = 0, totalWidth = 0;
                 foreach (DrawingML.TableRow tr in table.Descendants<DrawingML.TableRow>())
                 {
-                    height = (int) tr.Height;
                     colIndex = 0;
                     foreach (DrawingML.TableCell tc in tr.Descendants<DrawingML.TableCell>())
                     {
                         width = gridColWidthList[colIndex];
+                        height = (int)tr.Height;
 
-                        SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
-                        simpleSceneObject.BoundsX = boundsX + totalWidth;
-                        simpleSceneObject.BoundsY = boundsY + totalHeight;
-                        simpleSceneObject.ClipWidth = width;
-                        simpleSceneObject.ClipHeight = height;
+                        if (tc.RowSpan != null)
+                            height *= tc.RowSpan.Value;
+                        
+                        if(tc.GridSpan != null)
+                            width *= tc.GridSpan.Value;
+                        
+                        SimpleSceneObject simpleSceneObjectShape = new SimpleSceneObject();
+                        simpleSceneObjectShape.BoundsX = boundsX + totalWidth;
+                        simpleSceneObjectShape.BoundsY = boundsY + totalHeight;
+                        simpleSceneObjectShape.ClipWidth = width;
+                        simpleSceneObjectShape.ClipHeight = height;
 
-                        ShapeObject shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
+                        SimpleSceneObject simpleSceneObjectText = new SimpleSceneObject();
+                        simpleSceneObjectText.BoundsX = boundsX + totalWidth;
+                        simpleSceneObjectText.BoundsY = boundsY + totalHeight;
+                        simpleSceneObjectText.ClipWidth = width;
+                        simpleSceneObjectText.ClipHeight = height;
+
+                        ShapeObject shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Rectangle);
+                        TextObject textObject = new TextObject(simpleSceneObjectText);
+
 
                         //Set to default values
-                        shapeObject.setAttributes(getTableStyle(tableStyles, "wholeTbl"));
+                        TableStyle defaultTableStyle = getTableStyle(tableStyles, "wholeTbl");
+                        shapeObject.FillAlpha = defaultTableStyle.FillAlpha;
+                        shapeObject.FillColor = defaultTableStyle.FillColor;
+                        shapeObject.LineSize = defaultTableStyle.LineSize;
+                        shapeObject.LineColor = defaultTableStyle.LineColor;
+                        textObject.Color = defaultTableStyle.FontColor;
+                        textObject.Size = defaultTableStyle.FontSize;
 
                         //if band column
                         if (table.TableProperties.BandRow != null)
                         {
                             if (rowIndex % 2 == 0)
+                            {
                                 shapeObject.setAttributes(getTableStyle(tableStyles, "band1H"));
+                                textObject.setAttributes(getTableStyle(tableStyles, "band1H"));
+                            }
                             else
+                            {
                                 shapeObject.setAttributes(getTableStyle(tableStyles, "band2H"));
+                                textObject.setAttributes(getTableStyle(tableStyles, "band2H"));
+                            } 
                         }
 
                         //if band column
                         if (table.TableProperties.BandColumn != null)
                         {
                             if (colIndex % 2 == 0)
+                            {
                                 shapeObject.setAttributes(getTableStyle(tableStyles, "band1V"));
+                                textObject.setAttributes(getTableStyle(tableStyles, "band1V"));
+                            }
                             else
+                            {
                                 shapeObject.setAttributes(getTableStyle(tableStyles, "band2V"));
+                                textObject.setAttributes(getTableStyle(tableStyles, "band2V"));
+                            }
                         }
 
                         //if first row
                         if (table.TableProperties.FirstRow != null && (rowIndex == 0))
+                        {
                             shapeObject.setAttributes(getTableStyle(tableStyles, "firstRow"));
+                            textObject.setAttributes(getTableStyle(tableStyles, "firstRow"));
+                        }
 
                         //if first column
                         if (table.TableProperties.FirstColumn != null && (colIndex == 0))
+                        {
                             shapeObject.setAttributes(getTableStyle(tableStyles, "firstCol"));
+                            textObject.setAttributes(getTableStyle(tableStyles, "firstCol"));
+                        }
 
                         //if last row
                         if (table.TableProperties.LastRow != null && (rowIndex == lastRowIndex))
+                        {
                             shapeObject.setAttributes(getTableStyle(tableStyles, "lastRow"));
+                            textObject.setAttributes(getTableStyle(tableStyles, "lastRow"));
+                        }
 
                         //if last column
                         if (table.TableProperties.LastColumn != null && (colIndex == lastColIndex))
+                        {
                             shapeObject.setAttributes(getTableStyle(tableStyles, "lastCol"));
+                            textObject.setAttributes(getTableStyle(tableStyles, "lastCol"));
+                        }
 
-                        if (shapeObject.LineSize > 0)
-                            shapeObject.LineEnabled = true;
+                        if (tc.TextBody != null)
+                        {
+                            int paragraphIndex = 0;
+                            foreach (DrawingML.Paragraph p in tc.TextBody.Descendants<DrawingML.Paragraph>())
+                            {
 
-                        sceneObjectList.Add(shapeObject);
+                                bool HasRun = false;
+                                foreach (DrawingML.Run r in p.Descendants<DrawingML.Run>())
+                                {
+                                    HasRun = true;
+
+                                    TextStyle textStyle = new TextStyle();
+                                    TextFragment textFragment = new TextFragment();
+
+                                    textFragment.Text = r.InnerText;
+                                    textStyle.FontSize = textObject.Size;
+                                    textStyle.FontColor = textObject.Color;
+                                    textStyle.Bold = textObject.Bold;
+                                    textStyle.Underline = textObject.Underline;
+                                    textStyle.Italic = textObject.Italic;
+
+                                    if (paragraphIndex != 0)
+                                        textFragment.NewParagraph = true;
+
+                                    //Override with specific run properties
+                                    if (r.RunProperties != null)
+                                    {
+                                        DrawingML.RunProperties rPr = r.RunProperties;
+                                        textStyle.Bold = (rPr.Bold != null) ? rPr.Bold.Value : textStyle.Bold;
+                                        textStyle.Italic = (rPr.Italic != null) ? rPr.Italic.Value : textStyle.Italic;
+                                        textStyle.FontSize = (rPr.FontSize != null) ? rPr.FontSize.Value : textStyle.FontSize;
+                                        if (rPr.Underline != null)
+                                            if (rPr.Underline.Value.ToString() == "sng")
+                                                textStyle.Underline = true;
+
+                                        //Get font color
+                                        if (rPr.HasChildren)
+                                            foreach (var rPrChild in rPr.ChildElements)
+                                                if (rPrChild.LocalName == "solidFill")
+                                                    textStyle.FontColor = getColor(rPrChild);
+                                    }
+
+                                    textObject.StyleList.Add(textStyle);
+                                    textFragment.StyleId = textObject.StyleList.IndexOf(textStyle);
+                                    textObject.FragmentsList.Add(textFragment);
+                                }
+
+                                if (!HasRun)
+                                    if (textObject.FragmentsList.Count > 0)
+                                        textObject.FragmentsList.Last().Breaks++;
+
+                                paragraphIndex++;
+                            }
+                        }
+
+                        if (tc.HorizontalMerge == null && tc.VerticalMerge == null)
+                        {
+                            sceneObjectList.Add(shapeObject);
+                            sceneObjectList.Add(textObject);
+                        }
 
                         colIndex++;
                         totalWidth += width;
                     }
 
                     rowIndex++;
-                    totalHeight += height;
+                    totalHeight += (int)tr.Height;
                     totalWidth = 0;
                 }
             }
@@ -692,8 +806,6 @@ namespace ConsoleApplication
                             else
                             {
                                 shapeObject.LineSize = (ln.Width != null) ? ln.Width.Value : shapeObject.LineSize;
-                                shapeObject.LineEnabled = true;
-
                             }
                                 
                             foreach (var lnChild in ln)
@@ -786,9 +898,21 @@ namespace ConsoleApplication
                         //if slide level, get data from both master and layout level
                         if (_slideLevel)
                         {
-                            PowerPointText layout = getPowerPointObject(_placeHolderListLayout, powerPointText);
-                            if (layout != null)
-                                powerPointText.setVisualAttribues(layout);
+                            for (int i = 0; i < 9; i++)
+                            {
+                                powerPointLevelList[i].Idx = powerPointText.Idx;
+                                powerPointLevelList[i].Type = powerPointText.Type;
+                                powerPointLevelList[i].Level = i;
+
+                                PowerPointText layout = getPowerPointObject(_placeHolderListLayout, powerPointLevelList[i]);
+                                if (layout != null)
+                                {
+                                    powerPointLevelList[i].setVisualAttribues(layout);
+                                    powerPointLevelList[i].Level = i;
+                                }
+                            }
+
+                            powerPointText = powerPointLevelList[0];
                         }
 
                         //Get the transform properties
@@ -807,6 +931,8 @@ namespace ConsoleApplication
                                 powerPointLevelList[i].Cy = textSimpleSceneObject.ClipHeight;
                             }
                         }
+
+                    
                     }
 
                     //if textbody contains listinfo, get that information
@@ -814,7 +940,7 @@ namespace ConsoleApplication
                     {
                         listStyleList = getListStyles(txBody.ListStyle);
                         for (int i = 0; i < 9; i++)
-                            powerPointLevelList[i].setVisualAttribues(listStyleList[i]);
+                            powerPointLevelList[i].setVisualAttribues(listStyleList[i]);                   
                     }
 
                     textSimpleSceneObject.BoundsX = powerPointText.X;
@@ -825,7 +951,7 @@ namespace ConsoleApplication
                     textObject = new TextObject(textSimpleSceneObject);
 
                     int paragraphIndex = 0;
-                    
+
                     foreach (DrawingML.Paragraph p in child.Descendants<DrawingML.Paragraph>())
                     {
                         PowerPointText paragraghPPT = new PowerPointText(powerPointText);
@@ -841,8 +967,18 @@ namespace ConsoleApplication
                                 paragraghPPT.Level = p.ParagraphProperties.Level.Value;
 
                                 PowerPointText temp = powerPointLevelList[paragraghPPT.Level];
-                                if(temp!=null)
+                                if (temp != null)
+                                {
+                                    
                                     paragraghPPT.setVisualAttribues(temp);
+
+                                    //if (_slideLevel)
+                                    //{
+                                    //    Console.WriteLine(p.InnerText);
+                                    //    Console.WriteLine(temp.toString());
+                                    //}
+
+                                }
                             }
                             else
                             {
@@ -852,7 +988,7 @@ namespace ConsoleApplication
 
                         textObject.Align = (paragraghPPT.Alignment != "") ? paragraghPPT.Alignment : textObject.Align;
                         textObject.Color = (paragraghPPT.FontColor != "") ? paragraghPPT.FontColor : textObject.Color;
-                        textObject.Size = (paragraghPPT.FontSize > 0) ? paragraghPPT.FontSize : textObject.Size;
+                        textObject.Size  = (paragraghPPT.FontSize > 0)    ? paragraghPPT.FontSize  : textObject.Size;
 
                         bool HasRun = false;
                         //Get the run properties
@@ -887,25 +1023,19 @@ namespace ConsoleApplication
                                 {
                                     if (rPr.Underline.Value.ToString() == "sng")
                                     {
-                                        powerPointText.Underline = true;
+                                        runPPT.Underline = true;
                                     }
                                 }
 
                                 //Get font color
                                 if (rPr.HasChildren)
-                                {
                                     foreach (var rPrChild in rPr.ChildElements)
-                                    {
                                         if (rPrChild.LocalName == "solidFill")
-                                        {
-                                            runPPT.FontColor = getColor(rPrChild);
-                                                
-                                        }
-                                    }
-                                }
-                            
+                                            runPPT.FontColor = getColor(rPrChild);   
+
                             }
 
+                            textStyle.Alignment = (runPPT.Alignment != "") ? runPPT.Alignment : textStyle.Alignment;
                             textStyle.Bold = runPPT.Bold;
                             textStyle.Italic = runPPT.Italic;
                             textStyle.Underline = runPPT.Underline;
@@ -929,6 +1059,8 @@ namespace ConsoleApplication
                             textObject.StyleList.Add(textStyle);
                             textFragment.StyleId = textObject.StyleList.IndexOf(textStyle);
                             textObject.FragmentsList.Add(textFragment);
+
+
 
                             //Increase the run index
                             runIndex++;
@@ -963,13 +1095,20 @@ namespace ConsoleApplication
                             int lineRefIndex = (int)lnRef.Index.Value;
 
                             DrawingML.LineStyleList lineStyleList = _presentationDocument.PresentationPart.ThemePart.Theme.ThemeElements.FormatScheme.LineStyleList;
-
+                            
                             int lineStyleIndex = 1;
                             foreach (var ln in lineStyleList)
                             {
-                                foreach (var lineStyle in ln)
+                                DrawingML.Outline line = (DrawingML.Outline)ln;
+
+                                if (lineRefIndex == lineStyleIndex)
                                 {
-                                    if (lineRefIndex == lineStyleIndex)
+
+                                    if (line.Width != null)
+                                        shapeObject.LineSize = line.Width.Value;
+
+
+                                    foreach (var lineStyle in ln)
                                     {
                                         if (lineStyle.LocalName == "solidFill")
                                         {
@@ -977,7 +1116,6 @@ namespace ConsoleApplication
                                             {
                                                 HasLine = true;
                                                 shapeObject.LineColor = getColor(lineStyle, color);
-                                                shapeObject.LineEnabled = true;
                                             }
                                         }
 
@@ -985,6 +1123,7 @@ namespace ConsoleApplication
                                         {
                                             HasLine = true;
                                         }
+
                                     }
                                 }
 
@@ -1242,8 +1381,6 @@ namespace ConsoleApplication
             List<SceneObject> tempImageList = new List<SceneObject>();
             SimpleSceneObject imageScenObject = new SimpleSceneObject();
             MediaFile MF = new MediaFile();
-
-            Console.WriteLine(" " + xmlElement.LocalName);
             if (xmlElement.GetType() == typeof(PresentationML.BackgroundProperties))
             {
                 imageScenObject.ClipWidth = _presentationSizeX;
@@ -1258,7 +1395,6 @@ namespace ConsoleApplication
                         DrawingML.BlipFill blipFill = (DrawingML.BlipFill)child;
 
                         string file_id = blipFill.Blip.Embed.Value;
-
                         foreach (var blipChild in blipFill.Blip)
                         {
                             if (blipChild.LocalName == "alphaModFix")
@@ -1344,19 +1480,20 @@ namespace ConsoleApplication
             }
 
             Console.WriteLine(MF.toString());
-            /*if (MF.ImagePart != null)
+            if (MF.ImagePart != null)
             {
                 SavingImage img = SavingImage.FromStream(MF.ImagePart.GetStream());
 
                 try
                 {
+                    Console.WriteLine("Saving: " + MF.ImageName);
                     img.Save(MF.StoreLocation + MF.ImageName);
                 }
                 catch (Exception AE)
                 {
                     Console.WriteLine("Exception: " + AE);
                 }
-            }*/
+            }
 
             //if connection and response != null
             //read information needed clipId etc and apply to imageScenObject.
@@ -1454,35 +1591,42 @@ namespace ConsoleApplication
         {
             string color = "";
 
-            OpenXmlElement colorType = xmlElement.FirstChild;
-            
-            if (colorType.GetType().Equals(typeof(DrawingML.RgbColorModelHex))){
-                
-                foreach (var colorValue in colorType.Parent.Descendants<DrawingML.RgbColorModelHex>())
-                {
-                    if (colorValue.Val.ToString() == "phClr")
-                        color = phClr;
-                    else
-                        color = colorValue.Val.ToString();
-                }
-            }
-            else
-                foreach (var colorValue in colorType.Parent.Descendants<DrawingML.SchemeColor>())
-                {
-                    if (colorValue.Val.ToString() == "phClr")
-                        color = phClr;
-                    else
-                        color = getColorFromTheme(colorValue.Val.ToString());
-                }
-
-            if (colorType.HasChildren)
+            foreach (var colorValue in xmlElement.Descendants<DrawingML.RgbColorModelHex>())
             {
-                string transformedColor = colorTransforms(colorType, color);
-                color = transformedColor;
-                return color;
+                if (colorValue.Val.ToString() == "phClr")
+                    color = phClr;
+                else
+                    color = colorValue.Val.ToString();
+
+                if (colorValue.HasChildren)
+                {
+                    string transformedColor = colorTransforms(colorValue, color);
+                    color = transformedColor;
+                    return color;
+                }
+                else
+                    return color;
             }
-            else
-                return color;
+
+            foreach (var colorValue in xmlElement.Descendants<DrawingML.SchemeColor>())
+            {
+                if (colorValue.Val.ToString() == "phClr")
+                    color = phClr;
+                else
+                    color = getColorFromTheme(colorValue.Val.ToString());
+
+                if (colorValue.HasChildren)
+                {
+                    string transformedColor = colorTransforms(colorValue, color);
+                    color = transformedColor;
+                    return color;
+                }
+                else
+                    return color;
+            }
+
+            return "";
+
         }
 
         //Returns a transformed color
