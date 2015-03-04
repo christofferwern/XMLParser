@@ -885,9 +885,21 @@ namespace ConsoleApplication
                         //if slide level, get data from both master and layout level
                         if (_slideLevel)
                         {
-                            PowerPointText layout = getPowerPointObject(_placeHolderListLayout, powerPointText);
-                            if (layout != null)
-                                powerPointText.setVisualAttribues(layout);
+                            for (int i = 0; i < 9; i++)
+                            {
+                                powerPointLevelList[i].Idx = powerPointText.Idx;
+                                powerPointLevelList[i].Type = powerPointText.Type;
+                                powerPointLevelList[i].Level = i;
+
+                                PowerPointText layout = getPowerPointObject(_placeHolderListLayout, powerPointLevelList[i]);
+                                if (layout != null)
+                                {
+                                    powerPointLevelList[i].setVisualAttribues(layout);
+                                    powerPointLevelList[i].Level = i;
+                                }
+                            }
+
+                            powerPointText = powerPointLevelList[0];
                         }
 
                         //Get the transform properties
@@ -906,6 +918,8 @@ namespace ConsoleApplication
                                 powerPointLevelList[i].Cy = textSimpleSceneObject.ClipHeight;
                             }
                         }
+
+                    
                     }
 
                     //if textbody contains listinfo, get that information
@@ -913,7 +927,7 @@ namespace ConsoleApplication
                     {
                         listStyleList = getListStyles(txBody.ListStyle);
                         for (int i = 0; i < 9; i++)
-                            powerPointLevelList[i].setVisualAttribues(listStyleList[i]);
+                            powerPointLevelList[i].setVisualAttribues(listStyleList[i]);                   
                     }
 
                     textSimpleSceneObject.BoundsX = powerPointText.X;
@@ -924,7 +938,7 @@ namespace ConsoleApplication
                     textObject = new TextObject(textSimpleSceneObject);
 
                     int paragraphIndex = 0;
-                    
+
                     foreach (DrawingML.Paragraph p in child.Descendants<DrawingML.Paragraph>())
                     {
                         PowerPointText paragraghPPT = new PowerPointText(powerPointText);
@@ -940,8 +954,18 @@ namespace ConsoleApplication
                                 paragraghPPT.Level = p.ParagraphProperties.Level.Value;
 
                                 PowerPointText temp = powerPointLevelList[paragraghPPT.Level];
-                                if(temp!=null)
+                                if (temp != null)
+                                {
+                                    
                                     paragraghPPT.setVisualAttribues(temp);
+
+                                    //if (_slideLevel)
+                                    //{
+                                    //    Console.WriteLine(p.InnerText);
+                                    //    Console.WriteLine(temp.toString());
+                                    //}
+
+                                }
                             }
                             else
                             {
@@ -951,7 +975,7 @@ namespace ConsoleApplication
 
                         textObject.Align = (paragraghPPT.Alignment != "") ? paragraghPPT.Alignment : textObject.Align;
                         textObject.Color = (paragraghPPT.FontColor != "") ? paragraghPPT.FontColor : textObject.Color;
-                        textObject.Size = (paragraghPPT.FontSize > 0) ? paragraghPPT.FontSize : textObject.Size;
+                        textObject.Size  = (paragraghPPT.FontSize > 0)    ? paragraghPPT.FontSize  : textObject.Size;
 
                         bool HasRun = false;
                         //Get the run properties
@@ -986,7 +1010,7 @@ namespace ConsoleApplication
                                 {
                                     if (rPr.Underline.Value.ToString() == "sng")
                                     {
-                                        powerPointText.Underline = true;
+                                        runPPT.Underline = true;
                                     }
                                 }
 
@@ -998,6 +1022,7 @@ namespace ConsoleApplication
 
                             }
 
+                            textStyle.Alignment = (runPPT.Alignment != "") ? runPPT.Alignment : textStyle.Alignment;
                             textStyle.Bold = runPPT.Bold;
                             textStyle.Italic = runPPT.Italic;
                             textStyle.Underline = runPPT.Underline;
@@ -1021,6 +1046,8 @@ namespace ConsoleApplication
                             textObject.StyleList.Add(textStyle);
                             textFragment.StyleId = textObject.StyleList.IndexOf(textStyle);
                             textObject.FragmentsList.Add(textFragment);
+
+
 
                             //Increase the run index
                             runIndex++;

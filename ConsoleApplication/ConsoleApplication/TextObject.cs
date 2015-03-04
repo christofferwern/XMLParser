@@ -155,7 +155,6 @@ namespace ConsoleApplication
             string HTML = "";
 
             HTML += "<TEXTFORMAT LEFTMARGIN=\"1\" RIGHTMARGIN=\"2\">";
-            HTML += "<P ALIGN=\"" + _align + "\">";
 
             TextStyle newStyle = new TextStyle(), oldStyle = new TextStyle();
 
@@ -172,6 +171,8 @@ namespace ConsoleApplication
                 //First fragment
                 if (_fragmentsList.IndexOf(textFragment) == 0)
                 {
+                    HTML += "<P ALIGN=\"" + newStyle.Alignment + "\">";
+
                     fontCount++;
                     HTML += "<FONT FACE=\"" + newStyle.Font + "\" SIZE=\"" + newStyle.FontSize + "\" COLOR=\"#" + newStyle.FontColor + "\" LETTERSPACING=\"0\" KERNING=\"1\">";
                     
@@ -203,9 +204,25 @@ namespace ConsoleApplication
                 if (oldStyle != newStyle)
                 {
                     if (oldStyle.Font != newStyle.Font ||
-                       oldStyle.FontColor != newStyle.FontColor ||
-                       oldStyle.FontSize != newStyle.FontSize)
+                        oldStyle.FontColor != newStyle.FontColor ||
+                        oldStyle.FontSize != newStyle.FontSize ||
+                        oldStyle.Alignment != newStyle.Alignment)
                     {
+                        if (oldStyle.Alignment != newStyle.Alignment)
+                        {
+                            for (int i = 0; i < fontCount; i++)
+                                HTML += "</FONT>";
+
+                            HTML += "</P>";
+                            HTML += "</TEXTFORMAT>";
+                            fontCount = 0;
+
+                            HTML += "<P ALIGN=\"" + newStyle.Alignment + "\">";
+
+                            fontCount++;
+                            HTML += "<FONT FACE=\"" + newStyle.Font + "\" SIZE=\"" + newStyle.FontSize + "\" COLOR=\"#" + newStyle.FontColor + "\" LETTERSPACING=\"0\" KERNING=\"1\">";
+                        }
+
                         HTML += (bold) ? "</B>" : "";
                         HTML += (underline) ? "</U>" : "";
                         HTML += (italic) ? "</I>" : "";
