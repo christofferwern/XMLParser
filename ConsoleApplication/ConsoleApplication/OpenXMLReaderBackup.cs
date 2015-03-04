@@ -212,7 +212,7 @@ namespace ConsoleApplication
 
                             foreach (var item in fillColors)
                             {
-                                Console.WriteLine("#" + item.getAdjustedColor());
+                                //Console.WriteLine("#" + item.getAdjustedColor());
                             }
 
                         }

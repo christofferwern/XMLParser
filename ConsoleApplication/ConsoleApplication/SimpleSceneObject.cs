@@ -88,7 +88,7 @@ namespace ConsoleApplication
             _clipHeight = (int) Math.Round(_clipHeight * scaleHeight);
 
             //rotation
-            _rotation /= 60000;
+            _rotation = (int)Math.Round(_rotation/60000);
         }
 
         public Properties getProperties()
