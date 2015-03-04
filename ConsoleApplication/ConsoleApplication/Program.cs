@@ -20,39 +20,30 @@ namespace ConsoleApplication
         {
             var watch = Stopwatch.StartNew();
 
-            string originalPath = @"C:\Users\ex1\downloads\Imi.pptx";
+            string originalPath = @"C:\Users\ex1\downloads\Yooba.pptx";
             string path = @"C:\Users\ex1\desktop\randomStuffNotANYHAVEBOfDY12723489";
 
-            //Kopierar filen
+            //Copyy file
             File.Copy(originalPath, path + ".pptx");
 
             //Change to .zip
-            path.Replace(Path.GetExtension(path + ".pptx"), ".zip");
+            FileInfo f1 = new FileInfo(path + ".pptx");
+            f1.MoveTo(Path.ChangeExtension(path, ".zip"));
 
-            using (ZipArchive zip = ZipFile.Open(path + ".zip", ZipArchiveMode.Update))
-            {
-                for (int i = zip.Entries.Count - 1; i >= 0; i--)
-                {
-                    ZipArchiveEntry e = zip.Entries[i];
-
-                    if (e.Name == "app.xml" || e.Name == "core.xml")
-                    {
-                        e.Delete();
-                    }
-                }
-            }
+            //Open zip file
+            using (ZipArchive zip = ZipFile.Open(path + ".zip", ZipArchiveMode.Update)) { }
 
             //Change back to .pptx
-            path.Replace(Path.GetExtension(path + ".zip"), ".pptx");
+            FileInfo f2 = new FileInfo(path + ".zip");
+            f2.MoveTo(Path.ChangeExtension(path, ".pptx"));
 
-            //OpenXMLReader reader = new OpenXMLReader(path + ".pptx");
+            //Do the read
+            OpenXMLReader reader = new OpenXMLReader(path + ".pptx");
+            reader.read();
+            reader.PresentationObject.getXMLTree().Save(@"C:\Users\ex1\Desktop\out.xml");
 
-            //reader.read();
-
-            ///reader.PresentationObject.getXMLTree().Save(@"C:\Users\ex1\Desktop\out.xml");
-
-            //File.Delete(path + ".pptx");
-
+            //Delete copied file
+            File.Delete(path + ".pptx");
 
             Console.WriteLine("\nCompilation time: " + (double)watch.ElapsedMilliseconds/1000 + "s");
             Console.WriteLine("Press any key to exit...");
