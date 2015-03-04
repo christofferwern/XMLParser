@@ -260,11 +260,30 @@ namespace ConsoleApplication
                 {
                     TableStyle t = new TableStyle();
                     t.Type = style.LocalName;
+                    t.FontSize = 1400;
 
                     foreach (var child in style)
                     {
                         if (child.LocalName == "tcTxStyle")
                         {
+                            DrawingML.TableCellTextStyle tcTxStyle = (DrawingML.TableCellTextStyle)child;
+
+                            if (tcTxStyle.Italic != null)
+                                if (tcTxStyle.Italic.Value.ToString().ToLower() == "on" || tcTxStyle.Italic.Value.ToString().ToLower() == "true" ||
+                                    tcTxStyle.Italic.Value.ToString().ToLower() == "t"  || tcTxStyle.Italic.Value.ToString().ToLower() == "1")
+                                    t.Italic = true;
+
+                            if (tcTxStyle.Bold != null)
+                                if (tcTxStyle.Bold.Value.ToString().ToLower() == "on"   ||tcTxStyle.Bold.Value.ToString().ToLower() == "true" ||
+                                    tcTxStyle.Bold.Value.ToString().ToLower() == "t"    || tcTxStyle.Bold.Value.ToString().ToLower() == "1"    )
+                                    t.Bold = true;
+
+                            string color = getColor(tcTxStyle);
+                            if (color != "")
+                                t.FontColor = color;
+
+                            //FIX FONT AND FONT SIZE
+
                             //TODO
                         }
                         
@@ -306,8 +325,6 @@ namespace ConsoleApplication
 
                                         }
                                     }
-
-                                    
                                 }
                             }
 
@@ -316,9 +333,6 @@ namespace ConsoleApplication
 
                     tableStyles.Add(t);
                 }
-
-                foreach (TableStyle t in tableStyles)
-                    Console.WriteLine(t.ToString());
 
                 int lastColIndex = -1, lastRowIndex = -1;
 
@@ -336,68 +350,171 @@ namespace ConsoleApplication
                 int width, height, colIndex, rowIndex = 0, totalHeight = 0, totalWidth = 0;
                 foreach (DrawingML.TableRow tr in table.Descendants<DrawingML.TableRow>())
                 {
-                    height = (int) tr.Height;
                     colIndex = 0;
                     foreach (DrawingML.TableCell tc in tr.Descendants<DrawingML.TableCell>())
                     {
                         width = gridColWidthList[colIndex];
+                        height = (int)tr.Height;
 
-                        SimpleSceneObject simpleSceneObject = new SimpleSceneObject();
-                        simpleSceneObject.BoundsX = boundsX + totalWidth;
-                        simpleSceneObject.BoundsY = boundsY + totalHeight;
-                        simpleSceneObject.ClipWidth = width;
-                        simpleSceneObject.ClipHeight = height;
+                        if (tc.RowSpan != null)
+                            height *= tc.RowSpan.Value;
+                        
+                        if(tc.GridSpan != null)
+                            width *= tc.GridSpan.Value;
+                        
+                        SimpleSceneObject simpleSceneObjectShape = new SimpleSceneObject();
+                        simpleSceneObjectShape.BoundsX = boundsX + totalWidth;
+                        simpleSceneObjectShape.BoundsY = boundsY + totalHeight;
+                        simpleSceneObjectShape.ClipWidth = width;
+                        simpleSceneObjectShape.ClipHeight = height;
 
-                        ShapeObject shapeObject = new ShapeObject(simpleSceneObject, ShapeObject.shape_type.Rectangle);
+                        SimpleSceneObject simpleSceneObjectText = new SimpleSceneObject();
+                        simpleSceneObjectText.BoundsX = boundsX + totalWidth;
+                        simpleSceneObjectText.BoundsY = boundsY + totalHeight;
+                        simpleSceneObjectText.ClipWidth = width;
+                        simpleSceneObjectText.ClipHeight = height;
+
+                        ShapeObject shapeObject = new ShapeObject(simpleSceneObjectShape, ShapeObject.shape_type.Rectangle);
+                        TextObject textObject = new TextObject(simpleSceneObjectText);
+
 
                         //Set to default values
-                        shapeObject.setAttributes(getTableStyle(tableStyles, "wholeTbl"));
+                        TableStyle defaultTableStyle = getTableStyle(tableStyles, "wholeTbl");
+                        shapeObject.FillAlpha = defaultTableStyle.FillAlpha;
+                        shapeObject.FillColor = defaultTableStyle.FillColor;
+                        shapeObject.LineSize = defaultTableStyle.LineSize;
+                        shapeObject.LineColor = defaultTableStyle.LineColor;
+                        textObject.Color = defaultTableStyle.FontColor;
+                        textObject.Size = defaultTableStyle.FontSize;
 
                         //if band column
                         if (table.TableProperties.BandRow != null)
                         {
                             if (rowIndex % 2 == 0)
+                            {
                                 shapeObject.setAttributes(getTableStyle(tableStyles, "band1H"));
+                                textObject.setAttributes(getTableStyle(tableStyles, "band1H"));
+                            }
                             else
+                            {
                                 shapeObject.setAttributes(getTableStyle(tableStyles, "band2H"));
+                                textObject.setAttributes(getTableStyle(tableStyles, "band2H"));
+                            } 
                         }
 
                         //if band column
                         if (table.TableProperties.BandColumn != null)
                         {
                             if (colIndex % 2 == 0)
+                            {
                                 shapeObject.setAttributes(getTableStyle(tableStyles, "band1V"));
+                                textObject.setAttributes(getTableStyle(tableStyles, "band1V"));
+                            }
                             else
+                            {
                                 shapeObject.setAttributes(getTableStyle(tableStyles, "band2V"));
+                                textObject.setAttributes(getTableStyle(tableStyles, "band2V"));
+                            }
                         }
 
                         //if first row
                         if (table.TableProperties.FirstRow != null && (rowIndex == 0))
+                        {
                             shapeObject.setAttributes(getTableStyle(tableStyles, "firstRow"));
+                            textObject.setAttributes(getTableStyle(tableStyles, "firstRow"));
+                        }
 
                         //if first column
                         if (table.TableProperties.FirstColumn != null && (colIndex == 0))
+                        {
                             shapeObject.setAttributes(getTableStyle(tableStyles, "firstCol"));
+                            textObject.setAttributes(getTableStyle(tableStyles, "firstCol"));
+                        }
 
                         //if last row
                         if (table.TableProperties.LastRow != null && (rowIndex == lastRowIndex))
+                        {
                             shapeObject.setAttributes(getTableStyle(tableStyles, "lastRow"));
+                            textObject.setAttributes(getTableStyle(tableStyles, "lastRow"));
+                        }
 
                         //if last column
                         if (table.TableProperties.LastColumn != null && (colIndex == lastColIndex))
+                        {
                             shapeObject.setAttributes(getTableStyle(tableStyles, "lastCol"));
+                            textObject.setAttributes(getTableStyle(tableStyles, "lastCol"));
+                        }
 
                         if (shapeObject.LineSize > 0)
                             shapeObject.LineEnabled = true;
 
-                        sceneObjectList.Add(shapeObject);
+                        if (tc.TextBody != null)
+                        {
+                            int paragraphIndex = 0;
+                            foreach (DrawingML.Paragraph p in tc.TextBody.Descendants<DrawingML.Paragraph>())
+                            {
+
+                                bool HasRun = false;
+                                foreach (DrawingML.Run r in p.Descendants<DrawingML.Run>())
+                                {
+                                    HasRun = true;
+
+                                    TextStyle textStyle = new TextStyle();
+                                    TextFragment textFragment = new TextFragment();
+
+                                    textFragment.Text = r.InnerText;
+                                    textStyle.FontSize = textObject.Size;
+                                    textStyle.FontColor = textObject.Color;
+                                    textStyle.Bold = textObject.Bold;
+                                    textStyle.Underline = textObject.Underline;
+                                    textStyle.Italic = textObject.Italic;
+
+                                    if (paragraphIndex != 0)
+                                        textFragment.NewParagraph = true;
+
+                                    //Override with specific run properties
+                                    if (r.RunProperties != null)
+                                    {
+                                        DrawingML.RunProperties rPr = r.RunProperties;
+                                        textStyle.Bold = (rPr.Bold != null) ? rPr.Bold.Value : textStyle.Bold;
+                                        textStyle.Italic = (rPr.Italic != null) ? rPr.Italic.Value : textStyle.Italic;
+                                        textStyle.FontSize = (rPr.FontSize != null) ? rPr.FontSize.Value : textStyle.FontSize;
+                                        if (rPr.Underline != null)
+                                            if (rPr.Underline.Value.ToString() == "sng")
+                                                textStyle.Underline = true;
+
+                                        //Get font color
+                                        if (rPr.HasChildren)
+                                            foreach (var rPrChild in rPr.ChildElements)
+                                                if (rPrChild.LocalName == "solidFill")
+                                                    textStyle.FontColor = getColor(rPrChild);
+                                    }
+
+                                    textObject.StyleList.Add(textStyle);
+                                    textFragment.StyleId = textObject.StyleList.IndexOf(textStyle);
+                                    textObject.FragmentsList.Add(textFragment);
+                                }
+
+                                if (!HasRun)
+                                    if (textObject.FragmentsList.Count > 0)
+                                        textObject.FragmentsList.Last().Breaks++;
+
+                                paragraphIndex++;
+                            }
+                        }
+
+                        if (tc.HorizontalMerge == null && tc.VerticalMerge == null)
+                        {
+                            sceneObjectList.Add(shapeObject);
+                            sceneObjectList.Add(textObject);
+                        }
 
                         colIndex++;
                         totalWidth += width;
                     }
 
                     rowIndex++;
-                    totalHeight += height;
+                    totalHeight += (int)tr.Height;
                     totalWidth = 0;
                 }
             }
@@ -862,17 +979,10 @@ namespace ConsoleApplication
 
                                 //Get font color
                                 if (rPr.HasChildren)
-                                {
                                     foreach (var rPrChild in rPr.ChildElements)
-                                    {
                                         if (rPrChild.LocalName == "solidFill")
-                                        {
-                                            runPPT.FontColor = getColor(rPrChild);
-                                                
-                                        }
-                                    }
-                                }
-                            
+                                            runPPT.FontColor = getColor(rPrChild);   
+
                             }
 
                             textStyle.Bold = runPPT.Bold;
@@ -1227,35 +1337,42 @@ namespace ConsoleApplication
         {
             string color = "";
 
-            OpenXmlElement colorType = xmlElement.FirstChild;
-            
-            if (colorType.GetType().Equals(typeof(DrawingML.RgbColorModelHex))){
-                
-                foreach (var colorValue in colorType.Parent.Descendants<DrawingML.RgbColorModelHex>())
-                {
-                    if (colorValue.Val.ToString() == "phClr")
-                        color = phClr;
-                    else
-                        color = colorValue.Val.ToString();
-                }
-            }
-            else
-                foreach (var colorValue in colorType.Parent.Descendants<DrawingML.SchemeColor>())
-                {
-                    if (colorValue.Val.ToString() == "phClr")
-                        color = phClr;
-                    else
-                        color = getColorFromTheme(colorValue.Val.ToString());
-                }
-
-            if (colorType.HasChildren)
+            foreach (var colorValue in xmlElement.Descendants<DrawingML.RgbColorModelHex>())
             {
-                string transformedColor = colorTransforms(colorType, color);
-                color = transformedColor;
-                return color;
+                if (colorValue.Val.ToString() == "phClr")
+                    color = phClr;
+                else
+                    color = colorValue.Val.ToString();
+
+                if (colorValue.HasChildren)
+                {
+                    string transformedColor = colorTransforms(colorValue, color);
+                    color = transformedColor;
+                    return color;
+                }
+                else
+                    return color;
             }
-            else
-                return color;
+
+            foreach (var colorValue in xmlElement.Descendants<DrawingML.SchemeColor>())
+            {
+                if (colorValue.Val.ToString() == "phClr")
+                    color = phClr;
+                else
+                    color = getColorFromTheme(colorValue.Val.ToString());
+
+                if (colorValue.HasChildren)
+                {
+                    string transformedColor = colorTransforms(colorValue, color);
+                    color = transformedColor;
+                    return color;
+                }
+                else
+                    return color;
+            }
+
+            return "";
+
         }
 
         //Returns a transformed color

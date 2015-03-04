@@ -387,7 +387,7 @@ namespace ConsoleApplication
 
         internal void setAttributes(TableStyle tableStyle)
         {
-            if (tableStyle == null)
+            if(tableStyle==null)
                 return;
 
             FillAlpha = (tableStyle.FillAlpha != 0) ? tableStyle.FillAlpha : FillAlpha;

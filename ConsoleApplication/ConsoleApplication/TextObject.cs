@@ -613,5 +613,17 @@ namespace ConsoleApplication
             set { _useScroller = value; }
         }
 
+
+        internal void setAttributes(TableStyle tableStyle)
+        {
+            if (tableStyle == null)
+                return;
+
+            Color = (tableStyle.FontColor != "") ? tableStyle.FontColor : Color;
+            Size = (tableStyle.FontSize != 0) ? tableStyle.FontSize : Size;
+            Bold = tableStyle.Bold;
+            Italic = tableStyle.Italic;
+            Underline = tableStyle.Underline;
+        }
     }
 }
