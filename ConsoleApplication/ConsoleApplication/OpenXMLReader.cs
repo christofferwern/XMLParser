@@ -445,9 +445,6 @@ namespace ConsoleApplication
                             textObject.setAttributes(getTableStyle(tableStyles, "lastCol"));
                         }
 
-                        if (shapeObject.LineSize > 0)
-                            shapeObject.LineEnabled = true;
-
                         if (tc.TextBody != null)
                         {
                             int paragraphIndex = 0;
@@ -533,6 +530,9 @@ namespace ConsoleApplication
 
         private List<SceneObject> getSceneObjects(PresentationML.Shape shape)
         {
+            Console.WriteLine("------");
+            Console.WriteLine("'" + shape.InnerText + "'");
+
             List<SceneObject> sceneObjectList = new List<SceneObject>();
 
             int GchildOffX = 0, GchildOffY = 0, GchildExtX = 0, GchildExtY = 0, GoffX = 0, GoffY = 0, GextX = 0, GextY = 0;
@@ -784,8 +784,6 @@ namespace ConsoleApplication
                             else
                             {
                                 shapeObject.LineSize = (ln.Width != null) ? ln.Width.Value : shapeObject.LineSize;
-                                shapeObject.LineEnabled = true;
-
                             }
                                 
                             foreach (var lnChild in ln)
@@ -1042,13 +1040,20 @@ namespace ConsoleApplication
                             int lineRefIndex = (int)lnRef.Index.Value;
 
                             DrawingML.LineStyleList lineStyleList = _presentationDocument.PresentationPart.ThemePart.Theme.ThemeElements.FormatScheme.LineStyleList;
-
+                            
                             int lineStyleIndex = 1;
                             foreach (var ln in lineStyleList)
                             {
-                                foreach (var lineStyle in ln)
+                                DrawingML.Outline line = (DrawingML.Outline)ln;
+
+                                if (lineRefIndex == lineStyleIndex)
                                 {
-                                    if (lineRefIndex == lineStyleIndex)
+
+                                    if (line.Width != null)
+                                        shapeObject.LineSize = line.Width.Value;
+
+
+                                    foreach (var lineStyle in ln)
                                     {
                                         if (lineStyle.LocalName == "solidFill")
                                         {
@@ -1056,7 +1061,6 @@ namespace ConsoleApplication
                                             {
                                                 HasLine = true;
                                                 shapeObject.LineColor = getColor(lineStyle, color);
-                                                shapeObject.LineEnabled = true;
                                             }
                                         }
 
@@ -1064,6 +1068,7 @@ namespace ConsoleApplication
                                         {
                                             HasLine = true;
                                         }
+
                                     }
                                 }
 

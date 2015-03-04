@@ -145,8 +145,6 @@ namespace ConsoleApplication
 
             if (_fillType.Equals("gradient"))
             {
-                Console.WriteLine(_fillAlpha1);
-                
                 _fillColor = getColorAsInteger(_fillColor1).ToString();
 
                 _fillAlpha1 /= 100000;
@@ -156,14 +154,14 @@ namespace ConsoleApplication
                 _fillColor2 = getColorAsInteger(_fillColor2).ToString();
                 
                 _gradientAngle /= 60000;
-
-                Console.WriteLine(_fillAlpha1);
             }
 
             _lineSize = (int) Math.Round((double)_lineSize / 12700);
 
-            //if (_lineSize <= 0)
-            //    _lineEnabled = false;
+            if (_lineSize <= 0)
+                _lineEnabled = false;
+            else
+                _lineEnabled = true;
 
             _lineColor = getColorAsInteger(_lineColor).ToString();
             _cornerRadius = (float) Math.Round((_cornerRadius / 100000) * 128 * 4);
