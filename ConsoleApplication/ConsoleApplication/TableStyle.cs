@@ -10,9 +10,14 @@ namespace ConsoleApplication
     {
         int _lineSize, _fontSize, _fillAlpha;
         string _fontColor, _lineColor, _fillColor, _type;
+        bool _bold, _italic, _underline;
 
         public TableStyle()
         {
+            _bold = false;
+            _italic = false;
+            _underline = false;
+
             _lineSize = 0;
             _fontSize = 0;
             _fillAlpha = 0;
@@ -29,6 +34,24 @@ namespace ConsoleApplication
                    "Fill: " + _fillColor + ", " + _fillAlpha + "\n" +
                    "Line: " + _lineColor + ", " + _lineSize + "\n" +
                    "Font: " + _fontColor + ", " + _fontSize;
+        }
+
+        public bool Underline
+        {
+            get { return _underline; }
+            set { _underline = value; }
+        }
+
+        public bool Italic
+        {
+            get { return _italic; }
+            set { _italic = value; }
+        }
+
+        public bool Bold
+        {
+            get { return _bold; }
+            set { _bold = value; }
         }
 
         public string Type

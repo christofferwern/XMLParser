@@ -12,7 +12,8 @@ namespace ConsoleApplication
     {
         private Boolean _bold, _underline, _italic;
         private int _fontSize;
-        private string _font, _fontColor;
+        private string _font, _fontColor, _alignment;
+
         private XmlDocument _rootOfDocument;
 
         public TextStyle()
@@ -23,6 +24,7 @@ namespace ConsoleApplication
             _fontSize = 0;
             _fontColor = "";
             _font = "Arial";
+            _alignment = "";
         }
 
         public string attrubiteValue()
@@ -132,7 +134,7 @@ namespace ConsoleApplication
             if (other == null)
                 return false;
 
-            if ((Font == other.Font) && (FontColor == other.FontColor) && (FontSize == other.FontSize) && (Italic == other.Italic) && (Underline == other.Underline) && (Bold == other.Bold))
+            if ((Font == other.Font) && (FontColor == other.FontColor) && (FontSize == other.FontSize) && (Italic == other.Italic) && (Underline == other.Underline) && (Bold == other.Bold) && (Alignment == other.Alignment))
             {
                 return true; 
             }
@@ -147,6 +149,22 @@ namespace ConsoleApplication
                 && (Italic == other.Italic)
                 && (Underline == other.Underline)
                 && (Bold == other.Bold);*/
+        }
+
+        public string Alignment
+        {
+            get { return _alignment; }
+            set { 
+                
+                if(value.ToLower() == "r" || value.ToLower() == "right")
+                     _alignment = "right";
+
+                if (value.ToLower() == "l" || value.ToLower() == "left")
+                    _alignment = "left";
+
+                if (value.ToLower() == "c" || value.ToLower() == "ctr" || value.ToLower() == "center")
+                    _alignment = "center"; 
+            }
         }
 
         //public static bool operator ==(TextStyle x, TextStyle y)
