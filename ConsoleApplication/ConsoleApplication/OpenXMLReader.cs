@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Threading.Tasks;
+using SavingImage = System.Drawing.Image;
 
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml;
@@ -31,6 +32,8 @@ namespace ConsoleApplication
 
         private XmlDocument _rootXmlDoc;
 
+        private PresentationML.Slide currentSlide;
+        private PresentationML.SlideMaster currentMaster;
 
         internal PresentationObject PresentationObject
         {
@@ -68,8 +71,9 @@ namespace ConsoleApplication
 
         public void read()
         {
-            try
-            {
+
+           // try
+           // {
                 // Open the presentation file as read-only.
                 using (_presentationDocument = PresentationDocument.Open(_path, false))
                 {
@@ -86,10 +90,11 @@ namespace ConsoleApplication
 
                     //Get the slidemaster scene object, background etc
                     PresentationML.SlideMaster slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster; ;
-
+                    currentMaster = slideMaster;
                     _masterLevel = true;
                     foreach (var child in slideMaster.CommonSlideData.ChildElements)
                     {
+                    
                         if (child.LocalName == "bg")
                             _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.Background)child));
 
@@ -129,15 +134,17 @@ namespace ConsoleApplication
                         _placeHolderListMaster.AddRange(range);
                     }
 
+               
                     //Counter of scenes
                     int sceneCounter = 1;
 
                     //Go through all Slides in the PowerPoint presentation
                     foreach (PresentationML.SlideId slideID in presentation.SlideIdList)
                     {
+
                         SlidePart slidePart = _presentationDocument.PresentationPart.GetPartById(slideID.RelationshipId) as SlidePart;
                         Scene scene = new Scene(sceneCounter);
-
+                        currentSlide = slidePart.Slide;
                         //Go through all elements in the slide layout
                         _placeHolderListLayout.Clear();
                         _layoutLevel = true;
@@ -165,20 +172,22 @@ namespace ConsoleApplication
                         }
                         _slideLevel = false;
 
+                        currentSlide = null;
+
                         //Add scene to presentation
                         _presentationObject.addScene(scene);
-
                         sceneCounter++;
                     }
 
+
                     _presentationObject.ConvertToYoobaUnits(_presentationSizeX, _presentationSizeY);
                 }
-            }
-            catch(Exception e)
+          //  }
+            /*catch(Exception e)
             {
                 Console.WriteLine("Error reading '" + _path + "'");
                 Console.WriteLine("\nError code: \n\n" + e);
-            }
+            }*/
         }
 
         private List<SceneObject> getSceneObjects(PresentationML.ShapeTree shapeTree)
@@ -232,6 +241,9 @@ namespace ConsoleApplication
         private List<SceneObject> getSceneObjects(PresentationML.Picture picture)
         {
             List<SceneObject> sceneObjectList = new List<SceneObject>();
+
+            List<SceneObject> imageObjectList = getImages(picture);
+
             return sceneObjectList;
         }
 
@@ -1298,10 +1310,10 @@ namespace ConsoleApplication
                             shape.GradientAngle = getGradientAngle((DrawingML.GradientFill)bgStyle);
 
                             List<string> colors = getColors(bgStyle, color);
-                            //List<int> gradientAlphaList = getAlphas(bgStyle);
+                            List<int> gradientAlphaList = getAlphas(bgStyle);
 
-                            //shape.FillAlpha1 = gradientAlphaList.First();
-                            //shape.FillAlpha2 = gradientAlphaList.Last();
+                            shape.FillAlpha1 = gradientAlphaList.First();
+                            shape.FillAlpha2 = gradientAlphaList.Last();
                             shape.FillColor1 = colors.First();
                             shape.FillColor2 = colors.Last();
                             shape.FillType = "gradient";
@@ -1310,6 +1322,7 @@ namespace ConsoleApplication
                         }
                         if (bgStyle.LocalName == "blipFill")
                         {
+                            List<SceneObject> images = getImages(bgStyle);
                             //sceneObjectList.Add(shape);
                         }
                     }
@@ -1342,10 +1355,10 @@ namespace ConsoleApplication
                             shape.GradientAngle = getGradientAngle(gradientFill);
 
                             List<string> gradientColorList = getColors(gradientFill);
-                            //List<int> gradientAlphaList = getAlphas(gradientFill);
+                            List<int> gradientAlphaList = getAlphas(gradientFill);
 
-                            //shape.FillAlpha1 = gradientAlphaList.First();
-                            //shape.FillAlpha2 = gradientAlphaList.Last();
+                            shape.FillAlpha1 = gradientAlphaList.First();
+                            shape.FillAlpha2 = gradientAlphaList.Last();
                             shape.FillColor1 = gradientColorList.First();
                             shape.FillColor2 = gradientColorList.Last();
                         }
@@ -1353,10 +1366,7 @@ namespace ConsoleApplication
                     }
                     if (bgType.LocalName == "blipFill")
                     {
-                        foreach (DrawingML.BlipFill blipFill in background.Descendants<DrawingML.BlipFill>())
-                        {
-
-                        }
+                        List<SceneObject> imageList = getImages(background.FirstChild);
                         //sceneObjectList.Add(shape);
                     }
                 }
@@ -1366,6 +1376,195 @@ namespace ConsoleApplication
             return sceneObjectList;
         }
 
+        private List<SceneObject> getImages(OpenXmlElement xmlElement)
+        {
+            List<SceneObject> tempImageList = new List<SceneObject>();
+            SimpleSceneObject imageScenObject = new SimpleSceneObject();
+            MediaFile MF = new MediaFile();
+            if (xmlElement.GetType() == typeof(PresentationML.BackgroundProperties))
+            {
+                imageScenObject.ClipWidth = _presentationSizeX;
+                imageScenObject.ClipHeight = _presentationSizeY;
+
+                
+                foreach (var child in xmlElement)
+                {
+                
+                    if (child.LocalName == "blipFill")
+                    {
+                        DrawingML.BlipFill blipFill = (DrawingML.BlipFill)child;
+
+                        string file_id = blipFill.Blip.Embed.Value;
+                        foreach (var blipChild in blipFill.Blip)
+                        {
+                            if (blipChild.LocalName == "alphaModFix")
+                            {
+                                DrawingML.AlphaModulationFixed alphaMod = (DrawingML.AlphaModulationFixed)blipChild;
+                                MF.Alpha = alphaMod.Amount;
+                            }
+                        }
+
+                        if (_masterLevel)
+                        {
+                            
+                            MF.ImagePart = (ImagePart)currentMaster.SlideMasterPart.GetPartById(file_id);
+                            MF.ImageName = splitUriToImageName(MF.ImagePart.Uri);
+                        }
+                        if (_slideLevel)
+                        {
+
+                            MF.ImagePart = (ImagePart)currentSlide.SlidePart.GetPartById(file_id);
+                            MF.ImageName = splitUriToImageName(MF.ImagePart.Uri);
+                        }
+
+                    }
+
+                }
+            }
+            else if (xmlElement.GetType() == typeof(PresentationML.Picture))
+            {
+                foreach (var child in xmlElement)
+                {
+
+                    if (child.LocalName == "nvPicPr")
+                    {
+                        PresentationML.NonVisualPictureProperties nvPicPr = (PresentationML.NonVisualPictureProperties)child;
+
+                    }
+                    if (child.LocalName == "blipFill")
+                    {
+                        PresentationML.BlipFill blipFill = (PresentationML.BlipFill)child;
+
+                        string file_id = blipFill.Blip.Embed.Value;
+
+                        foreach (var blipChild in blipFill.Blip)
+                        {
+                            if (blipChild.LocalName == "alphaModFix")
+                            {
+                                DrawingML.AlphaModulationFixed alphaMod = (DrawingML.AlphaModulationFixed)blipChild;
+                                MF.Alpha = alphaMod.Amount;
+                            }
+                        }
+
+                        if (_masterLevel)
+                        {
+
+                            MF.ImagePart = (ImagePart)currentMaster.SlideMasterPart.GetPartById(file_id);
+                            MF.ImageName = splitUriToImageName(MF.ImagePart.Uri);
+                        }
+                        if (_slideLevel)
+                        {
+
+                            MF.ImagePart = (ImagePart)currentSlide.SlidePart.GetPartById(file_id);
+                            MF.ImageName = splitUriToImageName(MF.ImagePart.Uri);
+                        }
+
+                    }
+                    if (child.LocalName == "spPr")
+                    {
+                        PresentationML.ShapeProperties spPr = (PresentationML.ShapeProperties)child;
+
+                        
+                        imageScenObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : imageScenObject.BoundsX;
+                        imageScenObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : imageScenObject.BoundsY;
+                        imageScenObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : imageScenObject.ClipWidth;
+                        imageScenObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : imageScenObject.ClipHeight;
+
+                        MF.OffX = imageScenObject.BoundsX;
+                        MF.OffX = imageScenObject.BoundsY;
+                        MF.ExtX = imageScenObject.ClipWidth;
+                        MF.ExtY = imageScenObject.ClipHeight;
+                    }
+                }
+
+            }
+
+            Console.WriteLine(MF.toString());
+            if (MF.ImagePart != null)
+            {
+                SavingImage img = SavingImage.FromStream(MF.ImagePart.GetStream());
+
+                try
+                {
+                    Console.WriteLine("Saving: " + MF.ImageName);
+                    img.Save(MF.StoreLocation + MF.ImageName);
+                }
+                catch (Exception AE)
+                {
+                    Console.WriteLine("Exception: " + AE);
+                }
+            }
+
+            //if connection and response != null
+            //read information needed clipId etc and apply to imageScenObject.
+
+            ImageObject image = new ImageObject(imageScenObject);
+
+            return tempImageList;
+        }
+                    /*
+                    foreach (var pic in slide.Descendants<Picture>())
+                    {
+                        Boolean isVideo = false;
+                        IEnumerator<OpenXmlElement> checkMedia = pic.NonVisualPictureProperties.ApplicationNonVisualDrawingProperties.GetEnumerator();
+
+                        //check a:VideoFile for each child in p:NvPr
+                        while (checkMedia.MoveNext()) 
+                            if (checkMedia.Current.GetType().Equals(typeof(DrawingML.VideoFromFile)))
+                                isVideo = true;
+
+                        //If VideoFile, go to next iteration    
+                        if (isVideo)
+                            continue;
+
+                        MediaFile MF = new MediaFile();
+                        string slide_name = splitUriToImageName(slide_part.Uri);
+                        MF.setImageLocation(slide_name);
+                        
+                        String imageName = MF.getImageLocation() + "_" + (uniqNameCount++).ToString();
+                        MF.setImageName(imageName);
+
+                        //Set the position (X,Y) of the picture
+                        foreach (var position in pic.Descendants<DrawingML.Offset>())
+                        {
+                            if (position != null)
+                                MF.setOffPos((int)position.X, (int)position.Y);
+                        }
+
+                        //Set the position (X,Y) of the picture
+                        foreach (var position in pic.Descendants<DrawingML.Extents>())
+                        {
+                            if (position != null)
+                                MF.setExtPos((int)position.Cx, (int)position.Cy);
+                        }
+
+                        //Set the rotation (Rotation) of the picture
+                        foreach (var transform2D in pic.Descendants<DrawingML.Transform2D>())
+                        {
+                            if (transform2D.Rotation != null)
+                                MF.setRotation((int) transform2D.Rotation);
+                        }
+
+                        string file_id = pic.BlipFill.Blip.Embed.Value;
+                        ImagePart image_part = (ImagePart)slide.SlidePart.GetPartById(file_id);
+                        string[] type = image_part.ContentType.Split('/');
+                        MF.setImageType(type[1]);
+                        
+
+                        // GetStream() returns the image data
+                        SavingImage img = SavingImage.FromStream(image_part.GetStream());
+
+                        try
+                        {
+                            img.Save(MF.getStoreLocation() + MF.getImageName() + "." + MF.getImageType());
+                        }
+                        catch (Exception AE)
+                        {
+                            Console.WriteLine("Exception: "+ AE);
+                        }
+
+                        mediaList.Add(MF);*/
+         
         private List<string> getColors(OpenXmlElement xmlElement)
         {
             return getColors(xmlElement, "");
@@ -1629,6 +1828,14 @@ namespace ConsoleApplication
 
             //Default
             return 100000;
+        }
+        private static string splitUriToImageName(Uri uri)
+        {
+
+            string[] image = uri.OriginalString.Split('/');
+            string[] image_name = image[3].Split('.');
+
+            return image_name[0] + "." + image_name[1];
         }
 
         public List<int> getAlphas(OpenXmlElement xmlElement)
