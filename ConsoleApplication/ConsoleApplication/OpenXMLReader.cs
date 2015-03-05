@@ -79,10 +79,11 @@ namespace ConsoleApplication
                 {
                     //Read all colors from theme
                     readTheme();
-
                     //Retrive the presentation part
                     var presentation = _presentationDocument.PresentationPart.Presentation;
 
+                    //foreach(var part in _presentationDocument.CoreFilePropertiesPart.OpenXmlPackage.Package.PackageProperties.ContentStatus)
+                      //  Console.WriteLine("sds");
                     //Get the size of presentation
                     PresentationML.SlideSize slideInfo = presentation.SlideSize;
                     _presentationSizeX = slideInfo.Cx.Value;
@@ -1479,21 +1480,8 @@ namespace ConsoleApplication
 
             }
 
-            Console.WriteLine(MF.toString());
-            if (MF.ImagePart != null)
-            {
-                SavingImage img = SavingImage.FromStream(MF.ImagePart.GetStream());
-
-                try
-                {
-                    Console.WriteLine("Saving: " + MF.ImageName);
-                    img.Save(MF.StoreLocation + MF.ImageName);
-                }
-                catch (Exception AE)
-                {
-                    Console.WriteLine("Exception: " + AE);
-                }
-            }
+            //Console.WriteLine(MF.toString());
+            
 
             //if connection and response != null
             //read information needed clipId etc and apply to imageScenObject.

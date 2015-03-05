@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using System.IO;
 using System.IO.Compression;
 
+
+
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml;
 using PresentationML = DocumentFormat.OpenXml.Presentation;
@@ -22,7 +24,7 @@ namespace ConsoleApplication
 
             string originalPath = @"C:\Users\ex1\downloads\Imi.pptx";
             string path = @"C:\Users\ex1\desktop\randomStuffNotANYHAVEBOfDY12723489";
-
+            string imagesPath = @"C:\Users\ex1\Desktop\PPTImages";
             //Copyy file
             File.Copy(originalPath, path + ".pptx");
 
@@ -31,7 +33,39 @@ namespace ConsoleApplication
             f1.MoveTo(Path.ChangeExtension(path, ".zip"));
 
             //Open zip file
-            using (ZipArchive zip = ZipFile.Open(path + ".zip", ZipArchiveMode.Update)) { }
+            using (ZipArchive zip = ZipFile.Open(path + ".zip", ZipArchiveMode.Update)) {
+                
+                foreach (ZipArchiveEntry entry in zip.Entries)
+                {
+                    if (entry.FullName.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) || (entry.FullName.EndsWith(".png", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        if (Directory.Exists(imagesPath))
+                        {
+                            string[] fileEntries = Directory.GetFiles(imagesPath);
+                            int count = 0;
+                            bool exists = false;
+
+                            while (count < fileEntries.Length)
+                            {
+                                string last = fileEntries[count].Substring(fileEntries[count].LastIndexOf('\\') + 1);
+                                if (last == entry.Name.ToString())
+                                {
+                                    exists = true;
+                                    break;
+                                }
+                                count++;
+                            }
+
+                            if (!exists)
+                                entry.ExtractToFile(Path.Combine(imagesPath, entry.Name));
+
+                        }
+                        Console.WriteLine("-------------");
+                    }
+                    
+                }
+
+            }
 
             //Change back to .pptx
             FileInfo f2 = new FileInfo(path + ".zip");
