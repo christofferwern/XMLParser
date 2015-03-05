@@ -88,7 +88,52 @@ namespace ConsoleApplication
             _clipHeight = (int) Math.Round(_clipHeight * scaleHeight);
 
             //rotation
-            _rotation = (int)Math.Round(_rotation/60000);
+            _rotation = _rotation / 60000;
+
+            //Handle negative and too large angles
+            while (_rotation < 0)
+                _rotation += 360;
+
+            while (_rotation > 360)
+                _rotation -= 360;
+
+            double tempRot = 0;
+
+            //Handle the 4 different cases
+            if (_rotation >= 0 && _rotation <= 90)
+                tempRot = _rotation;
+            else if (_rotation > 90 && _rotation <= 180)
+                tempRot = 180 - _rotation;
+            else if (_rotation > 180 && _rotation <= 270)
+                tempRot = _rotation - 180;
+            else if (_rotation > 270 && _rotation < 360)
+                tempRot = 360 - _rotation;
+            
+            //Store the Center of mass for the object before the rotation
+            double COM_X = _boundsX + _clipWidth / 2, 
+                   COM_Y = _boundsY + _clipHeight / 2;
+
+            //Calculate the top left position for the rotated object, stored in newX and newY
+            double newAngle = 90 - tempRot;
+            double newAngleInRadians = newAngle * Math.PI / 180;
+            double stepLeft = Math.Cos(newAngleInRadians) * ClipHeight;
+            double newX = stepLeft + BoundsX;
+            double newY = BoundsY;
+
+            //Calculate the center of mass position for the rotated object
+            newX += Math.Sin(newAngleInRadians) * ClipWidth / 2;
+            newY += Math.Cos(newAngleInRadians) * ClipWidth / 2;
+            newX += Math.Sin(newAngleInRadians - Math.PI / 2) * ClipHeight / 2;
+            newY += Math.Cos(newAngleInRadians - Math.PI / 2) * ClipHeight / 2;
+
+            //Calculate the difference in COM
+            double diffX = newX - COM_X;
+            double diffY = newY - COM_Y;
+
+            //Subtract the diffrence from the original bounds
+            _boundsX -= (int)Math.Round(diffX);
+            _boundsY -= (int)Math.Round(diffY);
+
         }
 
         public Properties getProperties()

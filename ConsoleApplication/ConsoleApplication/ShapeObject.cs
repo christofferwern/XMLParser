@@ -169,7 +169,6 @@ namespace ConsoleApplication
             _cornerRadius = (float) Math.Round((_cornerRadius / 100000) * 128 * 4);
 
             _rotation /= 60000;
-
             
         }
 
