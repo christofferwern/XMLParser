@@ -51,6 +51,11 @@ namespace ConsoleApplication
             _sceneObject.setObjectType(objectType);
         }
 
+        public virtual void setZindex(int z)
+        {
+            _sceneObject.setZindex(z);
+        }
+
         public virtual XmlDocument getXMLDocumentRoot()
         {
             return _sceneObject.getXMLDocumentRoot();

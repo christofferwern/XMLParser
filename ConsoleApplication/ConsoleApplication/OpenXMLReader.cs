@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Threading.Tasks;
+using System.Runtime.Serialization.Json;
+using System.IO;
 using SavingImage = System.Drawing.Image;
 
 using DocumentFormat.OpenXml.Packaging;
@@ -28,6 +30,7 @@ namespace ConsoleApplication
 
         private List<PowerPointText> _placeHolderListMaster;
         private List<PowerPointText> _placeHolderListLayout;
+        private List<ImageResponse> _listOfimageResponse;
         private bool _masterLevel, _layoutLevel, _slideLevel;
 
         private XmlDocument _rootXmlDoc;
@@ -58,6 +61,8 @@ namespace ConsoleApplication
             _placeHolderListMaster = new List<PowerPointText>();
             _placeHolderListLayout = new List<PowerPointText>();
 
+            _listOfimageResponse = new List<ImageResponse>();
+
             _masterLevel = false;
             _layoutLevel = false;
             _slideLevel = false;
@@ -79,10 +84,15 @@ namespace ConsoleApplication
                 {
                     //Read all colors from theme
                     readTheme();
-
+                    
+                    //Get the image response from Yooba database
+                    getImagesFromDatabase();
+                    
                     //Retrive the presentation part
                     var presentation = _presentationDocument.PresentationPart.Presentation;
 
+                    //foreach(var part in _presentationDocument.CoreFilePropertiesPart.OpenXmlPackage.Package.PackageProperties.ContentStatus)
+                      //  Console.WriteLine("sds");
                     //Get the size of presentation
                     PresentationML.SlideSize slideInfo = presentation.SlideSize;
                     _presentationSizeX = slideInfo.Cx.Value;
@@ -133,8 +143,7 @@ namespace ConsoleApplication
 
                         _placeHolderListMaster.AddRange(range);
                     }
-
-               
+      
                     //Counter of scenes
                     int sceneCounter = 1;
 
@@ -196,17 +205,15 @@ namespace ConsoleApplication
 
             foreach (var child in shapeTree.ChildElements)
             {
+                
                 if (child.LocalName == "sp")
                     sceneObjectList.AddRange(getSceneObjects((PresentationML.Shape)child));
                 
-
                 if (child.LocalName == "graphicFrame")
                     sceneObjectList.AddRange(getSceneObjects((PresentationML.GraphicFrame)child));
-                
 
                 if (child.LocalName == "pic")
                     sceneObjectList.AddRange(getSceneObjects((PresentationML.Picture)child));
-                
 
                 if (child.LocalName == "grpSp")
                     sceneObjectList.AddRange(getSceneObjects((PresentationML.GroupShape)child));
@@ -243,6 +250,8 @@ namespace ConsoleApplication
             List<SceneObject> sceneObjectList = new List<SceneObject>();
 
             List<SceneObject> imageObjectList = getImages(picture);
+            foreach (SceneObject obj in imageObjectList)
+                sceneObjectList.Add(obj);
 
             return sceneObjectList;
         }
@@ -1002,18 +1011,12 @@ namespace ConsoleApplication
                         textSimpleSceneObject.ClipHeight = powerPointText.Cy;
                     }
 
-
-                    if ((powerPointText.Idx <= 0) && (powerPointText.Type == ""))
-                        Console.WriteLine(powerPointText.toString());
-
                     textObject = new TextObject(textSimpleSceneObject);
 
                     int paragraphIndex = 0;
 
                     foreach (DrawingML.Paragraph p in child.Descendants<DrawingML.Paragraph>())
                     {
-                        Console.WriteLine(p.InnerText);
-                        Console.WriteLine("---------------------------------");
 
                         PowerPointText paragraghPPT = new PowerPointText(powerPointText);
                         //Get the paragraph properties
@@ -1030,15 +1033,7 @@ namespace ConsoleApplication
                                 PowerPointText temp = powerPointLevelList[paragraghPPT.Level];
                                 if (temp != null)
                                 {
-                                    
                                     paragraghPPT.setVisualAttribues(temp);
-
-                                    //if (_slideLevel)
-                                    //{
-                                    //    Console.WriteLine(p.InnerText);
-                                    //    Console.WriteLine(temp.toString());
-                                    //}
-
                                 }
                             }
                             else
@@ -1409,7 +1404,8 @@ namespace ConsoleApplication
                         if (bgStyle.LocalName == "blipFill")
                         {
                             List<SceneObject> images = getImages(bgStyle);
-                            //sceneObjectList.Add(shape);
+                            foreach(SceneObject obj in images)
+                                sceneObjectList.Add(obj);
                         }
                     }
                     counter++;
@@ -1452,8 +1448,9 @@ namespace ConsoleApplication
                     }
                     if (bgType.LocalName == "blipFill")
                     {
-                        List<SceneObject> imageList = getImages(background.FirstChild);
-                        //sceneObjectList.Add(shape);
+                        List<SceneObject> images = getImages(background.FirstChild);
+                        foreach (SceneObject obj in images)
+                            sceneObjectList.Add(obj);
                     }
                 }
 
@@ -1565,92 +1562,27 @@ namespace ConsoleApplication
 
             }
 
-            Console.WriteLine(MF.toString());
-            if (MF.ImagePart != null)
-            {
-                SavingImage img = SavingImage.FromStream(MF.ImagePart.GetStream());
-
-                try
-                {
-                    Console.WriteLine("Saving: " + MF.ImageName);
-                    img.Save(MF.StoreLocation + MF.ImageName);
-                }
-                catch (Exception AE)
-                {
-                    Console.WriteLine("Exception: " + AE);
-                }
-            }
+            //Console.WriteLine(MF.toString());
+            
 
             //if connection and response != null
             //read information needed clipId etc and apply to imageScenObject.
+            foreach (ImageResponse ir in _listOfimageResponse)
+            {
+                /*if (ir.Label == MF.ImageName)
+                    imageScenObject.ClipID = ir.ClipID;*/
+                
+                if (ir.Label == "salesman.jpg")
+                    imageScenObject.ClipID = ir.ClipID;
+            }
 
-            ImageObject image = new ImageObject(imageScenObject);
+            ImageObject imageObj = new ImageObject(imageScenObject);
+            if(imageObj != null)
+                tempImageList.Add(imageObj);
 
             return tempImageList;
         }
-                    /*
-                    foreach (var pic in slide.Descendants<Picture>())
-                    {
-                        Boolean isVideo = false;
-                        IEnumerator<OpenXmlElement> checkMedia = pic.NonVisualPictureProperties.ApplicationNonVisualDrawingProperties.GetEnumerator();
 
-                        //check a:VideoFile for each child in p:NvPr
-                        while (checkMedia.MoveNext()) 
-                            if (checkMedia.Current.GetType().Equals(typeof(DrawingML.VideoFromFile)))
-                                isVideo = true;
-
-                        //If VideoFile, go to next iteration    
-                        if (isVideo)
-                            continue;
-
-                        MediaFile MF = new MediaFile();
-                        string slide_name = splitUriToImageName(slide_part.Uri);
-                        MF.setImageLocation(slide_name);
-                        
-                        String imageName = MF.getImageLocation() + "_" + (uniqNameCount++).ToString();
-                        MF.setImageName(imageName);
-
-                        //Set the position (X,Y) of the picture
-                        foreach (var position in pic.Descendants<DrawingML.Offset>())
-                        {
-                            if (position != null)
-                                MF.setOffPos((int)position.X, (int)position.Y);
-                        }
-
-                        //Set the position (X,Y) of the picture
-                        foreach (var position in pic.Descendants<DrawingML.Extents>())
-                        {
-                            if (position != null)
-                                MF.setExtPos((int)position.Cx, (int)position.Cy);
-                        }
-
-                        //Set the rotation (Rotation) of the picture
-                        foreach (var transform2D in pic.Descendants<DrawingML.Transform2D>())
-                        {
-                            if (transform2D.Rotation != null)
-                                MF.setRotation((int) transform2D.Rotation);
-                        }
-
-                        string file_id = pic.BlipFill.Blip.Embed.Value;
-                        ImagePart image_part = (ImagePart)slide.SlidePart.GetPartById(file_id);
-                        string[] type = image_part.ContentType.Split('/');
-                        MF.setImageType(type[1]);
-                        
-
-                        // GetStream() returns the image data
-                        SavingImage img = SavingImage.FromStream(image_part.GetStream());
-
-                        try
-                        {
-                            img.Save(MF.getStoreLocation() + MF.getImageName() + "." + MF.getImageType());
-                        }
-                        catch (Exception AE)
-                        {
-                            Console.WriteLine("Exception: "+ AE);
-                        }
-
-                        mediaList.Add(MF);*/
-         
         private List<string> getColors(OpenXmlElement xmlElement)
         {
             return getColors(xmlElement, "");
@@ -2022,6 +1954,52 @@ namespace ConsoleApplication
             return powerPointText;
         }
 
+        public void getImagesFromDatabase()
+        {
+            string response = "<assets>" + 
+              "<asset clipID='9457e300-517a-4fe8-9ebe-507c1be16bed'  itemType='clip' width='500' height='628' label='sven_sm.png' size='409165' uploadDate='2015-02-12 13:57' url='https://d1lskzugeos37d.cloudfront.net/f969a3ce-9cfb-41aa-8add-a2fa00e44eda/2a6/2a62fa1b-d6f1-44ea-a85e-13b9800afff3.png'/>" +
+              "<asset clipID='ff257113-dda6-404a-b7de-873d72c12836' itemType='clip' width='291' height='510' label='dataSourceScene.png' size='15555' uploadDate='2014-12-20 23:17' url='https://d1lskzugeos37d.cloudfront.net/f969a3ce-9cfb-41aa-8add-a2fa00e44eda/008/008e160c-1807-4bb0-9180-905b50e2f322.png'/>" +
+              "<asset clipID='5825ccd6-8477-481b-9d34-ba873c9af577' itemType='clip' width='500' height='59' label='button-down.png' size='3007' uploadDate='2014-11-12 11:06' url='https://d1lskzugeos37d.cloudfront.net/f969a3ce-9cfb-41aa-8add-a2fa00e44eda/7a0/7a04e656-2919-4915-9f9f-260ba398a6fa.png'/>" +
+              "<asset clipID='4bbb885d-1b45-4840-984c-c5ed5d0b3483' itemType='clip' width='963' height='912' label='1.PNG' size='71686' uploadDate='2015-02-20 15:35' url='https://d1lskzugeos37d.cloudfront.net/f969a3ce-9cfb-41aa-8add-a2fa00e44eda/5a4/5a438b08-2a64-4899-970b-82df591faa77.png'/>" +
+              "<asset clipID='7a769473-ad60-413e-a477-cd0c4d1ca328' itemType='clip' width='3264' height='2448' label='davids-snurra.jpg' size='417399' uploadDate='2014-11-28 11:13' url='https://d1lskzugeos37d.cloudfront.net/f969a3ce-9cfb-41aa-8add-a2fa00e44eda/903/90375161-11ba-478f-b738-d5aee2d12216.jpg'/>" +
+              "<asset clipID='4938d5b0-0a24-4977-b218-f7612f6e4630' itemType='clip' width='200' height='200' label='salesman.jpg' size='22343' uploadDate='2014-11-05 13:38' url='https://d1lskzugeos37d.cloudfront.net/f969a3ce-9cfb-41aa-8add-a2fa00e44eda/a86/a864d9fd-4c2e-4b9f-a0f8-a3b4d1e6fd77.jpg'/>" +
+              "</assets>";
+
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(response);
+            foreach (XmlElement asset in doc.FirstChild.ChildNodes)
+            {
+                if (asset.LocalName == "asset")
+                {
+                    ImageResponse IR = new ImageResponse();
+
+                    foreach (XmlAttribute attr in asset.Attributes)
+                    {
+                        if (attr.LocalName == "clipID")
+                            IR.ClipID = attr.Value;
+                        if (attr.LocalName == "itemType")
+                            IR.ItemType = attr.Value;
+                        if (attr.LocalName == "width")
+                            IR.Width = attr.Value;
+                        if (attr.LocalName == "height")
+                            IR.Height = attr.Value;
+                        if (attr.LocalName == "label")
+                            IR.Label = attr.Value;
+                        if (attr.LocalName == "size")
+                            IR.Size = attr.Value;
+                        if (attr.LocalName == "uploadDate")
+                            IR.UploadDate = attr.Value;
+                        if (attr.LocalName == "url")
+                            IR.Url = attr.Value;
+                    }
+                    
+                    _listOfimageResponse.Add(IR);
+                }
+
+            }
+
+            
+        }
         
     }
 }

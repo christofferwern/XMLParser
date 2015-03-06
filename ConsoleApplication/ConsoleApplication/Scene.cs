@@ -83,14 +83,16 @@ namespace ConsoleApplication
 
             _rootElement.AppendChild(_properties.getNode(_doc));
 
+            int z_index = 0;
+
             foreach (SceneObject sceneObject in _sceneObjectList)
             {
+                sceneObject.setZindex(z_index);
                 sceneObject.setXMLDocumentRoot(ref _doc);
                 _rootElement.AppendChild(sceneObject.getXMLTree());
+                z_index++;
 
             }
-
-            //_rootElement.AppendChild(getFormNode());
 
             return _rootElement;
         }
