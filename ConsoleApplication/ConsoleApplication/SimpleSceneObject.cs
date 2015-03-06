@@ -89,12 +89,63 @@ namespace ConsoleApplication
             _clipHeight = (int) Math.Round(_clipHeight * scaleHeight);
 
             //rotation
-            _rotation = (int)Math.Round(_rotation/60000);
+            handleTranslationWhenRotate();
+
+            _rotation = _rotation / 60000;
         }
 
         public void setZindex(int z)
         {
             _z = z;
+        }
+
+        public void handleTranslationWhenRotate()
+        {
+            double rotationInDegrees = (double)_rotation / 60000;
+
+            //Handle negative and too large angles
+            while (rotationInDegrees < 0)
+                rotationInDegrees += 360;
+
+            while (rotationInDegrees > 360)
+                rotationInDegrees -= 360;
+
+            double tempRot = 0;
+
+            //Handle the 4 different cases
+            if (rotationInDegrees >= 0 && rotationInDegrees <= 90)
+                tempRot = rotationInDegrees;
+            else if (rotationInDegrees > 90 && rotationInDegrees <= 180)
+                tempRot = 180 - rotationInDegrees;
+            else if (rotationInDegrees > 180 && rotationInDegrees <= 270)
+                tempRot = rotationInDegrees - 180;
+            else if (rotationInDegrees > 270 && rotationInDegrees < 360)
+                tempRot = 360 - rotationInDegrees;
+
+            //Store the Center of mass for the object before the rotation
+            double COM_X = _boundsX + _clipWidth / 2,
+                   COM_Y = _boundsY + _clipHeight / 2;
+
+            //Calculate the top left position for the rotated object, stored in newX and newY
+            double newAngle = 90 - tempRot;
+            double newAngleInRadians = newAngle * Math.PI / 180;
+            double stepLeft = Math.Cos(newAngleInRadians) * ClipHeight;
+            double newX = stepLeft + BoundsX;
+            double newY = BoundsY;
+
+            //Calculate the center of mass position for the rotated object
+            newX += Math.Sin(newAngleInRadians) * ClipWidth / 2;
+            newY += Math.Cos(newAngleInRadians) * ClipWidth / 2;
+            newX += Math.Sin(newAngleInRadians - Math.PI / 2) * ClipHeight / 2;
+            newY += Math.Cos(newAngleInRadians - Math.PI / 2) * ClipHeight / 2;
+
+            //Calculate the difference in COM
+            double diffX = newX - COM_X;
+            double diffY = newY - COM_Y;
+
+            //Subtract the diffrence from the original bounds
+            _boundsX -= (int)Math.Round(diffX);
+            _boundsY -= (int)Math.Round(diffY);
         }
 
         public Properties getProperties()

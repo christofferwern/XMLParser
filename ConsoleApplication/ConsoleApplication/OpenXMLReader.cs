@@ -554,7 +554,7 @@ namespace ConsoleApplication
         {
             List<SceneObject> sceneObjectList = new List<SceneObject>();
 
-            int GchildOffX = 0, GchildOffY = 0, GchildExtX = 0, GchildExtY = 0, GoffX = 0, GoffY = 0, GextX = 0, GextY = 0;
+            int GchildOffX = 0, GchildOffY = 0, GchildExtX = 0, GchildExtY = 0, GoffX = 0, GoffY = 0, GextX = 0, GextY = 0, Grot = 0;
 
             SimpleSceneObject shapeSimpleSceneObject = new SimpleSceneObject(),
                               textSimpleSceneObject = new SimpleSceneObject();
@@ -577,14 +577,16 @@ namespace ConsoleApplication
             }
 
             bool isGroup = false;
-
             //Check for potential group shapes.
             IEnumerator<OpenXmlElement> parent = shape.Parent.GetEnumerator();
             while (parent.MoveNext())
             {
                 if (parent.Current.LocalName == "grpSpPr")
                 {
+
                     PresentationML.GroupShapeProperties grpSpPr = (PresentationML.GroupShapeProperties)parent.Current;
+
+                    int rot = (grpSpPr.TransformGroup.Rotation != null) ? (int)grpSpPr.TransformGroup.Rotation : 0;
 
                     int offX = (int)grpSpPr.TransformGroup.Offset.X;
                     int offY = (int)grpSpPr.TransformGroup.Offset.Y;
@@ -596,7 +598,8 @@ namespace ConsoleApplication
                     int chExtX = (int)grpSpPr.TransformGroup.ChildExtents.Cx;
                     int chExtY = (int)grpSpPr.TransformGroup.ChildExtents.Cy;
 
-                    if (!((chOffX == chOffY) && (chExtX == chExtY) && (offX == offY) && (extX == extY) && extY == 0))
+                    if ((rot != 0) || (offX != 0) || (offY != 0) || (extX != 0) || (extY != 0)
+                        || (chOffX != 0) || (chOffY != 0) || (chExtX != 0) || (chExtY != 0))
                     {
                         GchildOffX = chOffX;
                         GchildOffY = chOffY;
@@ -607,21 +610,27 @@ namespace ConsoleApplication
                         GoffY = offY;
                         GextX = extX;
                         GextY = extY;
-                        
+
+                        Grot = rot;
+
+                        shapeSimpleSceneObject.Rotation = rot;
                         shapeSimpleSceneObject.BoundsX = offX;
                         shapeSimpleSceneObject.BoundsY = offY;
                         shapeSimpleSceneObject.ClipWidth = extX;
                         shapeSimpleSceneObject.ClipHeight = extY;
-                        
+
                         isGroup = true;
                     }
-                }
 
+                    break;
+
+                }
             }
 
             bool HasBg = false, HasLine = false, HasValidGeometry = false, HasText = false, HasTransform = false,
                  solidFillColorChange = false, lineColorChange = false, gradientColorChange = false, IsLine = false;
-            
+
+
             foreach (var child in shape.ChildElements)
             {
                 if(child.LocalName == "nvSpPr")
@@ -652,7 +661,9 @@ namespace ConsoleApplication
                             double scaleX = (double)GextX / GchildExtX;
                             double scaleY = (double)GextY / GchildExtY;
 
-                            shapeSimpleSceneObject.Rotation = (spPr.Transform2D.Rotation != null) ? (int)spPr.Transform2D.Rotation.Value : shapeSimpleSceneObject.Rotation;
+                            if (spPr.Transform2D.Rotation != null)
+                                shapeSimpleSceneObject.Rotation += (int)spPr.Transform2D.Rotation.Value;
+                            
                             shapeSimpleSceneObject.BoundsX = (GoffX - GchildOffX + (int)spPr.Transform2D.Offset.X);
                             shapeSimpleSceneObject.BoundsY = (GoffY - GchildOffY + (int)spPr.Transform2D.Offset.Y);
                             shapeSimpleSceneObject.BoundsX = (int)((shapeSimpleSceneObject.BoundsX - GoffX) * scaleX) + GoffX;
@@ -660,6 +671,48 @@ namespace ConsoleApplication
 
                             shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)(spPr.Transform2D.Extents.Cx * scaleX) : shapeSimpleSceneObject.ClipWidth;
                             shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)(spPr.Transform2D.Extents.Cy * scaleY) : shapeSimpleSceneObject.ClipHeight;
+                        
+                            if (Grot != 0)
+                            {
+                                //Calculate the center of mass for the group and the child
+                                double G_COM_X = GoffX + GextX / 2,
+                                       G_COM_Y = GoffY + GextY / 2,
+                                       C_COM_X = shapeSimpleSceneObject.BoundsX + shapeSimpleSceneObject.ClipWidth / 2,
+                                       C_COM_Y = shapeSimpleSceneObject.BoundsY + shapeSimpleSceneObject.ClipHeight / 2;
+
+                                //Calculate the distance between the two points
+                                double distance = Math.Sqrt(Math.Pow(G_COM_X - C_COM_X, 2) + Math.Pow(G_COM_Y - C_COM_Y, 2));
+
+                                //Calculate the angle in radians
+                                double angleInRadians = (Grot / 60000) * Math.PI / 180;
+
+                                //Calculate the diffrences in x and y between the centre of masses
+                                double dy = Math.Sin(angleInRadians) * distance,
+                                       dx = distance - (Math.Cos(angleInRadians) * distance);
+
+                                //Handle the for different cases, the 4 quadrants
+                                if ((C_COM_X <= G_COM_X) && (C_COM_X <= G_COM_X))
+                                {
+                                    shapeSimpleSceneObject.BoundsX += (int)Math.Round(dx);
+                                    shapeSimpleSceneObject.BoundsY -= (int)Math.Round(dy);
+                                }
+                                else if ((C_COM_X <= G_COM_X) && (C_COM_X >= G_COM_X))
+                                {
+                                    shapeSimpleSceneObject.BoundsX += (int)Math.Round(dx);
+                                    shapeSimpleSceneObject.BoundsY += (int)Math.Round(dy);
+                                }
+                                else if ((C_COM_X >= G_COM_X) && (C_COM_X <= G_COM_X))
+                                {
+                                    shapeSimpleSceneObject.BoundsX -= (int)Math.Round(dx);
+                                    shapeSimpleSceneObject.BoundsY -= (int)Math.Round(dy);
+                                }
+                                else if ((C_COM_X >= G_COM_X) && (C_COM_X >= G_COM_X))
+                                {
+                                    shapeSimpleSceneObject.BoundsX -= (int)Math.Round(dx);
+                                    shapeSimpleSceneObject.BoundsY += (int)Math.Round(dy);
+                                }
+                            }
+                        
                         }
                         else
                         {
@@ -670,17 +723,18 @@ namespace ConsoleApplication
                             shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
                         }
 
-                        textSimpleSceneObject.Rotation = (spPr.Transform2D.Rotation != null) ? (int)spPr.Transform2D.Rotation.Value : textSimpleSceneObject.Rotation;
-                        textSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
-                        textSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
-                        textSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
-                        textSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
+                        textSimpleSceneObject.Rotation = shapeSimpleSceneObject.Rotation;
+                        textSimpleSceneObject.BoundsX = shapeSimpleSceneObject.BoundsX;
+                        textSimpleSceneObject.BoundsY = shapeSimpleSceneObject.BoundsY;
+                        textSimpleSceneObject.ClipWidth = shapeSimpleSceneObject.ClipWidth;
+                        textSimpleSceneObject.ClipHeight = shapeSimpleSceneObject.ClipHeight;
 
-                        powerPointText.Rotation = (spPr.Transform2D.Rotation != null) ? (int)spPr.Transform2D.Rotation.Value : powerPointText.Rotation;
-                        powerPointText.X = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : powerPointText.X;
-                        powerPointText.Y = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : powerPointText.Y;
-                        powerPointText.Cx = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : powerPointText.Cx;
-                        powerPointText.Cy = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : powerPointText.Cy;
+
+                        powerPointText.Rotation = (int)Math.Round(shapeSimpleSceneObject.Rotation);
+                        powerPointText.X = shapeSimpleSceneObject.BoundsX;
+                        powerPointText.Y = shapeSimpleSceneObject.BoundsY;
+                        powerPointText.Cx = shapeSimpleSceneObject.ClipWidth;
+                        powerPointText.Cy = shapeSimpleSceneObject.ClipHeight;
 
                         HasTransform = true;
                     }
@@ -840,6 +894,8 @@ namespace ConsoleApplication
                         }
 
                     }
+
+
                 }
                 
                 if(child.LocalName == "txBody")
@@ -924,24 +980,19 @@ namespace ConsoleApplication
                             powerPointText = powerPointLevelList[0];
                         }
 
-                        //Get the transform properties
-                        if (HasTransform)
+                    }
+
+                    //Get the transform properties
+                    if (HasTransform)
+                    {
+
+                        for (int i = 0; i < 9; i++)
                         {
-                            powerPointText.X = textSimpleSceneObject.BoundsX;
-                            powerPointText.Y = textSimpleSceneObject.BoundsY;
-                            powerPointText.Cx = textSimpleSceneObject.ClipWidth;
-                            powerPointText.Cy = textSimpleSceneObject.ClipHeight;
-
-                            for (int i = 0; i < 9; i++)
-                            {
-                                powerPointLevelList[i].X = textSimpleSceneObject.BoundsX;
-                                powerPointLevelList[i].Y = textSimpleSceneObject.BoundsY;
-                                powerPointLevelList[i].Cx = textSimpleSceneObject.ClipWidth;
-                                powerPointLevelList[i].Cy = textSimpleSceneObject.ClipHeight;
-                            }
+                            powerPointLevelList[i].X = textSimpleSceneObject.BoundsX;
+                            powerPointLevelList[i].Y = textSimpleSceneObject.BoundsY;
+                            powerPointLevelList[i].Cx = textSimpleSceneObject.ClipWidth;
+                            powerPointLevelList[i].Cy = textSimpleSceneObject.ClipHeight;
                         }
-
-                    
                     }
 
                     //if textbody contains listinfo, get that information
@@ -952,10 +1003,13 @@ namespace ConsoleApplication
                             powerPointLevelList[i].setVisualAttribues(listStyleList[i]);                   
                     }
 
-                    textSimpleSceneObject.BoundsX = powerPointText.X;
-                    textSimpleSceneObject.BoundsY = powerPointText.Y;
-                    textSimpleSceneObject.ClipWidth = powerPointText.Cx;
-                    textSimpleSceneObject.ClipHeight = powerPointText.Cy;
+                    if (!isGroup)
+                    {
+                        textSimpleSceneObject.BoundsX = powerPointText.X;
+                        textSimpleSceneObject.BoundsY = powerPointText.Y;
+                        textSimpleSceneObject.ClipWidth = powerPointText.Cx;
+                        textSimpleSceneObject.ClipHeight = powerPointText.Cy;
+                    }
 
                     textObject = new TextObject(textSimpleSceneObject);
 
@@ -963,6 +1017,7 @@ namespace ConsoleApplication
 
                     foreach (DrawingML.Paragraph p in child.Descendants<DrawingML.Paragraph>())
                     {
+
                         PowerPointText paragraghPPT = new PowerPointText(powerPointText);
                         //Get the paragraph properties
                         if (p.ParagraphProperties != null)
@@ -978,15 +1033,7 @@ namespace ConsoleApplication
                                 PowerPointText temp = powerPointLevelList[paragraghPPT.Level];
                                 if (temp != null)
                                 {
-                                    
                                     paragraghPPT.setVisualAttribues(temp);
-
-                                    //if (_slideLevel)
-                                    //{
-                                    //    Console.WriteLine(p.InnerText);
-                                    //    Console.WriteLine(temp.toString());
-                                    //}
-
                                 }
                             }
                             else
@@ -1002,77 +1049,101 @@ namespace ConsoleApplication
                         bool HasRun = false;
                         //Get the run properties
                         int runIndex = 0;
-                        foreach (DrawingML.Run r in p.Descendants<DrawingML.Run>())
+                        foreach (var pChild in p)
                         {
-                            HasRun = true;
-
-                            if (r.Text.InnerText != "")
-                                HasText = true;
-
-                            PowerPointText runPPT = new PowerPointText(paragraghPPT);
-
-                            TextFragment textFragment = new TextFragment();
-                            TextStyle textStyle = new TextStyle();
-
-                            if (runIndex == 0)
+                            if (pChild.LocalName == "r")
                             {
-                                textFragment.Level = runPPT.Level;
+                                DrawingML.Run r = (DrawingML.Run)pChild;
 
-                                if (paragraphIndex != 0)
-                                    textFragment.NewParagraph = true;
-                            }
+                                HasRun = true;
 
-                            if (r.RunProperties != null)
-                            {
-                                DrawingML.RunProperties rPr = r.RunProperties;
-                                runPPT.Bold = (rPr.Bold != null) ? rPr.Bold.Value : runPPT.Bold;
-                                runPPT.Italic = (rPr.Italic != null) ? rPr.Italic.Value : runPPT.Italic;
-                                runPPT.FontSize = (rPr.FontSize != null) ? rPr.FontSize.Value : runPPT.FontSize;
-                                if (rPr.Underline != null)
+                                if (r.Text.InnerText != "")
+                                    HasText = true;
+
+                                PowerPointText runPPT = new PowerPointText(paragraghPPT);
+
+                                TextFragment textFragment = new TextFragment();
+                                TextStyle textStyle = new TextStyle();
+
+                                if (runIndex == 0)
                                 {
-                                    if (rPr.Underline.Value.ToString() == "sng")
-                                    {
-                                        runPPT.Underline = true;
-                                    }
+                                    textFragment.Level = runPPT.Level;
+
+                                    if (paragraphIndex != 0)
+                                        textFragment.NewParagraph = true;
                                 }
 
-                                //Get font color
-                                if (rPr.HasChildren)
-                                    foreach (var rPrChild in rPr.ChildElements)
-                                        if (rPrChild.LocalName == "solidFill")
-                                            runPPT.FontColor = getColor(rPrChild);   
+                                if (r.RunProperties != null)
+                                {
+                                    DrawingML.RunProperties rPr = r.RunProperties;
+                                    runPPT.Bold = (rPr.Bold != null) ? rPr.Bold.Value : runPPT.Bold;
+                                    runPPT.Italic = (rPr.Italic != null) ? rPr.Italic.Value : runPPT.Italic;
+                                    runPPT.FontSize = (rPr.FontSize != null) ? rPr.FontSize.Value : runPPT.FontSize;
+                                    if (rPr.Underline != null)
+                                    {
+                                        if (rPr.Underline.Value.ToString() == "sng")
+                                        {
+                                            runPPT.Underline = true;
+                                        }
+                                    }
 
+                                    //Get font color
+                                    if (rPr.HasChildren)
+                                        foreach (var rPrChild in rPr.ChildElements)
+                                            if (rPrChild.LocalName == "solidFill")
+                                                runPPT.FontColor = getColor(rPrChild);
+
+                                }
+
+                                textStyle.Alignment = (runPPT.Alignment != "") ? runPPT.Alignment : textStyle.Alignment;
+                                textStyle.Bold = runPPT.Bold;
+                                textStyle.Italic = runPPT.Italic;
+                                textStyle.Underline = runPPT.Underline;
+                                textStyle.FontSize = runPPT.FontSize;
+                                textStyle.FontColor = runPPT.FontColor;
+                                textFragment.Text = r.Text.InnerText;
+
+                                //Set to default stuffs
+                                var style = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster.TextStyles.OtherStyle;
+                                PowerPointText[] defaultPPT = getListStyles(style);
+
+                                if (textStyle.FontSize == 0)
+                                    textStyle.FontSize = defaultPPT[runPPT.Level].FontSize;
+
+                                if (textStyle.FontColor == "")
+                                    textStyle.FontColor = defaultPPT[runPPT.Level].FontColor;
+
+                                if (textObject.Align == "")
+                                    textObject.Align = defaultPPT[runPPT.Level].Alignment;
+
+                                textObject.StyleList.Add(textStyle);
+                                textFragment.StyleId = textObject.StyleList.IndexOf(textStyle);
+                                textObject.FragmentsList.Add(textFragment);
+
+                                //Increase the run index
+                                runIndex++;
                             }
 
-                            textStyle.Alignment = (runPPT.Alignment != "") ? runPPT.Alignment : textStyle.Alignment;
-                            textStyle.Bold = runPPT.Bold;
-                            textStyle.Italic = runPPT.Italic;
-                            textStyle.Underline = runPPT.Underline;
-                            textStyle.FontSize = runPPT.FontSize;
-                            textStyle.FontColor = runPPT.FontColor;
-                            textFragment.Text = r.Text.InnerText;
+                            if (pChild.LocalName == "br")
+                            {
+                                TextFragment textFragment = new TextFragment();
 
-                            //Set to default stuffs
-                            var style = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster.TextStyles.OtherStyle;
-                            PowerPointText[] defaultPPT = getListStyles(style);
+                                if (textObject.FragmentsList.Count > 0)
+                                {
+                                    textFragment.StyleId = textObject.FragmentsList.Last().StyleId;
+                                    textFragment.NewParagraph = true;
+                                    textFragment.Text = "";
+                                }
+                                else
+                                {
+                                    TextStyle textStyle = new TextStyle();
+                                    textObject.StyleList.Add(textStyle);
+                                    textFragment.StyleId = textObject.StyleList.IndexOf(textStyle);
+                                }
 
-                            if (textStyle.FontSize == 0)
-                                textStyle.FontSize = defaultPPT[runPPT.Level].FontSize;
-
-                            if (textStyle.FontColor == "")
-                                textStyle.FontColor = defaultPPT[runPPT.Level].FontColor;
-
-                            if (textObject.Align == "")
-                                textObject.Align = defaultPPT[runPPT.Level].Alignment;
-
-                            textObject.StyleList.Add(textStyle);
-                            textFragment.StyleId = textObject.StyleList.IndexOf(textStyle);
-                            textObject.FragmentsList.Add(textFragment);
-
-
-
-                            //Increase the run index
-                            runIndex++;
+                                textObject.FragmentsList.Add(textFragment);
+                                HasRun = true;
+                            }
                         }
 
                         //If paragraph has no run means it has no text, but it still will correspong to a new line 
@@ -1157,7 +1228,7 @@ namespace ConsoleApplication
                                 {
                                     if (fillStyle.LocalName == "solidFill")
                                     {
-                                        if (!solidFillColorChange)
+                                        if (!solidFillColorChange && !gradientColorChange)
                                         {
                                             HasBg = true;
                                             shapeObject.FillColor = getColor(fillStyle, color);
@@ -1169,7 +1240,7 @@ namespace ConsoleApplication
 
                                     if (fillStyle.LocalName == "gradFill")
                                     {
-                                        if (!gradientColorChange)
+                                        if (!gradientColorChange && !solidFillColorChange)
                                         {
                                             shapeObject.GradientType = getGradientType((DrawingML.GradientFill)fillStyle);
                                             shapeObject.GradientAngle = getGradientAngle((DrawingML.GradientFill)fillStyle);
@@ -1235,6 +1306,7 @@ namespace ConsoleApplication
                     }
                 }
             }
+
 
             return sceneObjectList;
         }

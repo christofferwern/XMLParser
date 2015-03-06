@@ -33,7 +33,6 @@ namespace ConsoleApplication
             //Image folder location
             string imagesPath = @"C:\Users\ex1\Desktop\" + originalFileName.Split('.')[0] + "_img";
 
-            //Copyy file
             File.Copy(originalPath, path + ".pptx");
 
             //Change to .zip
@@ -83,11 +82,11 @@ namespace ConsoleApplication
             f2.MoveTo(Path.ChangeExtension(path, ".pptx"));
 
             //Do the read
-            OpenXMLReader reader = new OpenXMLReader(path + ".pptx");
+            OpenXMLReader reader = new OpenXMLReader(originalPath);
             reader.read();
             reader.PresentationObject.getXMLTree().Save(@"C:\Users\ex1\Desktop\out.xml");
 
-            //Delete copied file
+            //Delete file
             File.Delete(path + ".pptx");
 
             Console.WriteLine("\nCompilation time: " + (double)watch.ElapsedMilliseconds/1000 + "s");
