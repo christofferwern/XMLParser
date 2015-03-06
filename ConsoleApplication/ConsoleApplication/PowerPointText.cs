@@ -65,7 +65,7 @@ namespace ConsoleApplication
                    "  Font color:  " + _fontColor + "\n" +
                    "  Size:        (" + _cx + "," + _cy + ")\n" +
                    "  Position:    (" + _x + "," + _y + ")\n" +
-                   "  Rotation:    " + Rotation + "\n" +
+                   "  Rotation:    " + Rotation/60000 + "\n" +
                    "  Anchor:      " + _anchor + "\n" +
                    "  Alignment:   " + _alignment + "\n" + 
                    "  B U I:       (" + _bold + ", " + _underline + ", " + _italic + ") \n";

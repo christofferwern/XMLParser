@@ -20,7 +20,7 @@ namespace ConsoleApplication
         {
             var watch = Stopwatch.StartNew();
 
-            string originalPath = @"C:\Users\ex1\downloads\Yooba.pptx";
+            string originalPath = @"C:\Users\ex1\downloads\rotation3.pptx";
             
             //Copy file
             string path = @"C:\Users\ex1\desktop\randomStuffNotANYHAVEBOfDY12723489";
@@ -38,7 +38,7 @@ namespace ConsoleApplication
             f2.MoveTo(Path.ChangeExtension(path, ".pptx"));
 
             //Do the read
-            OpenXMLReader reader = new OpenXMLReader(path + ".pptx");
+            OpenXMLReader reader = new OpenXMLReader(originalPath);
             reader.read();
             reader.PresentationObject.getXMLTree().Save(@"C:\Users\ex1\Desktop\out.xml");
 

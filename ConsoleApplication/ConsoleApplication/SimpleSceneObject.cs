@@ -88,29 +88,36 @@ namespace ConsoleApplication
             _clipHeight = (int) Math.Round(_clipHeight * scaleHeight);
 
             //rotation
+            handleTranslationWhenRotate();
+
             _rotation = _rotation / 60000;
+        }
+
+        public void handleTranslationWhenRotate()
+        {
+            double rotationInDegrees = (double)_rotation / 60000;
 
             //Handle negative and too large angles
-            while (_rotation < 0)
-                _rotation += 360;
+            while (rotationInDegrees < 0)
+                rotationInDegrees += 360;
 
-            while (_rotation > 360)
-                _rotation -= 360;
+            while (rotationInDegrees > 360)
+                rotationInDegrees -= 360;
 
             double tempRot = 0;
 
             //Handle the 4 different cases
-            if (_rotation >= 0 && _rotation <= 90)
-                tempRot = _rotation;
-            else if (_rotation > 90 && _rotation <= 180)
-                tempRot = 180 - _rotation;
-            else if (_rotation > 180 && _rotation <= 270)
-                tempRot = _rotation - 180;
-            else if (_rotation > 270 && _rotation < 360)
-                tempRot = 360 - _rotation;
-            
+            if (rotationInDegrees >= 0 && rotationInDegrees <= 90)
+                tempRot = rotationInDegrees;
+            else if (rotationInDegrees > 90 && rotationInDegrees <= 180)
+                tempRot = 180 - rotationInDegrees;
+            else if (rotationInDegrees > 180 && rotationInDegrees <= 270)
+                tempRot = rotationInDegrees - 180;
+            else if (rotationInDegrees > 270 && rotationInDegrees < 360)
+                tempRot = 360 - rotationInDegrees;
+
             //Store the Center of mass for the object before the rotation
-            double COM_X = _boundsX + _clipWidth / 2, 
+            double COM_X = _boundsX + _clipWidth / 2,
                    COM_Y = _boundsY + _clipHeight / 2;
 
             //Calculate the top left position for the rotated object, stored in newX and newY
@@ -133,8 +140,8 @@ namespace ConsoleApplication
             //Subtract the diffrence from the original bounds
             _boundsX -= (int)Math.Round(diffX);
             _boundsY -= (int)Math.Round(diffY);
-
         }
+
 
         public Properties getProperties()
         {
