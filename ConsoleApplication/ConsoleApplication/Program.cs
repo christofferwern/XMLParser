@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.IO.Compression;
+using System.Web;
 
 
 
@@ -22,15 +23,26 @@ namespace ConsoleApplication
         {
             var watch = Stopwatch.StartNew();
 
-            string originalPath = @"C:\Users\ex1\downloads\Imi.pptx";
+            string originalPath = @"C:\Users\ex1\desktop\Performance_Out.pptx";
+
+            //Get's the pptx name
+            string originalFileName = originalPath.Substring(originalPath.LastIndexOf('\\') + 1);
+
             string path = @"C:\Users\ex1\desktop\randomStuffNotANYHAVEBOfDY12723489";
-            string imagesPath = @"C:\Users\ex1\Desktop\PPTImages";
+
+            //Image folder location
+            string imagesPath = @"C:\Users\ex1\Desktop\" + originalFileName.Split('.')[0] + "_img";
+
             //Copyy file
             File.Copy(originalPath, path + ".pptx");
 
             //Change to .zip
             FileInfo f1 = new FileInfo(path + ".pptx");
             f1.MoveTo(Path.ChangeExtension(path, ".zip"));
+
+            if(!Directory.Exists(imagesPath)){
+                DirectoryInfo di = Directory.CreateDirectory(imagesPath);
+            }
 
             //Open zip file
             using (ZipArchive zip = ZipFile.Open(path + ".zip", ZipArchiveMode.Update)) {
@@ -60,7 +72,6 @@ namespace ConsoleApplication
                                 entry.ExtractToFile(Path.Combine(imagesPath, entry.Name));
 
                         }
-                        Console.WriteLine("-------------");
                     }
                     
                 }

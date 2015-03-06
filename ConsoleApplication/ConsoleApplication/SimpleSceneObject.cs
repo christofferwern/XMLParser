@@ -10,10 +10,11 @@ namespace ConsoleApplication
 {
     public class SimpleSceneObject : SceneObject
     {
-        private float _alpha, _height, _width, _rotation, _z;
+        private float _alpha, _height, _width, _rotation;
         //BoundsX and BoundsY corresponds to positions from left top corner
         //ClipHeight and ClipWidth are the height and width of the scene object
-        private int _boundsX, _boundsY, _clipHeight, _clipWidth, _flip;
+        private int _boundsX, _boundsY, _clipHeight, _clipWidth, _flip, _z;
+
         private string _clipID, _type, _name;
         private Boolean _hidden;
         private XmlDocument _doc;
@@ -91,6 +92,11 @@ namespace ConsoleApplication
             _rotation = (int)Math.Round(_rotation/60000);
         }
 
+        public void setZindex(int z)
+        {
+            _z = z;
+        }
+
         public Properties getProperties()
         {
             return _properties;
@@ -151,7 +157,7 @@ namespace ConsoleApplication
             return dsCol;
         }
 
-        public float Z
+        public int Z
         {
             get { return _z; }
             set { _z = value; }

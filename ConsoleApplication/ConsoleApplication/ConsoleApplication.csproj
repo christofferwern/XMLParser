@@ -43,6 +43,7 @@
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -57,6 +58,7 @@
     <Compile Include="GradientInfo.cs" />
     <Compile Include="HSLColor.cs" />
     <Compile Include="ImageObject.cs" />
+    <Compile Include="ImageResponse.cs" />
     <Compile Include="MediaFile.cs" />
     <Compile Include="OpenXMLReader.cs" />
     <Compile Include="OpenXMLReaderBackup.cs" />
