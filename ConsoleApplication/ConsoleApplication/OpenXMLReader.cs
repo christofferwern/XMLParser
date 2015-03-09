@@ -102,6 +102,7 @@ namespace ConsoleApplication
                     PresentationML.SlideMaster slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster; ;
                     currentMaster = slideMaster;
                     _masterLevel = true;
+                    Console.WriteLine("SlideMaster!!!");
                     foreach (var child in slideMaster.CommonSlideData.ChildElements)
                     {
                     
@@ -111,6 +112,7 @@ namespace ConsoleApplication
                         if (child.LocalName == "spTree")
                             _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
                     }
+                    Console.WriteLine("\nSlide");
                     _masterLevel = false;
 
                     //If master list do not contains any template named title or body,
@@ -811,6 +813,7 @@ namespace ConsoleApplication
                                     }
                                 }
                             }
+                            Console.WriteLine(prstGeom.Preset);
 
                         }
                         
@@ -855,19 +858,19 @@ namespace ConsoleApplication
                         if(spPrChild.LocalName == "ln")
                         {
                             DrawingML.Outline ln = (DrawingML.Outline)spPrChild;
+                            
                             if (IsLine)
                             {
-
                                 if (shapeSimpleSceneObject.ClipWidth == 0)
-                                    shapeSimpleSceneObject.ClipWidth = ln.Width.Value*100;
+                                    shapeSimpleSceneObject.ClipWidth = ln.Width.Value;
                                 else if (shapeSimpleSceneObject.ClipHeight == 0)
-                                    shapeSimpleSceneObject.ClipHeight = ln.Width.Value*100;
+                                    shapeSimpleSceneObject.ClipHeight = ln.Width.Value;
 
                                 shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Rectangle);
-
                             }
                             else
                             {
+                                Console.WriteLine(ln.Width.Value);
                                 shapeObject.LineSize = (ln.Width != null) ? ln.Width.Value : shapeObject.LineSize;
                             }
                                 
@@ -877,6 +880,7 @@ namespace ConsoleApplication
                                 {
                                     HasLine = true;
                                     lineColorChange = true;
+                                    shapeObject.FillAlpha = getAlpha(lnChild);
                                     if (IsLine)
                                         shapeObject.FillColor = getColor(lnChild);
                                     else
@@ -887,7 +891,19 @@ namespace ConsoleApplication
                                 {
                                     HasLine = true;
                                     lineColorChange = true;
-                                    shapeObject.LineColor = getColors(lnChild)[0];
+                                    if (IsLine)
+                                    {
+                                        shapeObject.GradientType = getGradientType((DrawingML.GradientFill)spPrChild);
+                                        shapeObject.GradientAngle = getGradientAngle((DrawingML.GradientFill)spPrChild);
+                                        List<int> alphas = getAlphas(lnChild);
+                                        List<string> colors = getColors(lnChild);
+                                        shapeObject.FillAlpha1 = alphas[0];
+                                        shapeObject.FillAlpha2 = alphas[1];
+                                        shapeObject.FillColor1 = colors[0];
+                                        shapeObject.FillColor2 = colors[1];
+                                    }
+                                    else
+                                        shapeObject.LineColor = getColors(lnChild)[0];
                                 }
                             }
                             
@@ -1279,7 +1295,7 @@ namespace ConsoleApplication
 
             }
 
-            if (HasValidGeometry && (HasLine || HasBg))
+            if (HasValidGeometry && (HasLine || HasBg) || IsLine)
                 sceneObjectList.Add(shapeObject);
             
             if (_slideLevel && HasText)
