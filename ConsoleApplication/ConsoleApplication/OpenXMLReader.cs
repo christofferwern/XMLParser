@@ -102,7 +102,6 @@ namespace ConsoleApplication
                     PresentationML.SlideMaster slideMaster = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster; ;
                     currentMaster = slideMaster;
                     _masterLevel = true;
-                    Console.WriteLine("SlideMaster!!!");
                     foreach (var child in slideMaster.CommonSlideData.ChildElements)
                     {
                     
@@ -112,7 +111,6 @@ namespace ConsoleApplication
                         if (child.LocalName == "spTree")
                             _presentationObject.BackgroundSceneObjectList.AddRange(getSceneObjects((PresentationML.ShapeTree)child));
                     }
-                    Console.WriteLine("\nSlide");
                     _masterLevel = false;
 
                     //If master list do not contains any template named title or body,
@@ -813,7 +811,6 @@ namespace ConsoleApplication
                                     }
                                 }
                             }
-                            Console.WriteLine(prstGeom.Preset);
 
                         }
                         
@@ -870,7 +867,6 @@ namespace ConsoleApplication
                             }
                             else
                             {
-                                Console.WriteLine(ln.Width.Value);
                                 shapeObject.LineSize = (ln.Width != null) ? ln.Width.Value : shapeObject.LineSize;
                             }
                                 
