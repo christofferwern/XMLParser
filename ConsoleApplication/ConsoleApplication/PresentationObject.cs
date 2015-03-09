@@ -68,13 +68,14 @@ namespace ConsoleApplication
             background.AppendChild(properties);
             background.AppendChild(backgroundColor);
 
-            
 
+            int z_index = 0;
             foreach (SceneObject item in _backgroundSceneObjectList)
             {
-
+                item.setZindex(z_index);
                 item.setXMLDocumentRoot(ref _xmlDoc);
                 background.AppendChild(item.getXMLTree());
+                z_index++;
             }
 
             return background;

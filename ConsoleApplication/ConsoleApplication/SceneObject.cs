@@ -17,5 +17,6 @@ namespace ConsoleApplication
         void setObjectType(string objectType);
         void ConvertToYoobaUnits(int width, int height);
         object Clone();
+        void setZindex(int z);
     }
 }
