@@ -22,7 +22,7 @@ namespace ConsoleApplication
 
         public TextFragment()
         {
-            _text = "text";
+            _text = "";
             _x = 0;
             _y = 0;
             _newParagraph = false;

@@ -467,6 +467,32 @@ namespace ConsoleApplication
                             textObject.setAttributes(getTableStyle(tableStyles, "lastCol"));
                         }
 
+                        if (tc.TableCellProperties != null)
+                        {
+                            foreach (var child in tc.TableCellProperties)
+                            {
+                                if (child.LocalName == "solidFill")
+                                {
+                                    shapeObject.FillColor = getColor(child);
+                                    shapeObject.FillAlpha = getAlpha(child);
+                                }
+
+                                if (child.LocalName == "lnL")
+                                {
+                                    DrawingML.LeftBorderLineProperties lnL = (DrawingML.LeftBorderLineProperties)child;
+                                    shapeObject.LineSize = (lnL.Width != null) ? lnL.Width.Value : shapeObject.LineSize;
+                                    foreach (var lnChild in lnL)
+                                    {
+                                        if (lnChild.LocalName == "solidFill")
+                                        {
+                                            shapeObject.LineColor = getColor(child);
+                                            shapeObject.LineAlpha = getAlpha(child);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         if (tc.TextBody != null)
                         {
                             int paragraphIndex = 0;
@@ -552,6 +578,8 @@ namespace ConsoleApplication
 
         private List<SceneObject> getSceneObjects(PresentationML.Shape shape)
         {
+            char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
+
             List<SceneObject> sceneObjectList = new List<SceneObject>();
 
             int GchildOffX = 0, GchildOffY = 0, GchildExtX = 0, GchildExtY = 0, GoffX = 0, GoffY = 0, GextX = 0, GextY = 0, Grot = 0;
@@ -666,11 +694,11 @@ namespace ConsoleApplication
                             
                             shapeSimpleSceneObject.BoundsX = (GoffX - GchildOffX + (int)spPr.Transform2D.Offset.X);
                             shapeSimpleSceneObject.BoundsY = (GoffY - GchildOffY + (int)spPr.Transform2D.Offset.Y);
-                            shapeSimpleSceneObject.BoundsX = (int)((shapeSimpleSceneObject.BoundsX - GoffX) * scaleX) + GoffX;
-                            shapeSimpleSceneObject.BoundsY = (int)((shapeSimpleSceneObject.BoundsY - GoffY) * scaleY) + GoffY;
+                            shapeSimpleSceneObject.BoundsX = (int) Math.Round(((shapeSimpleSceneObject.BoundsX - GoffX) * scaleX) + GoffX);
+                            shapeSimpleSceneObject.BoundsY = (int) Math.Round(((shapeSimpleSceneObject.BoundsY - GoffY) * scaleY) + GoffY);
 
-                            shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)(spPr.Transform2D.Extents.Cx * scaleX) : shapeSimpleSceneObject.ClipWidth;
-                            shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)(spPr.Transform2D.Extents.Cy * scaleY) : shapeSimpleSceneObject.ClipHeight;
+                            shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)Math.Round(spPr.Transform2D.Extents.Cx * scaleX) : shapeSimpleSceneObject.ClipWidth;
+                            shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)Math.Round(spPr.Transform2D.Extents.Cy * scaleY) : shapeSimpleSceneObject.ClipHeight;
                         
                             if (Grot != 0)
                             {
@@ -695,8 +723,8 @@ namespace ConsoleApplication
                                 double DX = C_COM_X - X,
                                        DY = C_COM_Y - Y;
 
-                                shapeSimpleSceneObject.BoundsX -= (int)DX;
-                                shapeSimpleSceneObject.BoundsY -= (int)DY;
+                                shapeSimpleSceneObject.BoundsX -= (int)Math.Round(DX);
+                                shapeSimpleSceneObject.BoundsY -= (int)Math.Round(DY);
                             }
                         
                         }
@@ -715,7 +743,6 @@ namespace ConsoleApplication
                         textSimpleSceneObject.ClipWidth = shapeSimpleSceneObject.ClipWidth;
                         textSimpleSceneObject.ClipHeight = shapeSimpleSceneObject.ClipHeight;
 
-
                         powerPointText.Rotation = (int)Math.Round(shapeSimpleSceneObject.Rotation);
                         powerPointText.X = shapeSimpleSceneObject.BoundsX;
                         powerPointText.Y = shapeSimpleSceneObject.BoundsY;
@@ -725,7 +752,6 @@ namespace ConsoleApplication
                         HasTransform = true;
                     }
 
-                    
                     foreach(var spPrChild in child)
                     {
 
@@ -985,8 +1011,9 @@ namespace ConsoleApplication
                     {
                         listStyleList = getListStyles(txBody.ListStyle);
                         for (int i = 0; i < 9; i++)
-                            powerPointLevelList[i].setVisualAttribues(listStyleList[i]);                   
+                            powerPointLevelList[i].setVisualAttribues(listStyleList[i]);
                     }
+
 
                     if (!isGroup)
                     {
@@ -1000,16 +1027,68 @@ namespace ConsoleApplication
 
                     int paragraphIndex = 0;
 
+                    int[] listLevel = new int[9] {0,0,0,0,0,0,0,0,0};
+                    int newStartAt = 0, oldStartAt = 0;
                     foreach (DrawingML.Paragraph p in child.Descendants<DrawingML.Paragraph>())
                     {
+                        bool bulletNumbering = true, 
+                             arabic = false, alpha = false, roman = false, 
+                             lowerCase = false, upperCase = false,
+                             period = false, parenR = false, parenL = false;
+
+                        newStartAt = 0;
 
                         PowerPointText paragraghPPT = new PowerPointText(powerPointText);
+
                         //Get the paragraph properties
                         if (p.ParagraphProperties != null)
                         {
                             paragraghPPT.Alignment = (p.ParagraphProperties.Alignment != null) ? p.ParagraphProperties.Alignment.Value.ToString() : powerPointText.Alignment;
 
                             textObject.Align = paragraghPPT.Alignment;
+
+                            foreach (var pPrChild in p.ParagraphProperties)
+                            {
+                                if (pPrChild.LocalName == "buNone")
+                                {
+                                    bulletNumbering = false;
+                                }
+
+                                if (pPrChild.LocalName == "buAutoNum")
+                                {
+                                    bulletNumbering = false;
+
+                                    DrawingML.AutoNumberedBullet buAutoNum = (DrawingML.AutoNumberedBullet)pPrChild;
+
+                                    if (buAutoNum.StartAt != null)
+                                        newStartAt = buAutoNum.StartAt.Value - 1;
+                                       
+
+                                    string listType = buAutoNum.Type.InnerText.ToString();
+
+                                    if (listType.Contains("Lc"))
+                                        lowerCase = true;
+                                    if (listType.Contains("Uc"))
+                                        upperCase = true;
+                                    if (listType.Contains("Period"))
+                                        period = true;
+                                    if (listType.Contains("ParenR"))
+                                        parenR = true;
+                                    if (listType.Contains("ParenL"))
+                                        parenL = true;
+                                    if (listType.Contains("ParenBoth"))
+                                    {
+                                        parenR = true;
+                                        parenL = true;
+                                    }
+                                    if (listType.Contains("arabic"))
+                                        arabic = true;
+                                    if (listType.Contains("roman"))
+                                        roman = true;
+                                    if (listType.Contains("alpha"))
+                                        alpha = true;
+                                }
+                            }
 
                             if (p.ParagraphProperties.Level != null)
                             {
@@ -1024,12 +1103,13 @@ namespace ConsoleApplication
                             else
                             {
                                 paragraghPPT.Level = 0;
+                                paragraghPPT.setVisualAttribues(powerPointLevelList[0]);
                             }
                         }
 
                         textObject.Align = (paragraghPPT.Alignment != "") ? paragraghPPT.Alignment : textObject.Align;
                         textObject.Color = (paragraghPPT.FontColor != "") ? paragraghPPT.FontColor : textObject.Color;
-                        textObject.Size  = (paragraghPPT.FontSize > 0)    ? paragraghPPT.FontSize  : textObject.Size;
+                        textObject.Size  = (paragraghPPT.FontSize  > 0  ) ? paragraghPPT.FontSize  : textObject.Size;
 
                         bool HasRun = false;
                         //Get the run properties
@@ -1052,10 +1132,93 @@ namespace ConsoleApplication
 
                                 if (runIndex == 0)
                                 {
-                                    textFragment.Level = runPPT.Level;
+                                    TextFragment listTextFragment = new TextFragment();
+                                    TextStyle listTextStyle = new TextStyle();
 
-                                    if (paragraphIndex != 0)
-                                        textFragment.NewParagraph = true;
+                                    listTextFragment.Level = runPPT.Level;
+                                    listTextStyle.Alignment = (runPPT.Alignment != "") ? runPPT.Alignment : textStyle.Alignment;
+                                    listTextStyle.Bold = runPPT.Bold;
+                                    listTextStyle.Italic = runPPT.Italic;
+                                    listTextStyle.Underline = runPPT.Underline;
+                                    listTextStyle.FontSize = runPPT.FontSize;
+                                    listTextStyle.FontColor = runPPT.BulletColor;
+
+                                    var bulletDefstyle = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster.TextStyles.OtherStyle;
+                                    PowerPointText[] bulletDefaultPPT = getListStyles(bulletDefstyle);
+
+                                    if (listTextStyle.FontSize == 0)
+                                        textStyle.FontSize = bulletDefaultPPT[runPPT.Level].FontSize;
+
+                                    if (listTextStyle.FontColor == "")
+                                        textStyle.FontColor = bulletDefaultPPT[runPPT.Level].FontColor;
+
+                                    if (textObject.Align == "")
+                                        textObject.Align = bulletDefaultPPT[runPPT.Level].Alignment;
+
+                                    if (bulletNumbering && runPPT.BulletColor != "")
+                                    {
+                                        listTextFragment.Text = "¤ ";
+
+                                        if (paragraphIndex != 0)
+                                            listTextFragment.NewParagraph = true;
+
+                                        textObject.StyleList.Add(listTextStyle);
+                                        listTextFragment.StyleId = textObject.StyleList.IndexOf(listTextStyle);
+                                        textObject.FragmentsList.Add(listTextFragment);
+                                    }
+                                    else if (alpha || roman || arabic)
+                                    {
+                                        if (parenL)
+                                            listTextFragment.Text += "(";
+
+                                        if (arabic)
+                                        {
+                                            if (newStartAt != oldStartAt && oldStartAt!=0)
+                                                listLevel[listTextFragment.Level] = 0;
+
+                                            listTextFragment.Text += (listLevel[listTextFragment.Level] + 1 + newStartAt).ToString();
+                                        }
+                                        else if (alpha)
+                                        {
+                                            listTextFragment.Text += alphabet[listLevel[listTextFragment.Level] + newStartAt].ToString();
+                                        }
+                                        else if (roman)
+                                        {
+                                            listTextFragment.Text += ToRoman(listLevel[listTextFragment.Level] + 1 + newStartAt);
+                                        }
+
+
+                                        if (period)
+                                            listTextFragment.Text += ".  ";
+                                        if (parenR)
+                                            listTextFragment.Text += ")  ";
+                                        if (lowerCase)
+                                            listTextFragment.Text = listTextFragment.Text.ToLower();
+                                        if (upperCase)
+                                            listTextFragment.Text = listTextFragment.Text.ToUpper();
+
+                                        listLevel[listTextFragment.Level]++;
+
+                                        for (int i = listTextFragment.Level + 1; i < 9; i++)
+                                            listLevel[i] = 0;
+
+                                        if (paragraphIndex != 0)
+                                            listTextFragment.NewParagraph = true;
+
+                                        textObject.StyleList.Add(listTextStyle);
+                                        listTextFragment.StyleId = textObject.StyleList.IndexOf(listTextStyle);
+                                        textObject.FragmentsList.Add(listTextFragment);
+                                    }
+                                    else
+                                    {
+                                        if (paragraphIndex != 0)
+                                        {
+                                            textFragment.Level = runPPT.Level;
+                                            textFragment.NewParagraph = true;
+                                        }  
+                                    }
+
+                                    oldStartAt = newStartAt;
                                 }
 
                                 if (r.RunProperties != null)
@@ -1086,7 +1249,7 @@ namespace ConsoleApplication
                                 textStyle.Underline = runPPT.Underline;
                                 textStyle.FontSize = runPPT.FontSize;
                                 textStyle.FontColor = runPPT.FontColor;
-                                textFragment.Text = r.Text.InnerText;
+                                textFragment.Text += r.Text.InnerText;
 
                                 //Set to default stuffs
                                 var style = _presentationDocument.PresentationPart.SlideMasterParts.ElementAt(0).SlideMaster.TextStyles.OtherStyle;
@@ -1140,6 +1303,7 @@ namespace ConsoleApplication
 
                         //Increase the paragragh index
                         paragraphIndex++;
+
                     }
 
 
@@ -1906,6 +2070,8 @@ namespace ConsoleApplication
 
             OpenXmlElementList childElements = (OpenXmlElementList)input.GetType().GetMethod("get_ChildElements").Invoke(input, null);
 
+            bool hasBullet = false, noBullet = false;
+
             foreach (var childElement in childElements)
             {
                 if (childElement.LocalName == "defRPr")
@@ -1916,8 +2082,6 @@ namespace ConsoleApplication
                     powerPointText.FontSize = (defRPR.FontSize != null) ? (int)defRPR.FontSize : powerPointText.FontSize;
                     powerPointText.Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointText.Bold;
                     powerPointText.Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointText.Italic;
-                    //powerPointText.Underline = (defRPR.Underline != null) ? true : powerPointText.Underline;
-
                     if (defRPR.Underline != null)
                     {
                         if (defRPR.Underline.Value.ToString() == "sng")
@@ -1934,7 +2098,28 @@ namespace ConsoleApplication
                         }
                     }
                 }
+
+                if (childElement.LocalName == "buClr")
+                {
+                    powerPointText.BulletColor = getColor(childElement);
+                }
+
+                if (childElement.LocalName == "buNone")
+                {
+                    noBullet = true;
+                }
+
+                if (childElement.LocalName == "buChar")
+                {
+                    hasBullet = true;
+                }
             }
+
+            if (hasBullet)
+                powerPointText.BulletColor = (powerPointText.BulletColor == "") ? powerPointText.FontColor : powerPointText.BulletColor;
+
+            if (noBullet)
+                powerPointText.BulletColor = "none";
 
             return powerPointText;
         }
@@ -1985,6 +2170,26 @@ namespace ConsoleApplication
 
             
         }
-        
+
+        public string ToRoman(int number)
+        {
+            if ((number < 0) || (number > 3999)) throw new ArgumentOutOfRangeException("insert value betwheen 1 and 3999");
+            if (number < 1) return string.Empty;
+            if (number >= 1000) return "M" + ToRoman(number - 1000);
+            if (number >= 900) return "CM" + ToRoman(number - 900); //EDIT: i've typed 400 instead 900
+            if (number >= 500) return "D" + ToRoman(number - 500);
+            if (number >= 400) return "CD" + ToRoman(number - 400);
+            if (number >= 100) return "C" + ToRoman(number - 100);
+            if (number >= 90) return "XC" + ToRoman(number - 90);
+            if (number >= 50) return "L" + ToRoman(number - 50);
+            if (number >= 40) return "XL" + ToRoman(number - 40);
+            if (number >= 10) return "X" + ToRoman(number - 10);
+            if (number >= 9) return "IX" + ToRoman(number - 9);
+            if (number >= 5) return "V" + ToRoman(number - 5);
+            if (number >= 4) return "IV" + ToRoman(number - 4);
+            if (number >= 1) return "I" + ToRoman(number - 1);
+            throw new ArgumentOutOfRangeException("something bad happened");
+        }
+
     }
 }
