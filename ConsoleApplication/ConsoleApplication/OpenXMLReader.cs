@@ -686,31 +686,17 @@ namespace ConsoleApplication
                                 //Calculate the angle in radians
                                 double angleInRadians = (Grot / 60000) * Math.PI / 180;
 
-                                //Calculate the diffrences in x and y between the centre of masses
-                                double dy = Math.Sin(angleInRadians) * distance,
-                                       dx = distance - (Math.Cos(angleInRadians) * distance);
+                                double cosTheta = Math.Cos(angleInRadians);
+                                double sinTheta = Math.Sin(angleInRadians);
 
-                                //Handle the for different cases, the 4 quadrants
-                                if ((C_COM_X <= G_COM_X) && (C_COM_X <= G_COM_X))
-                                {
-                                    shapeSimpleSceneObject.BoundsX += (int)Math.Round(dx);
-                                    shapeSimpleSceneObject.BoundsY -= (int)Math.Round(dy);
-                                }
-                                else if ((C_COM_X <= G_COM_X) && (C_COM_X >= G_COM_X))
-                                {
-                                    shapeSimpleSceneObject.BoundsX += (int)Math.Round(dx);
-                                    shapeSimpleSceneObject.BoundsY += (int)Math.Round(dy);
-                                }
-                                else if ((C_COM_X >= G_COM_X) && (C_COM_X <= G_COM_X))
-                                {
-                                    shapeSimpleSceneObject.BoundsX -= (int)Math.Round(dx);
-                                    shapeSimpleSceneObject.BoundsY -= (int)Math.Round(dy);
-                                }
-                                else if ((C_COM_X >= G_COM_X) && (C_COM_X >= G_COM_X))
-                                {
-                                    shapeSimpleSceneObject.BoundsX -= (int)Math.Round(dx);
-                                    shapeSimpleSceneObject.BoundsY += (int)Math.Round(dy);
-                                }
+                                double X = (int)(cosTheta * (C_COM_X - G_COM_X) - sinTheta * (C_COM_Y - G_COM_Y) + G_COM_X);
+                                double Y = (int)(sinTheta * (C_COM_X - G_COM_X) + cosTheta * (C_COM_Y - G_COM_Y) + G_COM_Y);
+
+                                double DX = C_COM_X - X,
+                                       DY = C_COM_Y - Y;
+
+                                shapeSimpleSceneObject.BoundsX -= (int)DX;
+                                shapeSimpleSceneObject.BoundsY -= (int)DY;
                             }
                         
                         }
@@ -985,7 +971,6 @@ namespace ConsoleApplication
                     //Get the transform properties
                     if (HasTransform)
                     {
-
                         for (int i = 0; i < 9; i++)
                         {
                             powerPointLevelList[i].X = textSimpleSceneObject.BoundsX;

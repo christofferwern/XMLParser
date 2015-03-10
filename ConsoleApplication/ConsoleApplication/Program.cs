@@ -23,7 +23,7 @@ namespace ConsoleApplication
         {
             var watch = Stopwatch.StartNew();
 
-            string originalPath = @"C:\Users\ex1\desktop\Performance_Out.pptx";
+            string originalPath = @"C:\Users\ex1\downloads\Test.pptx";
 
             //Get's the pptx name
             string originalFileName = originalPath.Substring(originalPath.LastIndexOf('\\') + 1);
