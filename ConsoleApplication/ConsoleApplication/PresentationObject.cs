@@ -16,10 +16,6 @@ namespace ConsoleApplication
         private XmlDocument _xmlDoc;
         List<SceneObject> _backgroundSceneObjectList;
 
-
-
-
-
         public PresentationObject()
         {
             _projektWidth = 1024;
@@ -30,7 +26,6 @@ namespace ConsoleApplication
             _backgroundSceneObjectList = new List<SceneObject>();
             sceneList = new List<Scene>();
             _xmlDoc = new XmlDocument();
-            
         }
 
         public void addScene(Scene scene)
