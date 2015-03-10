@@ -11,6 +11,7 @@ namespace ConsoleApplication
     public class SimpleSceneObject : SceneObject
     {
         private float _alpha, _height, _width, _rotation;
+
         //BoundsX and BoundsY corresponds to positions from left top corner
         //ClipHeight and ClipWidth are the height and width of the scene object
         private int _boundsX, _boundsY, _clipHeight, _clipWidth, _flip, _z;
@@ -80,6 +81,10 @@ namespace ConsoleApplication
         {
             //_boundsX, _boundsY, _clipHeight, _clipWidth,
             int pptWidth = width, pptHeight = height, yoobaWidth = 1024, yoobaHeight = 768;
+
+            yoobaWidth = (int)Math.Round(pptWidth * ((double)yoobaHeight / (double)pptHeight));
+
+            Console.WriteLine(yoobaWidth + ":" + yoobaHeight);
 
             float scaleWidth = (float)yoobaWidth / (float)pptWidth, scaleHeight = (float)yoobaHeight / (float)pptHeight;
 
