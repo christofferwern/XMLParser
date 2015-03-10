@@ -147,10 +147,11 @@ namespace ConsoleApplication
                     //Counter of scenes
                     int sceneCounter = 1;
 
+                    
                     //Go through all Slides in the PowerPoint presentation
                     foreach (PresentationML.SlideId slideID in presentation.SlideIdList)
                     {
-
+                        Console.WriteLine("Slide"+sceneCounter);
                         SlidePart slidePart = _presentationDocument.PresentationPart.GetPartById(slideID.RelationshipId) as SlidePart;
                         Scene scene = new Scene(sceneCounter);
                         currentSlide = slidePart.Slide;
@@ -188,7 +189,6 @@ namespace ConsoleApplication
                         sceneCounter++;
                     }
 
-
                     _presentationObject.ConvertToYoobaUnits(_presentationSizeX, _presentationSizeY);
                 }
           //  }
@@ -205,9 +205,9 @@ namespace ConsoleApplication
 
             foreach (var child in shapeTree.ChildElements)
             {
-                
-                if (child.LocalName == "sp")
-                    sceneObjectList.AddRange(getSceneObjects((PresentationML.Shape)child));
+
+                if (child.LocalName == "sp" || child.LocalName == "cxnSp")
+                    sceneObjectList.AddRange(getSceneObjects(child));
                 
                 if (child.LocalName == "graphicFrame")
                     sceneObjectList.AddRange(getSceneObjects((PresentationML.GraphicFrame)child));
@@ -576,7 +576,7 @@ namespace ConsoleApplication
             return null;
         }
 
-        private List<SceneObject> getSceneObjects(PresentationML.Shape shape)
+        private List<SceneObject> getSceneObjects(OpenXmlElement shape)
         {
             char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
 
@@ -656,12 +656,14 @@ namespace ConsoleApplication
             }
 
             bool HasBg = false, HasLine = false, HasValidGeometry = false, HasText = false, HasTransform = false,
-                 solidFillColorChange = false, lineColorChange = false, gradientColorChange = false, IsLine = false;
+                 solidFillColorChange = false, lineColorChange = false, gradientColorChange = false, IsLine = false, isCxn = false, vFlip = false, hFlip = false, lineWidth = false;
 
+            if(shape.LocalName == "cxnSp")
+                isCxn = true;
 
             foreach (var child in shape.ChildElements)
             {
-                if(child.LocalName == "nvSpPr")
+                if (child.LocalName == "nvSpPr" || child.LocalName == "nvCxnSpPr")
                 {
                     foreach (var nvSpPrChild in child)
                     {
@@ -730,11 +732,17 @@ namespace ConsoleApplication
                         }
                         else
                         {
+                            if (spPr.Transform2D.HorizontalFlip != null)
+                                hFlip = true;
+                            if (spPr.Transform2D.VerticalFlip != null)
+                                vFlip = true;
+
                             shapeSimpleSceneObject.Rotation = (spPr.Transform2D.Rotation != null) ? (int)spPr.Transform2D.Rotation.Value : shapeSimpleSceneObject.Rotation;
                             shapeSimpleSceneObject.BoundsX = (spPr.Transform2D.Offset.X != null) ? (int)spPr.Transform2D.Offset.X : shapeSimpleSceneObject.BoundsX;
                             shapeSimpleSceneObject.BoundsY = (spPr.Transform2D.Offset.Y != null) ? (int)spPr.Transform2D.Offset.Y : shapeSimpleSceneObject.BoundsY;
                             shapeSimpleSceneObject.ClipWidth = (spPr.Transform2D.Extents.Cx != null) ? (int)spPr.Transform2D.Extents.Cx : shapeSimpleSceneObject.ClipWidth;
-                            shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;
+                            shapeSimpleSceneObject.ClipHeight = (spPr.Transform2D.Extents.Cy != null) ? (int)spPr.Transform2D.Extents.Cy : shapeSimpleSceneObject.ClipHeight;   
+
                         }
 
                         textSimpleSceneObject.Rotation = shapeSimpleSceneObject.Rotation;
@@ -869,14 +877,18 @@ namespace ConsoleApplication
                             DrawingML.Outline ln = (DrawingML.Outline)spPrChild;
                             if (IsLine)
                             {
+                                if (ln.Width != null)
+                                {
+                                    if (shapeSimpleSceneObject.ClipWidth <=  shapeSimpleSceneObject.ClipHeight)
+                                        shapeSimpleSceneObject.ClipWidth = ln.Width.Value;
+                                    else if (shapeSimpleSceneObject.ClipHeight < shapeSimpleSceneObject.ClipWidth)
+                                        shapeSimpleSceneObject.ClipHeight = ln.Width.Value;
 
-                                if (shapeSimpleSceneObject.ClipWidth == 0)
-                                    shapeSimpleSceneObject.ClipWidth = ln.Width.Value*100;
-                                else if (shapeSimpleSceneObject.ClipHeight == 0)
-                                    shapeSimpleSceneObject.ClipHeight = ln.Width.Value*100;
+                                    lineWidth = true;
+                                }
 
                                 shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Rectangle);
-
+                                shapeObject.LineSize = 0;
                             }
                             else
                             {
@@ -889,6 +901,7 @@ namespace ConsoleApplication
                                 {
                                     HasLine = true;
                                     lineColorChange = true;
+                                    shapeObject.FillAlpha = getAlpha(lnChild);
                                     if (IsLine)
                                         shapeObject.FillColor = getColor(lnChild);
                                     else
@@ -899,7 +912,20 @@ namespace ConsoleApplication
                                 {
                                     HasLine = true;
                                     lineColorChange = true;
-                                    shapeObject.LineColor = getColors(lnChild)[0];
+                                    if (IsLine)
+                                    {
+                                        shapeObject.GradientType = getGradientType((DrawingML.GradientFill)lnChild);
+                                        shapeObject.GradientAngle = getGradientAngle((DrawingML.GradientFill)lnChild);
+                                        List<int> alphas = getAlphas(lnChild);
+                                        List<string> colors = getColors(lnChild);
+                                        shapeObject.FillType = "gradient";
+                                        shapeObject.FillAlpha1 = alphas[0];
+                                        shapeObject.FillAlpha2 = alphas[1];
+                                        shapeObject.FillColor1 = colors[0];
+                                        shapeObject.FillColor2 = colors[1];
+                                    }
+                                    else
+                                        shapeObject.LineColor = getColors(lnChild)[0];
                                 }
                             }
                             
@@ -1334,9 +1360,109 @@ namespace ConsoleApplication
                                 if (lineRefIndex == lineStyleIndex)
                                 {
 
-                                    if (line.Width != null)
-                                        shapeObject.LineSize = line.Width.Value;
+                                    if(isCxn)
+                                    {
+                                        shapeSimpleSceneObject.IsLine = true;
 
+                                        double rotation = 0;
+                                        double distance = Math.Sqrt(Math.Pow(shapeSimpleSceneObject.ClipWidth, 2) + Math.Pow(shapeSimpleSceneObject.ClipHeight, 2));
+                                        rotation = Math.Atan((double)(shapeSimpleSceneObject.ClipWidth) / (double)(shapeSimpleSceneObject.ClipHeight));
+                                        rotation *= (float)(180 / Math.PI);
+
+
+                                            if (vFlip && !hFlip)
+                                            {
+
+                                                if (shapeSimpleSceneObject.ClipWidth <= shapeSimpleSceneObject.ClipHeight)
+                                                {
+                                                    if (!lineWidth)
+                                                        shapeSimpleSceneObject.ClipWidth = line.Width.Value;
+                                                    shapeSimpleSceneObject.ClipHeight = (int)Math.Round(distance);
+
+                                                }
+                                                else if (shapeSimpleSceneObject.ClipHeight < shapeSimpleSceneObject.ClipWidth)
+                                                {
+                                                    if (!lineWidth)
+                                                        shapeSimpleSceneObject.ClipHeight = line.Width.Value;
+                                                    shapeSimpleSceneObject.ClipWidth = (int)Math.Round(distance);
+                                                    rotation += 90;
+                                                }
+
+                                                shapeSimpleSceneObject.Rotation += (int)Math.Round(rotation) * 60000;
+
+                                            }
+                                            else if (!vFlip && hFlip)
+                                            {
+
+                                                if (shapeSimpleSceneObject.ClipWidth <= shapeSimpleSceneObject.ClipHeight)
+                                                {
+                                                    if(!lineWidth)
+                                                        shapeSimpleSceneObject.ClipWidth = line.Width.Value;
+
+                                                    shapeSimpleSceneObject.ClipHeight = (int)Math.Round(distance);
+
+                                                }
+                                                else if (shapeSimpleSceneObject.ClipHeight < shapeSimpleSceneObject.ClipWidth)
+                                                {
+                                                    if (!lineWidth)
+                                                        shapeSimpleSceneObject.ClipHeight = line.Width.Value;
+
+                                                    shapeSimpleSceneObject.ClipWidth = (int)Math.Round(distance);
+                                                    rotation += 90;
+                                                }
+
+                                                shapeSimpleSceneObject.Rotation += (int)Math.Round(rotation) * 60000;
+
+                                            }
+                                            else if (hFlip && vFlip)
+                                            {
+                                                if (shapeSimpleSceneObject.ClipWidth <= shapeSimpleSceneObject.ClipHeight)
+                                                {
+                                                    if (!lineWidth)
+                                                        shapeSimpleSceneObject.ClipWidth = line.Width.Value;
+                                                    shapeSimpleSceneObject.ClipHeight = (int)Math.Round(distance);
+                                                }
+                                                else if (shapeSimpleSceneObject.ClipHeight < shapeSimpleSceneObject.ClipWidth)
+                                                {
+                                                    if (!lineWidth)
+                                                        shapeSimpleSceneObject.ClipHeight = line.Width.Value;
+
+                                                    shapeSimpleSceneObject.ClipWidth = (int)Math.Round(distance);
+                                                    rotation -= 90;
+                                                }
+
+                                                shapeSimpleSceneObject.Rotation -= (int)Math.Round(rotation) * 60000;
+                                            }
+                                            else if (!hFlip && !vFlip)
+                                            {
+                                                if (shapeSimpleSceneObject.ClipWidth <= shapeSimpleSceneObject.ClipHeight)
+                                                {
+                                                    if (!lineWidth)
+                                                        shapeSimpleSceneObject.ClipWidth = line.Width.Value;
+                                                    shapeSimpleSceneObject.ClipHeight = (int)Math.Round(distance);
+                                                    rotation*=-1;
+                                                }
+                                                else if (shapeSimpleSceneObject.ClipHeight < shapeSimpleSceneObject.ClipWidth)
+                                                {
+                                                    if (!lineWidth)
+                                                        shapeSimpleSceneObject.ClipHeight = line.Width.Value;
+                                                    shapeSimpleSceneObject.ClipWidth = (int)Math.Round(distance);
+                                                    rotation = 90 - rotation;
+
+                                                }
+
+                                                shapeSimpleSceneObject.Rotation += (int)Math.Round(rotation) * 60000;
+                                            }
+
+                                            shapeObject = new ShapeObject(shapeSimpleSceneObject, ShapeObject.shape_type.Rectangle);
+                                            shapeObject.LineSize = 0;
+
+
+                                        
+                                    }
+
+                                    if (line.Width != null && !HasLine && !IsLine)
+                                        shapeObject.LineSize = line.Width.Value;
 
                                     foreach (var lineStyle in ln)
                                     {
@@ -1345,8 +1471,16 @@ namespace ConsoleApplication
                                             if (!lineColorChange)
                                             {
                                                 HasLine = true;
-                                                shapeObject.LineColor = getColor(lineStyle, color);
+                                                if (IsLine && HasLine)
+                                                {
+                                                    shapeObject.FillColor = getColor(lineStyle, color);
+                                                    shapeObject.FillAlpha = getAlpha(lineStyle);
+                                                }
+                                                else
+                                                    shapeObject.LineColor = getColor(lineStyle, color);
                                             }
+                                            
+
                                         }
 
                                         if (lineStyle.LocalName == "gradFill")
@@ -1429,7 +1563,7 @@ namespace ConsoleApplication
 
             }
 
-            if (HasValidGeometry && (HasLine || HasBg))
+            if (HasValidGeometry && (HasLine || HasBg) || IsLine)
                 sceneObjectList.Add(shapeObject);
             
             if (_slideLevel && HasText)

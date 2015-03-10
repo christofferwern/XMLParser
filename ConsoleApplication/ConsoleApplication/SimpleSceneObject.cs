@@ -17,7 +17,9 @@ namespace ConsoleApplication
         private int _boundsX, _boundsY, _clipHeight, _clipWidth, _flip, _z;
 
         private string _clipID, _type, _name;
-        private Boolean _hidden;
+        private Boolean _hidden, _isLine;
+
+
         private XmlDocument _doc;
         private Properties _properties;
         private OptimizedClip _optimizedClip;
@@ -39,6 +41,7 @@ namespace ConsoleApplication
             _flip = 0;
             _properties = new Properties();
             _optimizedClip = new OptimizedClip();
+            _isLine = false;
 
             _rotation = 0;
             _z = 0;
@@ -66,6 +69,7 @@ namespace ConsoleApplication
             _rotation = s.Rotation;
             _z = s.Z;
             _type = s.Type;
+            _isLine = s.IsLine;
             _boundsX = s.BoundsX;
             _boundsY = s.BoundsY;
             _clipHeight = s.ClipHeight;
@@ -93,8 +97,10 @@ namespace ConsoleApplication
             _clipWidth = (int) Math.Round(_clipWidth * scaleWidth);
             _clipHeight = (int) Math.Round(_clipHeight * scaleHeight);
 
+
             //rotation
-            handleTranslationWhenRotate();
+            if(!IsLine)
+                handleTranslationWhenRotate();
 
             _rotation = _rotation / 60000;
         }
@@ -211,6 +217,12 @@ namespace ConsoleApplication
             dsCol.AppendChild(cData);
 
             return dsCol;
+        }
+
+        public Boolean IsLine
+        {
+            get { return _isLine; }
+            set { _isLine = value; }
         }
 
         public int Z
