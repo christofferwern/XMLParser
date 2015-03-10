@@ -9,7 +9,7 @@ namespace ConsoleApplication
     class PowerPointText
     {
         private int _fontSize, _x, _y, _cx, _cy, _rotation, _idx, _level;
-        private string _type, _font, _alignment, _anchor, _fontColor;
+        private string _type, _font, _alignment, _anchor, _fontColor, _bulletColor;
         private Boolean _bold, _italic, _underline;
 
         public PowerPointText()
@@ -26,6 +26,7 @@ namespace ConsoleApplication
             _type = "";
             _font = "";
             _fontColor = "";
+            _bulletColor = "";
             _anchor = "";
             _alignment = "";
             
@@ -48,6 +49,7 @@ namespace ConsoleApplication
             _type = ppt.Type;
             _font = ppt.Font;
             _fontColor = ppt.FontColor;
+            _bulletColor = ppt.BulletColor;
             _anchor = ppt.Anchor;
             _alignment = ppt.Alignment;
 
@@ -63,12 +65,19 @@ namespace ConsoleApplication
                    "  Font:        " + _font + "\n" +
                    "  Font size:   " + _fontSize + "\n" +
                    "  Font color:  " + _fontColor + "\n" +
+                   "  Bullet clr:  " + _bulletColor + "\n" +
                    "  Size:        (" + _cx + "," + _cy + ")\n" +
                    "  Position:    (" + _x + "," + _y + ")\n" +
                    "  Rotation:    " + Rotation/60000 + "\n" +
                    "  Anchor:      " + _anchor + "\n" +
                    "  Alignment:   " + _alignment + "\n" + 
                    "  B U I:       (" + _bold + ", " + _underline + ", " + _italic + ") \n";
+        }
+
+        public string BulletColor
+        {
+            get { return _bulletColor; }
+            set { _bulletColor = value; }
         }
 
         public int Idx
@@ -200,6 +209,11 @@ namespace ConsoleApplication
             this.Cy = (temp.Cy != 0) ? temp.Cy : this.Cy;
             this.Font = (temp.Font != "") ? temp.Font : this.Font;
             this.FontColor = (temp.FontColor != "") ? temp.FontColor : this.FontColor;
+            this.BulletColor = (temp.BulletColor != "") ? temp.BulletColor : this.BulletColor;
+
+            if (temp.BulletColor == "none")
+                this.BulletColor = "";
+
             this.FontSize = (temp.FontSize != 0) ? temp.FontSize : this.FontSize;
             this.Italic = temp.Italic;
             this.Rotation = (temp.Rotation != 0) ? temp.Rotation : this.Rotation;
