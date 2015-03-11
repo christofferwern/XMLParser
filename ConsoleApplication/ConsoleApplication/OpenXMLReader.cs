@@ -525,7 +525,7 @@ namespace ConsoleApplication
                                         textStyle.Italic = (rPr.Italic != null) ? rPr.Italic.Value : textStyle.Italic;
                                         textStyle.FontSize = (rPr.FontSize != null) ? rPr.FontSize.Value : textStyle.FontSize;
                                         if (rPr.Underline != null)
-                                            if (rPr.Underline.Value.ToString() == "sng")
+                                            if (rPr.Underline.Value.ToString() != "")
                                                 textStyle.Underline = true;
 
                                         //Get font color
@@ -1256,7 +1256,7 @@ namespace ConsoleApplication
                                     runPPT.FontSize = (rPr.FontSize != null) ? rPr.FontSize.Value : runPPT.FontSize;
                                     if (rPr.Underline != null)
                                     {
-                                        if (rPr.Underline.Value.ToString() == "sng")
+                                        if (rPr.Underline.Value.ToString() != "")
                                         {
                                             runPPT.Underline = true;
                                         }
@@ -2218,12 +2218,8 @@ namespace ConsoleApplication
                     powerPointText.Bold = (defRPR.Bold != null) ? (Boolean)defRPR.Bold : powerPointText.Bold;
                     powerPointText.Italic = (defRPR.Italic != null) ? (Boolean)defRPR.Italic : powerPointText.Italic;
                     if (defRPR.Underline != null)
-                    {
-                        if (defRPR.Underline.Value.ToString() == "sng")
-                        {
+                        if (defRPR.Underline.Value.ToString() != "")
                             powerPointText.Underline = true;
-                        }
-                    }
 
                     foreach (var defRPrChild in childElement)
                     {
